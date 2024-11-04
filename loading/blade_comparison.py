@@ -71,7 +71,6 @@ else:
     ax.set_xlabel('Approximate Speed (RPM)')
 
 ax.set_ylabel('Thrust (N)')
-
 plt.legend()
 plt.grid(which='both')
 
@@ -80,5 +79,25 @@ if esc:
 
 else:
     plt.savefig('loading/figures/speed_vs_thrust.eps')
+
+if not esc:
+
+    fig, ax = plt.subplots()
+
+    f = 2 * np.pi / 60
+
+    # plot torque vs speed
+    ax.plot(biblade['Speed (RPM)'], biblade['Power (W)'] / (f * biblade['Speed (RPM)']), '-o', label="Bi-Blade")
+    ax.plot(triblade['Speed (RPM)'], triblade['Power (W)'] / (f * triblade['Speed (RPM)']), '-o', label="Tri-Blade")
+    ax.plot(toroidal['Speed (RPM)'], toroidal['Power (W)'] / (f * toroidal['Speed (RPM)']), '-o', label="Toroidal")
+
+    ax.set_xlabel('Speed (RPM)')
+    ax.set_ylabel('Torque (Nm)')
+
+    plt.savefig('loading/figures/torque_vs_speed.eps')
+
+plt.legend()
+plt.grid(which='both')
+
 
 plt.show()

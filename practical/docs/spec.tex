@@ -111,11 +111,11 @@ This however, can be broken down into smaller objectives:
     \item Write calibration and testing procedures
 \end{itemize}
 
-\section{Force and Torque Measurement}
+\section{Measurements}
 
 The variables thrust, torque and speed are required to get an indication of the propulsive efficiency of a propeller.
 
-\subsection{Instrument choice}
+\subsection{Thrust and Torque}
 
 There are two widely used methods to measure forces.
 The first is a null method which involves adjusting a mechanical balance to zero the force.
@@ -143,6 +143,38 @@ Disadvantages include:
     \item Calibration required
     \item Drift
 \end{itemize}
+
+It is decided to use strain gauges to measure dynamic forces as the setup is simpler and the forces are expected to be dynamic.
+The strain gauge arrangement is important as to eliminate forces in directions other than the required thrust and torque.
+
+The ranges of forces are important to consider when choosing the arrangement.
+From preliminary tests, the ranges of thrust and torque are expected to be 0.1-10N and 0.001-0.1Nm respectively.
+
+Some theory of stain gauges is required to position them correctly.
+\begin{equation}
+    \delta R = \frac{\partial R}{\partial L} \delta L + \frac{\partial R}{\partial A} \delta A + \frac{\partial R}{\partial \rho} \delta \rho
+\end{equation}
+\begin{equation}
+    R = \frac{\rho L}{A}
+\end{equation}
+Gives
+\begin{equation}
+    \frac{\delta R}{R} = \frac{\delta L}{L} + \frac{\delta A}{A} + \frac{\delta \rho}{\rho} = (1 + 2\nu)\epsilon + \frac{\delta \rho}{\rho}
+\end{equation}
+
+A fundamental parameter of strain gauges is its sensitivity to strain, which is labelled the gauge factor.
+\begin{equation}
+    G_F = \frac{\Delta R/R}{\epsilon} = (1 + 2\nu) + \frac{1}{\epsilon} \frac{\delta \rho}{\rho}
+\end{equation}
+This is typically around 2 for metallic strain gauges.
+In practice, strain measurements are typically of the order $10^{-3}$, so the change in resistance is small.
+To measure small changes in resistance a Wheatstone bridge is used.
+
+Quarter-, half-, and full-bridge configurations of the Wheatstone bridge give different sensitivities and compensations for temperature effects and undesired components of forces.
+
+
+
+
 
 \section{Microphone Placement}
 
