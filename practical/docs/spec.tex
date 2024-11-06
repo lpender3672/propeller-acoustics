@@ -104,6 +104,7 @@ This however, can be broken down into smaller objectives:
     \item Decide using available theory:
     \begin{itemize}
         \item how best to orient load cells to measure thrust and torque
+        \item what microphones to use and:
         \item where best to place microphones to reconstruct the sound field
         \item how to process the data to extract useful information
     \end{itemize}
@@ -121,28 +122,19 @@ There are two widely used methods to measure forces.
 The first is a null method which involves adjusting a mechanical balance to zero the force.
 The second, deflection method, measures force by measuring the strain.
 
-Advantages of the null method include:
-\begin{itemize}
-    \item High accuracy
-    \item No calibration required
-    \item No drift
-\end{itemize}
-Disadvantages include:
-\begin{itemize}
-    \item Complicated setup
-    \item Unable to measure dynamic forces
-\end{itemize}
-
-Advantages of the deflection method include:
-\begin{itemize}
-    \item Simple setup
-    \item Can measure dynamic forces
-\end{itemize}
-Disadvantages include:
-\begin{itemize}
-    \item Calibration required
-    \item Drift
-\end{itemize}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|l|l|l|}
+        \hline
+        \textbf{Method} & \textbf{Advantages} & \textbf{Disadvantages} \\
+        \hline
+        Null Method & High accuracy, No calibration, No drift & Complicated setup, Cannot measure dynamic forces \\
+        \hline
+        Deflection Method & Simple setup, Can measure dynamic forces & Calibration required, Drift \\
+        \hline
+    \end{tabular}
+    \caption{Comparison of Null and Deflection Methods}
+\end{table}
 
 It is decided to use strain gauges to measure dynamic forces as the setup is simpler and the forces are expected to be dynamic.
 The strain gauge arrangement is important as to eliminate forces in directions other than the required thrust and torque.
@@ -168,16 +160,29 @@ A fundamental parameter of strain gauges is its sensitivity to strain, which is 
 \end{equation}
 This is typically around 2 for metallic strain gauges.
 In practice, strain measurements are typically of the order $10^{-3}$, so the change in resistance is small.
-To measure small changes in resistance a Wheatstone bridge is used.
+To measure these small changes in resistance a Wheatstone bridge is used.
 
-Quarter-, half-, and full-bridge configurations of the Wheatstone bridge give different sensitivities and compensations for temperature effects and undesired components of forces.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{wheatstone.png}
+    \caption{Wheatstone bridge}
+\end{figure}
+
+\begin{equation}
+    V_O = V_S \left( \frac{R_1}{R_1 + R_2} - \frac{R_4}{R_3 + R_4} \right)
+\end{equation}
+
+Quarter-, half-, and full-bridge configurations of the Wheatstone bridge consist of different quantities and arrangements of strain gauges.
+These give varying sensitivities and compensations for temperature effects and undesired components of forces.
+The full bridge configuration is chosen for its high sensitivity and compensation \dots
 
 
 
+\section{Microphone}
 
 
-\section{Microphone Placement}
 
+Measurements are to be taken at the beginning and end of each major test series.
 
 % bibliography
 
