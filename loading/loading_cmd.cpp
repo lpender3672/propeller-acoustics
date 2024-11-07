@@ -153,7 +153,7 @@ int main() {
                 break;
             }
         }
-
+ 
         // Check if the input was "read"
         if (strcmp(input_buffer, "read") == 0) {
             //printf("Taking force reading...\n");

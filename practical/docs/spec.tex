@@ -174,13 +174,34 @@ To measure these small changes in resistance a Wheatstone bridge is used.
 
 Quarter-, half-, and full-bridge configurations of the Wheatstone bridge consist of different quantities and arrangements of strain gauges.
 These give varying sensitivities and compensations for temperature effects and undesired components of forces.
-The full bridge configuration is chosen for its high sensitivity and compensation \dots
+The full bridge configuration is chosen for its high sensitivity and compensation \dots [?]
 
+The torque and thrust apply internal bending moment profiles in axis perpendicular to each other.
+This means a simple arrangement of strain gauges can be used to measure both forces.
 
+\begin{equation}
+    \sqrt{\frac{4 u(F)^{2} \left(F_{+}^{2} \left(F_{+} k \sin{\left(\theta \right)} + v_{1}\right)^{2} + F_{-}^{2} \left(- F_{-} k \sin{\left(\theta \right)} + v_{1}\right)^{2}\right) + u(v1)^{2} \left(F_{+} - F_{-}\right)^{2} \left(F_{+} + F_{-}\right)^{2}}{k^{2} \left(F_{+} + F_{-}\right)^{4}}}
+\end{equation}
+\begin{equation}
+    \sqrt{\frac{4 u(F)^{2} \left(F_{+}^{2} \left(F_{+} k \cos{\left(\theta \right)} + v_{2}\right)^{2} + F_{-}^{2} \left(- F_{-} k \cos{\left(\theta \right)} + v_{2}\right)^{2}\right) + u(v2)^{2} \left(F_{+} - F_{-}\right)^{2} \left(F_{+} + F_{-}\right)^{2}}{k^{2} \left(F_{+} + F_{-}\right)^{4}}}
+\end{equation}
 
 \section{Microphone}
 
+The \textit{free-field response} of a microphone relates its output voltage with and the sound pressure that existed before the microphone was introduced into the sound field.
+Microphones distort the pressure field because their acoustic impedance is very different from that of air.
+Sound waves impinging on the body of the microphone give rise to complex reflections that depend on the frequency, the direction of propagation, and the shape of the microphone \cite{measurement_systems}
+Wavelenghts of sound larger than the microphone, reflections are negligible at varying incidences.
+For wavelengths much smaller however, the microphone is a significant obstacle and reflections are significant.
+This means that the pressure measured by the microphone is twice what it would be if the microphone were not present \cite{measurement_systems}.
 
+This means smaller microphones are required to measure high frequency sounds.
+
+
+Three sets of sound pressure level readings over the frequency range of interest will be taken. \\
+(1) Background level \\
+(2) With only the motor in operation \\
+(3) With the motor and propeller in operation \\
 
 Measurements are to be taken at the beginning and end of each major test series.
 
@@ -190,11 +211,11 @@ Measurements are to be taken at the beginning and end of each major test series.
 
 %Endres, SC, Sandrock, C, Focke, WW (2018) “A simplicial homology algorithm for lipschitz optimisation”, Journal of Global Optimization.
 
-  \bibitem{handout}
-  J. V. Taylor and J. C. Massey
-  \emph{GA3 Heat Exchanger Handout}
-  University of Cambridge,
-  2024.
+  \bibitem{measurement_systems}
+  Ernest O. Doebelin
+  \emph{Measurement Systems: Application and Design},
+  Department of Mechanical Engineering, Ohio State University
+  1967.
 
 \end{thebibliography}
 

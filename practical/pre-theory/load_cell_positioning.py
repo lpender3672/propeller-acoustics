@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def wheatstone(vex, r1, r2, r3, r4):
-    vout = vex * (r3 / (r4 + r3) - r2 / (r1 + r2))
+    vout = vex * (r1 / (r1 + r2) - r4 / (r3 + r4))
     return vout
 
 class strain_gauge:
