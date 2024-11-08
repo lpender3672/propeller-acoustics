@@ -143,23 +143,25 @@ The ranges of forces are important to consider when choosing the arrangement.
 From preliminary tests, the ranges of thrust and torque are expected to be 0.1-10N and 0.001-0.1Nm respectively.
 
 Some theory of stain gauges is required to position them correctly.
+The resistance of a wire is given by
+\begin{equation}
+    R = \frac{\rho L}{A} \label{eq:resistance}
+\end{equation}
+A small change in resistance is simply
 \begin{equation}
     \delta R = \frac{\partial R}{\partial L} \delta L + \frac{\partial R}{\partial A} \delta A + \frac{\partial R}{\partial \rho} \delta \rho
 \end{equation}
-\begin{equation}
-    R = \frac{\rho L}{A}
-\end{equation}
-Gives
+Substituting in equation \ref{eq:resistance} and factoring out the strain, $\epsilon$ with Poisson's ratio $\nu$ gives
 \begin{equation}
     \frac{\delta R}{R} = \frac{\delta L}{L} + \frac{\delta A}{A} + \frac{\delta \rho}{\rho} = (1 + 2\nu)\epsilon + \frac{\delta \rho}{\rho}
 \end{equation}
-
 A fundamental parameter of strain gauges is its sensitivity to strain, which is labelled the gauge factor.
 \begin{equation}
     G_F = \frac{\Delta R/R}{\epsilon} = (1 + 2\nu) + \frac{1}{\epsilon} \frac{\delta \rho}{\rho}
 \end{equation}
 This is typically around 2 for metallic strain gauges.
 In practice, strain measurements are typically of the order $10^{-3}$, so the change in resistance is small.
+The resistivity and elastic modulus of the material are also temperature dependent which can cause errors in the measurement.
 To measure these small changes in resistance a Wheatstone bridge is used.
 
 \begin{figure}[H]
