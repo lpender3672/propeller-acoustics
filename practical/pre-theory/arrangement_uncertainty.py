@@ -91,7 +91,7 @@ print(min_uTotal)
 plt.plot(lin_theta, uM_t_values, label='uM')
 plt.plot(lin_theta, uF_t_values, label='uF')
 
-plt.ylabel('Added uncertainty in M and F')
+plt.ylabel('Uncertainty')
 plt.xlabel('Theta (radians)')
 
 plt.grid()
