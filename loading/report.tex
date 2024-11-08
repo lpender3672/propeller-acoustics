@@ -86,46 +86,27 @@ A rough survey was done up to the axial direction to observe the directivity of 
 \end{figure}
 
 \begin{figure}[H]
-    % subfigure
-    \begin{subfigure}{0.99\textwidth}
-        \centering
-        \includegraphics[width=0.99\textwidth]{figures/hispeed_biprop.png}
-        \caption{Bi-Propeller}
-        \label{fig:hispeed_biprop}
-    \end{subfigure}
-    % subfigure
-    \begin{subfigure}{0.99\textwidth}
-        \centering
-        \includegraphics[width=0.99\textwidth]{figures/hispeed_toroid.png}
-        \caption{Toroidal propeller}
-        \label{fig:hispeed_toroid}
-    \end{subfigure}
-    \caption{Noise spectrum of propellers at high speed}
-    \label{fig:noise_spectrum_hispeed}
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/13183rpm_twinblade.png}
+    \caption{Measured acoustic response of bi-blade at 13183 RPM, (50\% throttle)}
+    \label{fig:biblade_freq}
 \end{figure}
 
 \begin{figure}[H]
-    % subfigure
-    \begin{subfigure}{0.99\textwidth}
-        \centering
-        \includegraphics[width=0.99\textwidth]{figures/lospeed_biprop.png}
-        \caption{Bi-Propeller}
-        \label{fig:lospeed_biprop}
-    \end{subfigure}
-    % subfigure
-    \begin{subfigure}{0.99\textwidth}
-        \centering
-        \includegraphics[width=0.99\textwidth]{figures/lospeed_toroid.png}
-        \caption{Toroidal propeller}
-        \label{fig:lospeed_toroid}
-    \end{subfigure}
-    \caption{Noise spectrum of propellers at low speed}
-    \label{fig:noise_spectrum_lospeed}
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/11126rpm_triblade.png}
+    \caption{Measured acoustic response of tri-blade at 11126 RPM, (50\% throttle)}
+    \label{fig:triblade_freq}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.99\textwidth]{figures/12854rpm_toroid.png}
+    \caption{Measured acoustic response of toroidal blade at 12854 RPM, (50\% throttle)}
+    \label{fig:toroidal_freq}
 \end{figure}
 
 \section{Discussion}
-
-
 
 \subsection{Acoustics}
 
@@ -133,7 +114,17 @@ The noise measured by the microphone, close to the propeller, was observed to be
 The far field noise could not be measured due to lack of sensitivity, reflections and presence of background noise.
 Noise measurements were also poor due to poor acoustics with some reflective surfaces, (e.g. table) close to the propellers.
 
+Figure \ref{fig:biblade_freq} shows the spectrum of the bi-blade propeller at 13183 RPM.
+The spectrum shows a primary peak at ~ 420 Hz
+From the angular speed and number of blades we can calculate this frequency more accurately as 
+$ f = \Omega_\text{RPM} B / 60 = 439.4$ Hz which is within 4.4\% of the value obtained from the spectrum.
+It can also be observed the higher order harmonics are much weaker than the primary peak.
 
+Figure \ref{fig:triblade_freq} shows the spectrum of the tri-blade propeller at 11126 RPM.
+Here the spectrum shows a peak at ~ 540 Hz which is within 1.1\% of the calculated $f = 556.3$ Hz.
+
+Finally, figure \ref{fig:toroidal_freq} shows the spectrum of the toroidal propeller at 12854 RPM.
+The spectrum shows a peak at ~ 410 Hz. And the calculated $f = 428.5$ Hz is within 4.3\% of the value determined from the spectrum.
 
 \section{Conclusions}
 
@@ -142,6 +133,7 @@ Nonlinearities in the inputs for the motor controller were observed, specificall
 This shows the importance of accurately measuring the motor speed, rather than trying to infer it from the control input.
 The source of this nonlinearity is not known, but is likely a problem with the estimated speed from the back EMF of the motor.
 
-
+The acoustic measurements were observed to be very directional and the far field noise could not be measured for a variety of reasons including poor enviroment and microphone sensitivity.
+The measured primary sound frequency of the propellers were within 5\% to values calculated from measured speed.
 
 \end{document}
