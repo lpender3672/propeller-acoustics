@@ -25,6 +25,9 @@ R2 = (v2 - f(Fminus * sp.cos(theta))) / (f(Fplus*sp.cos(theta)) + f(Fminus * sp.
 M = d * (R1 * sp.cos(theta) - R2 * sp.sin(theta))
 F = R1 * sp.sin(theta) + R2 * sp.cos(theta)
 
+print(sp.latex(sp.simplify(M)))
+print(sp.latex(sp.simplify(F)))
+
 # now define uncertainties
 uv1 = sp.symbols('u(v1)')
 uv2 = sp.symbols('u(v2)')

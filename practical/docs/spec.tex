@@ -109,6 +109,7 @@ This however, can be broken down into smaller objectives:
         \item how to process the data to extract useful information
     \end{itemize}
     \item Create CAD model of test rig
+    \item Discuss methods for rapid prototyping of aerodynamic propellers
     \item Write calibration and testing procedures
 \end{itemize}
 
@@ -166,7 +167,7 @@ To measure these small changes in resistance a Wheatstone bridge is used.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\textwidth]{wheatstone.png}
+    \includegraphics[width=0.5\textwidth]{figures/wheatstone.png}
     \caption{Wheatstone bridge}
 \end{figure}
 
@@ -181,12 +182,13 @@ The full bridge configuration is chosen for its high sensitivity and compensatio
 The torque and thrust apply internal bending moment profiles in axis perpendicular to each other.
 This means a simple arrangement of strain gauges can be used to measure both forces.
 
-\begin{equation}
-    \sqrt{\frac{4 u(F)^{2} \left(F_{+}^{2} \left(F_{+} k \sin{\left(\theta \right)} + v_{1}\right)^{2} + F_{-}^{2} \left(- F_{-} k \sin{\left(\theta \right)} + v_{1}\right)^{2}\right) + u(v1)^{2} \left(F_{+} - F_{-}\right)^{2} \left(F_{+} + F_{-}\right)^{2}}{k^{2} \left(F_{+} + F_{-}\right)^{4}}}
-\end{equation}
-\begin{equation}
-    \sqrt{\frac{4 u(F)^{2} \left(F_{+}^{2} \left(F_{+} k \cos{\left(\theta \right)} + v_{2}\right)^{2} + F_{-}^{2} \left(- F_{-} k \cos{\left(\theta \right)} + v_{2}\right)^{2}\right) + u(v2)^{2} \left(F_{+} - F_{-}\right)^{2} \left(F_{+} + F_{-}\right)^{2}}{k^{2} \left(F_{+} + F_{-}\right)^{4}}}
-\end{equation}
+
+
+
+\begin{align}
+    F &= \frac{d \left(F_{+} v_{1} \cos{\left(\theta \right)} - F_{+} v_{2} \sin{\left(\theta \right)} - F_{-} v_{1} \cos{\left(\theta \right)} + F_{-} v_{2} \sin{\left(\theta \right)}\right)}{F_{+} + F_{-}} \\
+    M &= \frac{- 2 F_{+} F_{-} + F_{+} v_{1} \sin{\left(\theta \right)} + F_{+} v_{2} \cos{\left(\theta \right)} - F_{-} v_{1} \sin{\left(\theta \right)} - F_{-} v_{2} \cos{\left(\theta \right)}}{F_{+} + F_{-}}
+\end{align}
 
 \section{Microphone}
 
@@ -206,6 +208,15 @@ Three sets of sound pressure level readings over the frequency range of interest
 (3) With the motor and propeller in operation \\
 
 Measurements are to be taken at the beginning and end of each major test series.
+
+\section{Data Acquisition}
+
+\section{Rapid Prototyping}
+
+Efficient propellers blades consist of highly twisted airfoils, which are difficult to manufacture using traditional methods.
+Typically propellers are made by injection molding, which is not suitable for rapid prototyping of designs.
+
+Advances in resin 3D printing have made it possible to print high quality propellers with strengths approaching that of injection molded propellers [?].
 
 % bibliography
 
