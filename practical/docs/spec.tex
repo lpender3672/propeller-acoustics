@@ -186,9 +186,16 @@ This means a simple arrangement of strain gauges can be used to measure both for
 
 
 \begin{align}
-    F &= \frac{d \left(F_{+} v_{1} \cos{\left(\theta \right)} - F_{+} v_{2} \sin{\left(\theta \right)} - F_{-} v_{1} \cos{\left(\theta \right)} + F_{-} v_{2} \sin{\left(\theta \right)}\right)}{F_{+} + F_{-}} \\
-    M &= \frac{- 2 F_{+} F_{-} + F_{+} v_{1} \sin{\left(\theta \right)} + F_{+} v_{2} \cos{\left(\theta \right)} - F_{-} v_{1} \sin{\left(\theta \right)} - F_{-} v_{2} \cos{\left(\theta \right)}}{F_{+} + F_{-}}
+    F &= \frac{- 2 F_{+} F_{-} + F_{+} v_{1} \sin{\left(\theta \right)} + F_{+} v_{2} \cos{\left(\theta \right)} - F_{-} v_{1} \sin{\left(\theta \right)} - F_{-} v_{2} \cos{\left(\theta \right)}}{F_{+} + F_{-}} \\
+    M &= \frac{d \left(F_{+} v_{1} \cos{\left(\theta \right)} - F_{+} v_{2} \sin{\left(\theta \right)} - F_{-} v_{1} \cos{\left(\theta \right)} + F_{-} v_{2} \sin{\left(\theta \right)}\right)}{F_{+} + F_{-}}
 \end{align}
+
+\subsubsection{Interference of motor EMF}
+
+Large currents in the motor can induce voltages in the strain gauge wire which can interfere with the measurement.
+Efforts to mitigate this include twisted pair wiring and shielding the wires.
+A faraday cage can also be used around the strain gauages to shield them from electromagnetic interference.
+
 
 \section{Microphone}
 
@@ -199,6 +206,8 @@ Wavelenghts of sound larger than the microphone, reflections are negligible at v
 For wavelengths much smaller however, the microphone is a significant obstacle and reflections are significant.
 This means that the pressure measured by the microphone is twice what it would be if the microphone were not present \cite{measurement_systems}.
 
+Flow incident on the microphone can also cause measurement errors. This can be mitigated by wind shields.
+
 This means smaller microphones are required to measure high frequency sounds.
 
 
@@ -208,6 +217,7 @@ Three sets of sound pressure level readings over the frequency range of interest
 (3) With the motor and propeller in operation \\
 
 Measurements are to be taken at the beginning and end of each major test series.
+
 
 \section{Data Acquisition}
 
@@ -229,6 +239,13 @@ Advances in resin 3D printing have made it possible to print high quality propel
   \emph{Measurement Systems: Application and Design},
   Department of Mechanical Engineering, Ohio State University
   1967.
+
+  \bibitem{rapid_prototyping}
+  M. Christian Manuel et al.,
+  \emph{Fabrication and Analysis of Manufacturing Propellers for Unmanned Aerial Vehicles (UAV) Using Stereolithography Rapid Prototyping}
+  11th IEEE Control and System Graduate Research Colloquium
+  2020.
+
 
 \end{thebibliography}
 
