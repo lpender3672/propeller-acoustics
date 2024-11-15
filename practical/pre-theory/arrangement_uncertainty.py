@@ -61,7 +61,7 @@ uF = uF.subs({v1: 5, v2: 5, Fplus: 10, Fminus: 1, d: 0.05})
 uF = uF.subs({uv1: 0.01, uv2: 0.01, uFplus: 0.01, uFminus: 0.01, ud: 0.01})
 
 # now find the value of theta where value of uM + uF is minimum
-func = uM + uF
+func = uM + 0.05 * uF
 min_thetas = sp.solve(sp.diff(func, theta), theta)
 
 # plot theta
