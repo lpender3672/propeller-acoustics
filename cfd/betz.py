@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 # read data
-xf,zf = np.loadtxt('practical/pre-theory/clarkY.surf', unpack=True, skiprows=2)
+xf,zf = np.loadtxt('cfd/clarkY.surf', unpack=True, skiprows=2)
 # split to upper and lower surfaces
 idx = np.where(zf == 0)[0][1]
 xf_upper = xf[:idx]
@@ -20,7 +20,7 @@ xf = np.concatenate((xf_upper, xf_lower[::-1]))
 zf = np.concatenate((zf_upper, zf_lower[::-1]))
 
 # read data
-alpha_foil, Cl_foil, Cd_foil, _, _, _, _ = np.loadtxt('practical/pre-theory/clarkY.dat', unpack=True, skiprows=11)
+alpha_foil, Cl_foil, Cd_foil, _, _, _, _ = np.loadtxt('cfd/clarkY.dat', unpack=True, skiprows=11)
 
 V = 80 # m/s
 
@@ -36,13 +36,15 @@ Nsect = 50
 # Select an initial estimate for zeta
 zeta = 0.0001
 dzeta = 100
-xi = np.linspace(0.2, 1, Nsect)
+xi = np.linspace(0.05, 1, Nsect)
 y = xi * R * Omega / V
 
 idx = np.argmax(Cl_foil / Cd_foil)
 alpha = alpha_foil[idx]
 Cl = Cl_foil[idx]
 Cd = Cd_foil[idx]
+
+print(alpha, Cl, Cd)
 
 
 target_thrust_N = 4 # N
@@ -103,7 +105,7 @@ while np.abs(dzeta/zeta) > 1e-3:
 
 # cross section plot
 
-for i in range(0, Nsect, 10):
+for i in range(0, Nsect, 5):
     bi = -np.pi/2 + beta[i] - 2 * np.pi
     ci = 1e3 * c[i]
     r = 1e3 * R * xi[i]
@@ -116,6 +118,10 @@ for i in range(0, Nsect, 10):
 
     bideg = bi * 180 / np.pi
     plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
+
+    # save cross section
+    rarr = r * np.ones_like(x)
+    np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
 
 plt.axis('equal')
 
