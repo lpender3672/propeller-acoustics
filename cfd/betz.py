@@ -22,12 +22,10 @@ zf = np.concatenate((zf_upper, zf_lower[::-1]))
 # read data
 alpha_foil, Cl_foil, Cd_foil, _, _, _, _ = np.loadtxt('cfd/clarkY.dat', unpack=True, skiprows=11)
 
-V = 80 # m/s
 
 R = 5/2 * 25.4e-3
 B = 3
 Omega = 10000 * 2 * np.pi / 60 # rad/s
-lamda = V / (Omega * R) # advance ratio
 nu = 1.48e-5
 ro = 1.225
 
@@ -37,20 +35,21 @@ Nsect = 50
 zeta = 0.0001
 dzeta = 100
 xi = np.linspace(0.05, 1, Nsect)
-y = xi * R * Omega / V
 
 idx = np.argmax(Cl_foil / Cd_foil)
 alpha = alpha_foil[idx]
 Cl = Cl_foil[idx]
 Cd = Cd_foil[idx]
 
-print(alpha, Cl, Cd)
+alpha *= np.pi / 180
 
+target_thrust_N = 0.1 # N
 
-target_thrust_N = 4 # N
+V = 10 # m/s
 T_c = 2 * target_thrust_N / (ro * V**2 * np.pi * R**2)
+y = xi * R * Omega / V
+lamda = V / (Omega * R) # advance ratio
 
-V = np.sqrt(2 * target_thrust_N / (ro * np.pi * R**2))
 
 while np.abs(dzeta/zeta) > 1e-3:
     phi_t = np.arctan(lamda * (1 + zeta / 2))
@@ -103,28 +102,30 @@ while np.abs(dzeta/zeta) > 1e-3:
     dzeta = new_zeta - zeta
     zeta = new_zeta
 
-# cross section plot
+else:
 
-for i in range(0, Nsect, 5):
-    bi = -np.pi/2 + beta[i] - 2 * np.pi
-    ci = 1e3 * c[i]
-    r = 1e3 * R * xi[i]
+    # cross section plot
 
-    xof = ci * (xf - 0.25)
-    zof = ci * (zf - 0.01)
-    # rotate
-    x = xof * np.cos(bi) - zof * np.sin(bi)
-    z = xof * np.sin(bi) + zof * np.cos(bi)
+    for i in range(0, Nsect, 5):
+        bi = -beta[i]
+        ci = 1e3 * c[i]
+        r = 1e3 * R * xi[i]
 
-    bideg = bi * 180 / np.pi
-    plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
+        xof = ci * (xf - 0.25)
+        zof = ci * (zf - 0.01)
+        # rotate
+        x = xof * np.cos(bi) - zof * np.sin(bi)
+        z = xof * np.sin(bi) + zof * np.cos(bi)
 
-    # save cross section
-    rarr = r * np.ones_like(x)
-    np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
+        bideg = beta[i] * 180 / np.pi
+        plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
 
-plt.axis('equal')
+        # save cross section
+        rarr = r * np.ones_like(x)
+        np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
 
-plt.legend()
+    plt.axis('equal')
 
-plt.show()
+    plt.legend()
+
+    plt.show()
