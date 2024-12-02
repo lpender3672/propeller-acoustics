@@ -8,34 +8,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from geometry import save_shape_data
-
-def plot3D(X, Y, Z, B):
-    # function by Lily Board phd
-    X2 = np.zeros((nf, Nsect))
-    Y2 = np.zeros((nf, Nsect))
-    Z2 = np.zeros((nf, Nsect))
-
-    fig = plt.figure(figsize = (6,6))
-    ax = plt.axes(projection='3d')
-    ax.grid()
-    for nb in range(B):
-        # rotate around zy plane by nb/B * 2 * np.pi
-        Y2 = Y * np.cos(nb/B * 2 * np.pi) - X * np.sin(nb/B * 2 * np.pi)
-        X2 = Y * np.sin(nb/B * 2 * np.pi) + X * np.cos(nb/B * 2 * np.pi)
-        Z2 = Z
-
-        ax.plot_surface(X2, Y2, Z2, color = 'whitesmoke', edgecolor='k', lw=0.1, rstride=1, cstride=1, alpha=1)
-
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-
-    # xy equal
-    ax.set_box_aspect([1,1,1])
-
-    return ax
-
+from geometry import save_shape_data, plot3D
 
 # read data
 xf,zf = np.loadtxt('cfd/clarkY.surf', unpack=True, skiprows=2)
@@ -154,7 +127,12 @@ else:
         Y[:,i] = 1e3 * R * xi[i] * np.ones(nf)
         #np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((X[:,i], Z[:,i], Y[:,i])))
 
-    #ax = plot3D(X, Y, Z, B)
+    fig, ax = plot3D(X, Y, Z, B)
     save_shape_data(c, beta, R * xi, xf, zf, "practical/designs/clarkY.stl")
+
+    # set limits
+    ax.set_xlim(-50, 50)
+    ax.set_ylim(-50, 50)
+    ax.set_zlim(-50, 50)
 
     plt.show()
