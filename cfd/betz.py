@@ -8,6 +8,33 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+
+def plot3D(X, Y, Z, R, B):
+    X2 = np.zeros((nf, Nsect))
+    Y2 = np.zeros((nf, Nsect))
+    Z2 = np.zeros((nf, Nsect))
+
+    fig = plt.figure(figsize = (6,6))
+    ax = plt.axes(projection='3d')
+    ax.grid()
+    for nb in range(B):
+        # rotate around zy plane by nb/B * 2 * np.pi
+        Y2 = Y * np.cos(nb/B * 2 * np.pi) - X * np.sin(nb/B * 2 * np.pi)
+        X2 = Y * np.sin(nb/B * 2 * np.pi) + X * np.cos(nb/B * 2 * np.pi)
+        Z2 = Z
+
+        ax.plot_surface(X2, Y2, Z2, color = 'whitesmoke', edgecolor='k', lw=0.1, rstride=1, cstride=1, alpha=1)
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+
+    # xy equal
+    ax.set_box_aspect([1,1,1])
+
+    return ax
+
+
 # read data
 xf,zf = np.loadtxt('cfd/clarkY.surf', unpack=True, skiprows=2)
 # split to upper and lower surfaces
@@ -53,7 +80,7 @@ lamda = V / (Omega * R) # advance ratio
 
 while np.abs(dzeta/zeta) > 1e-3:
     phi_t = np.arctan(lamda * (1 + zeta / 2))
-    f = B/2 * (1 - zeta) / np.sin(phi_t)
+    f = B/2 * (1 - xi) / np.sin(phi_t)
     F = 2 / np.pi * np.arccos(np.exp(-f))
 
     phi = np.arctan( np.tan(phi_t) / xi)
@@ -106,7 +133,12 @@ else:
 
     # cross section plot
 
-    for i in range(0, Nsect, 5):
+    nf = xf.shape[0]
+    X = np.zeros((nf, Nsect))
+    Y = np.zeros((nf, Nsect))
+    Z = np.zeros((nf, Nsect))
+    
+    for i in range(0, Nsect):
         bi = -beta[i]
         ci = 1e3 * c[i]
         r = 1e3 * R * xi[i]
@@ -114,18 +146,15 @@ else:
         xof = ci * (xf - 0.25)
         zof = ci * (zf - 0.01)
         # rotate
-        x = xof * np.cos(bi) - zof * np.sin(bi)
-        z = xof * np.sin(bi) + zof * np.cos(bi)
+        X[:,i] = xof * np.cos(bi) - zof * np.sin(bi)
+        Z[:,i] = xof * np.sin(bi) + zof * np.cos(bi)
 
         bideg = beta[i] * 180 / np.pi
-        plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
-
+        #plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
         # save cross section
-        rarr = r * np.ones_like(x)
-        np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
+        Y[:,i] = r * np.ones(nf)
+        #np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
 
-    plt.axis('equal')
-
-    plt.legend()
+    ax = plot3D(X, Y, Z, R, B)
 
     plt.show()
