@@ -8,8 +8,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+from geometry import save_shape_data
 
-def plot3D(X, Y, Z, R, B):
+def plot3D(X, Y, Z, B):
+    # function by Lily Board phd
     X2 = np.zeros((nf, Nsect))
     Y2 = np.zeros((nf, Nsect))
     Z2 = np.zeros((nf, Nsect))
@@ -141,7 +143,6 @@ else:
     for i in range(0, Nsect):
         bi = -beta[i]
         ci = 1e3 * c[i]
-        r = 1e3 * R * xi[i]
 
         xof = ci * (xf - 0.25)
         zof = ci * (zf - 0.01)
@@ -150,11 +151,10 @@ else:
         Z[:,i] = xof * np.sin(bi) + zof * np.cos(bi)
 
         bideg = beta[i] * 180 / np.pi
-        #plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
-        # save cross section
-        Y[:,i] = r * np.ones(nf)
-        #np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
+        Y[:,i] = 1e3 * R * xi[i] * np.ones(nf)
+        #np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((X[:,i], Z[:,i], Y[:,i])))
 
-    ax = plot3D(X, Y, Z, R, B)
+    #ax = plot3D(X, Y, Z, B)
+    save_shape_data(c, beta, R * xi, xf, zf, "practical/designs/clarkY.stl")
 
     plt.show()
