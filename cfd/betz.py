@@ -8,6 +8,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+from geometry import save_shape_data, plot3D
+
 # read data
 xf,zf = np.loadtxt('cfd/clarkY.surf', unpack=True, skiprows=2)
 # split to upper and lower surfaces
@@ -126,27 +128,32 @@ else:
 
     # cross section plot
 
-    for i in range(0, Nsect, 5):
+    nf = xf.shape[0]
+    X = np.zeros((nf, Nsect))
+    Y = np.zeros((nf, Nsect))
+    Z = np.zeros((nf, Nsect))
+    
+    for i in range(0, Nsect):
         bi = -beta[i]
         ci = 1e3 * c[i]
-        r = 1e3 * R * xi[i]
 
         xof = ci * (xf - 0.25)
         zof = ci * (zf - 0.01)
         # rotate
-        x = xof * np.cos(bi) - zof * np.sin(bi)
-        z = xof * np.sin(bi) + zof * np.cos(bi)
+        X[:,i] = xof * np.cos(bi) - zof * np.sin(bi)
+        Z[:,i] = xof * np.sin(bi) + zof * np.cos(bi)
         x = -x
 
         bideg = beta[i] * 180 / np.pi
-        plt.plot(x, z, label=f'r = {r:.2f}, beta={bideg:.2f}')
+        Y[:,i] = 1e3 * R * xi[i] * np.ones(nf)
+        #np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((X[:,i], Z[:,i], Y[:,i])))
 
-        # save cross section
-        rarr = r * np.ones_like(x)
-        np.savetxt(f'practical/designs/clarkY/section_{i}.sldcrv', np.column_stack((x, z, rarr)))
+    fig, ax = plot3D(X, Y, Z, B)
+    save_shape_data(c, beta, R * xi, xf, zf, "practical/designs/clarkY.stl")
 
-    plt.axis('equal')
-
-    plt.legend()
+    # set limits
+    ax.set_xlim(-50, 50)
+    ax.set_ylim(-50, 50)
+    ax.set_zlim(-50, 50)
 
     plt.show()
