@@ -142,7 +142,6 @@ else:
         # rotate
         X[:,i] = xof * np.cos(bi) - zof * np.sin(bi)
         Z[:,i] = xof * np.sin(bi) + zof * np.cos(bi)
-        x = -x
 
         bideg = beta[i] * 180 / np.pi
         Y[:,i] = 1e3 * R * xi[i] * np.ones(nf)
