@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout
 
 from vis import STLViewerWidget
 from input import PropInputTable, OpInputTable
+from dists import DistributionPlotWidget
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -11,10 +12,15 @@ class MainWindow(QWidget):
         self.prop_input = PropInputTable(self)
         self.op_input = OpInputTable(self)
         self.stl_viewer = STLViewerWidget()
+        
+        self.beta_plot = DistributionPlotWidget()
 
         layout.addWidget(self.prop_input, 0, 0, 1, 1)
         layout.addWidget(self.op_input, 1, 0, 1, 1)
-        layout.addWidget(self.stl_viewer, 0, 1, 2, 1)
+
+        layout.addWidget(self.beta_plot, 0, 1, 2, 1)
+
+        layout.addWidget(self.stl_viewer, 0, 2, 2, 1)
         
 
         self.stl_viewer.set_stl_file("practical/designs/clarkY.stl")
