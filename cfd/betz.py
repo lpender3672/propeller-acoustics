@@ -45,9 +45,9 @@ Cd = Cd_foil[idx]
 alpha *= np.pi / 180
 
 target_thrust_N = 1 # N
-target_power_W = 10 # W
+target_power_W = 50 # W
 
-V = 2 # m/s
+V = 50 # m/s
 T_c = 2 * target_thrust_N / (ro * V**2 * np.pi * R**2)
 P_c = 2 * target_power_W / (ro * V**3 * np.pi * R**2)
 y = xi * R * Omega / V

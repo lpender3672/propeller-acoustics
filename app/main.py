@@ -7,6 +7,8 @@ from dists import DistributionPlotWidget
 
 import numpy as np
 from scipy.interpolate import interp2d
+import json
+import os
 
 class AppVars(QObject):
     new_oper = pyqtSignal()
@@ -22,23 +24,41 @@ class AppVars(QObject):
 
         }
 
-    def load_from_file(self, filename):
-        pass
+    def load_oper_from_file(self, filename):
+        try:
+            with open(filename, 'r') as f:
+                av = json.load(f)
+        except FileNotFoundError:
+            return False
+        self.oper = av['oper']
+        return True
 
-    def save_to_file(self, filename):
-        pass
-
+    def save_oper_to_file(self, filename):
+        av = {
+            'oper': self.oper
+        }
+        try:
+            with open(filename, 'w') as f:
+                json.dump(av, f)
+        except FileNotFoundError:
+            print("Error saving to directory")
+            return
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
         self.av = AppVars()
+
+        self.app_dir = os.path.dirname(os.path.realpath(__file__))
         
         self.assemble_widgets()
-        
         self.attach_signals()
 
+        av_file = os.path.join(self.app_dir, "app_vars.json")
+        if self.av.load_oper_from_file(av_file):
+            self.input_widget.oper_table.set_values(self.av.oper)
+            
         self.stl_viewer.load_stl_file("practical/designs/clarkY.stl")#
 
     def assemble_widgets(self):
@@ -83,6 +103,12 @@ class MainWindow(QWidget):
         print("Updating oper")
         
         self.av.oper = self.input_widget.oper_table.parse_values()
+
+    
+    def closeEvent(self, event):
+        av_file = os.path.join(self.app_dir, "app_vars.json")
+        self.av.save_oper_to_file(av_file)
+        event.accept()
 
 
 def main():

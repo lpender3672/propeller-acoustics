@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QTableWidgetItem, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QTableWidgetItem, QWidget, QVBoxLayout, QLineEdit, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6 import QtGui
 
@@ -35,6 +35,9 @@ class InputTable(TexQTableWidget):
         for i,v in enumerate(self.vars):
             row_names.append(v.symbol)
             self.setItem(
+                i, 0, QTableWidgetItem()
+            )
+            self.setItem(
                 i, 1, QTableWidgetItem(v.unit)
             )
             self.setItem(
@@ -59,10 +62,20 @@ class InputTable(TexQTableWidget):
         except ValueError:
             self.item(row, col).setBackground(QtGui.QColor(255, 0, 0))
             self.clearSelection()
+        except AttributeError:
+            print(self.item(row, col))
         else:
             v.value = v.dtype(self.item(row, col).text())
             self.item(row, col).setBackground(QtGui.QColor(255, 255, 255))
             self.item(row, col).setText(str(v.value))
+
+        self.cellChanged.connect(self.on_cell_changed)
+    
+    def set_values(self):
+        self.cellChanged.disconnect(self.on_cell_changed)
+
+        for i,v in enumerate(self.vars):
+            self.item(i, 0).setText(str(v.value))
 
         self.cellChanged.connect(self.on_cell_changed)
 
@@ -100,7 +113,19 @@ class PropInputTable(InputTable):
         prop['r0_rt'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
         prop['dz'] = np.diff(rarr_pts)
 
+        if None in prop.values():
+            return None
+
         return prop
+    
+    def set_values(self, prop):
+        self.vars[0].value = prop['B']
+        self.vars[1].value = prop['rt']
+        self.vars[2].value = prop['rh']
+        self.vars[3].value = prop['nr']
+        self.vars[4].value = prop['nx']
+
+        super().set_values()
 
 class OperInputTable(InputTable):
     new_oper = pyqtSignal()
@@ -121,8 +146,23 @@ class OperInputTable(InputTable):
     
     def parse_values(self):
         oper = {}
+        oper['rho'] = self.vars[0].value
+        oper['c0'] = self.vars[1].value
+        oper['pref'] = self.vars[2].value
+        oper['V'] = self.vars[3].value
+
+        if None in oper.values():
+            return None
 
         return oper
+
+    def set_values(self, oper):
+        self.vars[0].value = oper['rho']
+        self.vars[1].value = oper['c0']
+        self.vars[2].value = oper['pref']
+        self.vars[3].value = oper['V']
+
+        super().set_values()
 
 
 class InputWidget(QWidget):
@@ -139,6 +179,12 @@ class InputWidget(QWidget):
         self.oper_table.new_oper.connect(self.new_oper.emit)
 
         self.layout = QVBoxLayout()
+        self.prop_path = QLineEdit()
+        self.set_prop_btn = QPushButton("Load propeller")
+
+        self.layout.addWidget(self.prop_path)
+        self.layout.addWidget(self.set_prop_btn)
+
         self.layout.addWidget(self.prop_table)
         self.layout.addWidget(self.oper_table)
 

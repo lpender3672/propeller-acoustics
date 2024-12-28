@@ -59,9 +59,9 @@ def hanson(av: dict, prop: dict, obs: dict, ms: np.ndarray) -> dict:
             psiLKx = Psi(kx, prop['xc'], prop['Cl'])
             psiDKx = Psi(kx, prop['xc'], prop['Cd'])
 
-            out['PVM'][o, m] = trapz(prop['rarr'], terms1and2 * kx**2 * prop['tb'] * psiVKx)
-            out['PDM'][o, m] = trapz(prop['rarr'], terms1and2 * 1j * kx * prop['Cd'] / 2 * psiDKx)
-            out['PLM'][o, m] = trapz(prop['rarr'], terms1and2 * -1j * ky * prop['Cl'] / 2 * psiLKx)
+            out['PVM'][o, m] = trapz( prop['r0_rt'], terms1and2 * kx**2 * prop['tb'] * psiVKx)
+            out['PDM'][o, m] = trapz( prop['r0_rt'], terms1and2 * 1j * kx * prop['Cd'] / 2 * psiDKx)
+            out['PLM'][o, m] = trapz( prop['r0_rt'], terms1and2 * -1j * ky * prop['Cl'] / 2 * psiLKx)
 
     return out
 
@@ -83,7 +83,7 @@ prop['nx'] = 100 # chordwise elements per section
 xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
 rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
 prop['xc']  = (xc_pts[1:] + xc_pts[:-1]) / 2
-prop['rarr'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
+prop['r0_rt'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
 prop['dz'] = np.diff(rarr_pts)
 
 av['Min'] = 0;                  #% inflow Mach number [-]
