@@ -1,5 +1,6 @@
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QComboBox, QWidget
+from PyQt6.QtCore import Qt, pyqtSignal
 import pyqtgraph as pg
 import numpy as np
 
@@ -50,6 +51,8 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
                 self.sigPlotChanged.emit(self)
 
 class DistributionPlotWidget(QWidget):
+    new_dist = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         
@@ -92,28 +95,36 @@ class DistributionPlotWidget(QWidget):
             self.scatter.is_spline = True
 
         self.scatter.setData(pos=self.scatter.control_points)
-        self.update_curve()
-    
-    def update_curve(self):
+        #self.update_curve() # not actually necessary
+
+    def get_distribution(self, x_dist):
         x = self.scatter.control_points[:, 0]
         y = self.scatter.control_points[:, 1]
-        x_fine = np.linspace(0, 1, 100)
-        
+
         if self.scatter.is_spline:
             idx = np.argsort(x)
             spline = CubicSpline(x[idx], y[idx])
-            y_fine = spline(x_fine)
+            y_dist = spline(x_dist)
         elif len(x) == 2:
             b = (y[1] - y[0]) / (x[1] - x[0])
             a = y[0] - b * x[0]
-            y_fine = a + b * x_fine
+            y_dist = a + b * x_dist
         elif len(x) == 3:
             coefficients = fit_quadratic(x, y)
-            y_fine = coefficients[0] * x_fine**2 + coefficients[1] * x_fine + coefficients[2]
+            y_dist = coefficients[0] * x_dist**2 + coefficients[1] * x_dist + coefficients[2]
         else:
-            y_fine = np.zeros_like(x_fine)
+            y_dist = np.zeros_like(x_dist)
+
+        return y_dist
+    
+    def update_curve(self):
+
+        x_plot = np.linspace(0, 1, 100)
+        y_plot = self.get_distribution(x_plot)
         
         self.plot_widget.clear()
         self.plot_widget.addItem(self.scatter)
-        self.plot_widget.plot(x_fine, y_fine, pen='b')
+        self.plot_widget.plot(x_plot, y_plot, pen='b')
+
+        self.new_dist.emit()
 

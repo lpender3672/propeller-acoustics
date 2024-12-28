@@ -15,13 +15,13 @@ class STLViewerWidget(QWidget):
 
         self.smoothToggle = QCheckBox("Smooth")
         self.smoothToggle.setChecked(False)
-        self.smoothToggle.stateChanged.connect(self.load_stl)
+        self.smoothToggle.stateChanged.connect(self.update_mesh_plot)
 
         self.edgeToggle = QCheckBox("Draw Edges")
         self.edgeToggle.setChecked(False)
-        self.edgeToggle.stateChanged.connect(self.load_stl)
+        self.edgeToggle.stateChanged.connect(self.update_mesh_plot)
 
-        viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
+        #viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
         viewSettingLayout.addWidget(self.edgeToggle, 0, 1)
 
         viewSettingWidget.setMaximumHeight(30)
@@ -33,12 +33,12 @@ class STLViewerWidget(QWidget):
 
         self.view.setCameraPosition(distance=0.1)
 
-    def set_stl_file(self, stl_file):
+    def load_stl_file(self, stl_file):
         self.stl_file = stl_file
         self.stl_mesh = mesh.Mesh.from_file(stl_file)
-        self.load_stl()
+        self.update_mesh_plot()
 
-    def load_stl(self):
+    def update_mesh_plot(self):
         # clear the view
         self.view.items = []
 
