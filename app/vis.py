@@ -31,7 +31,7 @@ class STLViewerWidget(QWidget):
         self.setMinimumHeight(400)
         self.setMinimumWidth(400)
 
-        self.view.setCameraPosition(distance=0.1)
+        self.view.setCameraPosition(distance=1)
 
     def load_stl_file(self, stl_file):
         self.stl_file = stl_file

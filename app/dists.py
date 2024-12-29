@@ -1,10 +1,14 @@
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QComboBox, QWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QComboBox, QWidget, QPushButton
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
+
 from PyQt6.QtCore import Qt, pyqtSignal
 import pyqtgraph as pg
 import numpy as np
 
 from scipy.interpolate import CubicSpline
+
+import betz
 
 def fit_quadratic(x, y):
     A = np.array([
@@ -25,6 +29,10 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
 
     def mouseDragEvent(self, ev):
         if ev.button() != pg.QtCore.Qt.MouseButton.LeftButton:
+            ev.ignore()
+            return
+
+        if not self.isVisible():
             ev.ignore()
             return
 
@@ -53,24 +61,40 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
 class DistributionPlotWidget(QWidget):
     new_dist = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, parent = None, title = None, xlabel = None, ylabel = None):
         super().__init__()
         
         layout = QVBoxLayout()
         self.setLayout(layout)
         
         self.dist_type = QComboBox()
-        self.dist_type.addItems(["Linear", "Quadratic", "Spline"])
+        self.dist_model = QStandardItemModel(self.dist_type)
+        #self.dist_type.addItems(["Linear", "Quadratic", "Spline", "Betz"])
+        self.dist_model.appendRow(QStandardItem("Linear"))
+        self.dist_model.appendRow(QStandardItem("Quadratic"))
+        self.dist_model.appendRow(QStandardItem("Spline"))
+        custom_item = QStandardItem("Custom")
+        custom_item.setFlags( custom_item.flags() & ~Qt.ItemFlag.ItemIsSelectable )
+        self.dist_model.appendRow(custom_item)
+        self.dist_type.setModel(self.dist_model)
         self.dist_type.currentIndexChanged.connect(self.update_distribution)
-        layout.addWidget(self.dist_type)
         
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setXRange(0, 1)
         self.plot_widget.setYRange(0, 1)
         self.plot_widget.setLabel('left', 'Value')
         self.plot_widget.setLabel('bottom', 'Radius')
+
+        if title is not None:
+            self.plot_widget.setTitle(title)
+        if xlabel is not None:
+            self.plot_widget.setLabel('bottom', xlabel)
+        if ylabel is not None:
+            self.plot_widget.setLabel('left', ylabel)
         self.plot_widget.showGrid(x=True, y=True)
+
         layout.addWidget(self.plot_widget)
+        layout.addWidget(self.dist_type)
         
         # initially linear
         control_points = np.array([[0, 0], [1, 1]]).astype(float)  # Two points for linear by default
@@ -82,9 +106,13 @@ class DistributionPlotWidget(QWidget):
         self.plot_widget.addItem(self.scatter)
         
         self.update_distribution(0)
+
+        self.xb = np.linspace(0, 1, 100)
+        self.yb = np.zeros_like(self.xb)
     
     def update_distribution(self, index):
         self.scatter.is_spline = False
+        self.scatter.show()
 
         if index == 0:  # linear
             self.scatter.control_points = np.array([[0.0, 0.0], [1.0, 1.0]])
@@ -93,6 +121,10 @@ class DistributionPlotWidget(QWidget):
         elif index == 2: # spline
             self.scatter.control_points = np.array([[0.0, 0.0], [1.0, 1.0]])
             self.scatter.is_spline = True
+        elif index == 3: # custom
+            self.scatter.hide()
+            self.update_curve()
+            return
 
         self.scatter.setData(pos=self.scatter.control_points)
         #self.update_curve() # not actually necessary
@@ -101,17 +133,21 @@ class DistributionPlotWidget(QWidget):
         x = self.scatter.control_points[:, 0]
         y = self.scatter.control_points[:, 1]
 
-        if self.scatter.is_spline:
-            idx = np.argsort(x)
-            spline = CubicSpline(x[idx], y[idx])
-            y_dist = spline(x_dist)
-        elif len(x) == 2:
+        index = self.dist_type.currentIndex()
+
+        if index == 0:
             b = (y[1] - y[0]) / (x[1] - x[0])
             a = y[0] - b * x[0]
             y_dist = a + b * x_dist
-        elif len(x) == 3:
+        elif index == 1:
             coefficients = fit_quadratic(x, y)
             y_dist = coefficients[0] * x_dist**2 + coefficients[1] * x_dist + coefficients[2]
+        elif index == 2:
+            idx = np.argsort(x)
+            spline = CubicSpline(x[idx], y[idx])
+            y_dist = spline(x_dist)
+        elif index == 3:
+            return self.yb
         else:
             y_dist = np.zeros_like(x_dist)
 
@@ -119,12 +155,173 @@ class DistributionPlotWidget(QWidget):
     
     def update_curve(self):
 
-        x_plot = np.linspace(0, 1, 100)
-        y_plot = self.get_distribution(x_plot)
+        index = self.dist_type.currentIndex()
+        if index == 3:
+            x_plot = self.xb
+            y_plot = self.yb
+        else:
+            x_plot = np.linspace(0, 1, 100)
+            y_plot = self.get_distribution(x_plot)
         
         self.plot_widget.clear()
         self.plot_widget.addItem(self.scatter)
         self.plot_widget.plot(x_plot, y_plot, pen='b')
 
         self.new_dist.emit()
+    
+    def set_distribution(self, distype, *args):
+        distype = distype.strip().lower()
+        self.scatter.is_spline = False
+        self.scatter.show()
+
+        self.dist_type.currentIndexChanged.disconnect(self.update_distribution)
+        
+        if distype == "linear":
+            self.dist_type.setCurrentIndex(0)
+            self.scatter.control_points = args[0]
+        elif distype == "quadratic":
+            self.dist_type.setCurrentIndex(1)
+            self.scatter.control_points = args[0]
+        elif distype == "spline":
+            self.dist_type.setCurrentIndex(2)
+            self.scatter.control_points = args[0]
+            self.scatter.is_spline = True
+        elif distype == "custom":
+            self.dist_type.setCurrentIndex(3)
+            self.scatter.control_points = np.zeros((0, 2))
+            self.xb = args[0]
+            self.yb = args[1]
+            self.scatter.hide()
+        
+        self.scatter.setData(pos=self.scatter.control_points)
+
+        self.dist_type.currentIndexChanged.connect(self.update_distribution)
+
+class DistributionsWidget(QWidget):
+    new_dist = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        layout = QVBoxLayout(self)
+
+        self.betz_button = QPushButton("Betz Optimised")
+        self.betz_button.clicked.connect(self.betz_optimised)
+        layout.addWidget(self.betz_button)
+
+        self.avs = None
+        
+        self.thickness_plot = DistributionPlotWidget(self, title="Thickness", ylabel="Normalized Thickness")
+        self.chord_plot = DistributionPlotWidget(self, title="Chord", ylabel="Normalized Chord")
+        self.twist_plot = DistributionPlotWidget(self, title="Twist", ylabel="Normalized Twist")
+        self.sweep_plot = DistributionPlotWidget(self, title="Sweep", ylabel="Normalized Sweep")
+
+        layout.addWidget(self.thickness_plot)
+        layout.addWidget(self.chord_plot)
+        layout.addWidget(self.twist_plot)
+        layout.addWidget(self.sweep_plot)
+
+        self.attach_dist_signals()
+
+        
+    def attach_dist_signals(self):
+        self.thickness_plot.new_dist.connect(self.on_new_dist)
+        self.chord_plot.new_dist.connect(self.on_new_dist)
+        self.sweep_plot.new_dist.connect(self.on_new_dist)
+        self.twist_plot.new_dist.connect(self.on_new_dist)
+    
+    def detach_dist_signals(self):
+        self.thickness_plot.new_dist.disconnect(self.on_new_dist)
+        self.chord_plot.new_dist.disconnect(self.on_new_dist)
+        self.sweep_plot.new_dist.disconnect(self.on_new_dist)
+        self.twist_plot.new_dist.disconnect(self.on_new_dist)
+
+    def on_new_dist(self):
+        self.new_dist.emit()
+
+    def update_avs(self, avs):
+
+        # high resolution distributions
+        avs.prop['HX'] = self.thickness_plot.get_distribution(avs.prop['r0_rt'])
+        avs.prop['c'] = self.chord_plot.get_distribution(avs.prop['r0_rt'])
+        avs.prop['twist'] = self.twist_plot.get_distribution(avs.prop['r0_rt'])
+        avs.prop['sweep'] = self.sweep_plot.get_distribution(avs.prop['r0_rt'])
+
+        distypes = [
+            "linear",
+            "quadratic",
+            "spline",
+            "custom"
+        ]
+
+        avs.dist['CTL_HX'] = self.thickness_plot.scatter.control_points
+        avs.dist['CTL_HX_type'] = distypes[
+            self.thickness_plot.dist_type.currentIndex()]
+        avs.dist['CTL_c'] = self.chord_plot.scatter.control_points
+        avs.dist['CTL_c_type'] = distypes[
+            self.chord_plot.dist_type.currentIndex()]
+        avs.dist['CTL_twist'] = self.twist_plot.scatter.control_points
+        avs.dist['CTL_twist_type'] = distypes[
+            self.twist_plot.dist_type.currentIndex()]
+        avs.dist['CTL_sweep'] = self.sweep_plot.scatter.control_points
+        avs.dist['CTL_sweep_type'] = distypes[
+            self.sweep_plot.dist_type.currentIndex()]
+
+        self.avs = avs
+    
+    def betz_optimised(self):
+        if self.avs is None:
+            return
+        
+        if betz.betz(self.avs):
+            self.set_dists(self.avs)
+
+
+    def set_dists(self, avs):
+        self.detach_dist_signals()
+
+        thickness_type = avs.dist['CTL_HX_type']
+        if thickness_type == "custom":
+            self.thickness_plot.set_distribution(
+                "custom", avs.prop['r0_rt'], avs.prop['HX']
+            )
+        else:
+            self.thickness_plot.set_distribution(
+                thickness_type, avs.dist['CTL_HX']
+            )
+        
+        chord_type = avs.dist['CTL_c_type']
+        if chord_type == "custom":
+            self.chord_plot.set_distribution(
+                "custom", avs.prop['r0_rt'], avs.prop['c']
+            )
+        else:
+            self.chord_plot.set_distribution(
+                avs.dist['CTL_c_type'], avs.dist['CTL_c']
+            )
+        
+        twist_type = avs.dist['CTL_twist_type']
+        if twist_type == "custom":
+            self.twist_plot.set_distribution(
+                "custom", avs.prop['r0_rt'], avs.prop['twist']
+            )
+        else:
+            self.twist_plot.set_distribution(
+                avs.dist['CTL_twist_type'], avs.dist['CTL_twist']
+            )
+        
+        sweep_type = avs.dist['CTL_sweep_type']
+        if sweep_type == "custom":
+            self.sweep_plot.set_distribution(
+                "custom", avs.prop['r0_rt'], avs.prop['sweep']
+            )
+        else:
+            self.sweep_plot.set_distribution(
+                avs.dist['CTL_sweep_type'], avs.dist['CTL_sweep']
+            )
+
+        self.attach_dist_signals()
+        self.new_dist.emit()
+
+
 

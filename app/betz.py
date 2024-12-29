@@ -1,0 +1,135 @@
+
+import numpy as np
+
+# read data
+xf,zf = np.loadtxt('cfd/clarkY.surf', unpack=True, skiprows=2)
+# split to upper and lower surfaces
+idx = np.where(zf == 0)[0][1]
+xf_upper = xf[:idx]
+zf_upper = zf[:idx]
+xf_lower = xf[idx:]
+zf_lower = zf[idx:]
+xf = np.concatenate((xf_upper, xf_lower[::-1]))
+zf = np.concatenate((zf_upper, zf_lower[::-1]))
+
+# read data
+
+
+def betz(av):
+
+    print(av.prop)
+    print(av.oper)
+
+    R = av.prop['rt']
+    B = av.prop['B']
+    Omega = av.prop['Omega']
+    nu = av.oper['nu']
+    ro = av.oper['rho']
+
+    Nsect = av.prop['nr']
+
+    # Select an initial estimate for zeta
+    dzeta = 100
+    xi = np.linspace(0.15, 1, Nsect)
+
+    alpha = av.prop['alpha']
+    Cl = 0.5
+    Cd = 0.1
+
+    alpha *= np.pi / 180
+
+    target_thrust_N = 1 # N
+    target_power_W = 50 # W
+
+    V = av.oper['V'] # m/s
+    T_c = 2 * target_thrust_N / (ro * V**2 * np.pi * R**2)
+    P_c = 2 * target_power_W / (ro * V**3 * np.pi * R**2)
+    y = xi * R * Omega / V
+    lamda = V / (Omega * R) # advance ratio
+
+    zeta = np.sqrt(2 * T_c)
+
+    print(f'Advance ratio: {lamda}')
+
+    while np.abs(dzeta/zeta) > 1e-3:
+
+        # Design of Optimum Propellers
+        # Charles N. Adkins*
+        # Falls Church, Virginia 22042
+        # Douglas Aircraft Company, Long Beach, California 90846
+
+        # 2 calculate F and phi
+        phi_t = np.arctan(lamda * (1 + zeta / 2))
+        # ensure phi_t is not too small
+        phi_t = np.clip(phi_t, 1e-3, np.pi/2)
+
+        f = B/2 * (1 - xi) / np.sin(phi_t)
+        F = 2 / np.pi * np.arccos(np.exp(-f))
+        phi = np.arctan( np.tan(phi_t) / xi)
+
+        # 3 calculate Wc and Re_c
+        G = F * np.cos(phi) * np.sin(phi)
+        Wc = 4 * np.pi * lamda * G * V * R * zeta / (Cl * B)
+        Re_c = Wc / nu
+
+        #print(np.max(Re_c) - np.min(Re_c))
+
+        # 4,5 determine epsilon and Cl
+        # TODO: find best airfoil at each chord Reynolds number
+        alpha = alpha
+        Cl = Cl
+        Cd = Cd
+        epsilon = Cd / Cl
+
+        # 6 calculate a, a', W
+        a = zeta / 2 * np.cos(phi)**2 * (1 - epsilon * np.tan(phi))
+        a_prime = zeta / (2 * y) * np.cos(phi) * np.sin(phi) * (1 + epsilon / np.tan(phi))
+        W = V * (1 + a) / np.sin(phi)
+        # 7 recompute step 3 for chord and blade twist
+        Wc = 4 * np.pi * lamda * G * V * R * zeta / (Cl * B)
+        c = Wc / W
+        beta = alpha + phi
+
+        #print(np.max(phi))
+
+        # 8 calculate derivatives and integrate wrt xi
+        I1_prime = 4 * xi * G * (1 - epsilon * np.tan(phi)) 
+        I2_prime = lamda * I1_prime / (2 * xi) * (1 + epsilon / np.tan(phi)) * np.cos(phi) * np.sin(phi)
+        J1_prime = 4 * xi * G * (1 + epsilon / np.tan(phi))
+        J2_prime = J1_prime / 2 * (1 - epsilon * np.tan(phi)) * np.cos(phi) ** 2
+
+        I1 = np.trapz(I1_prime, xi)
+        I2 = np.trapz(I2_prime, xi)
+        J1 = np.trapz(J1_prime, xi)
+        J2 = np.trapz(J2_prime, xi)
+
+        # 9 determine new zeta
+        I1_over_2I2 = I1 / (2 * I2)
+        J1_over_2J2 = J1 / (2 * J2)
+
+        # Thrust specified
+        #new_zeta = I1_over_2I2 - (I1_over_2I2**2 - T_c / I2)**(1/2)
+        #P_c = J1 * zeta + J2 * zeta**2
+
+        # Power specified
+        new_zeta = - J1_over_2J2 + (J1_over_2J2**2 + P_c / J2)**(1/2)
+        T_c = I1 * zeta + I2 * zeta**2
+
+        if np.isnan(new_zeta):
+            print("unable to reach target input power/thrust")
+            return False
+
+        dzeta = new_zeta - zeta
+        zeta = new_zeta
+
+    else:
+        print("Betz calculation converged")
+        # success
+        av.prop['c'] = c
+        av.prop['twist'] = beta
+
+        av.dist['CTL_c_type'] = 'custom'
+        av.dist['CTL_twist_type'] = 'custom'
+        
+        return True
+        

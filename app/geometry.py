@@ -9,8 +9,13 @@ def rotate(X,Y,theta):
     return (X[:]*np.cos(theta) - Y[:]*np.sin(theta)), (X[:]*np.sin(theta) + Y[:]*np.cos(theta)) 
 
 
-def generate_blade_mesh(chord, twist, radius, xf, yf):
+def generate_blade_mesh(av):
     # adapted from code by Lily Board phd
+
+    chord, twist, radius = av.prop['c'], av.prop['HX'], av.prop['r0_rt']
+    xnf, ynf = av.airfoil_data[:,0], av.airfoil_data[:,1]
+    xf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
+    yf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, ynf.shape[0]), ynf)
 
     nf = xf.shape[0]
     Nsect = radius.shape[0]

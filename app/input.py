@@ -88,11 +88,13 @@ class PropInputTable(InputTable):
 
     def __init__(self, parent):
         vars = [
-            InputVar("$B$", "[-]", "Blade number", int),
-            InputVar("$r_t$", "[m]", "Blade tip radius", float),
-            InputVar("$r_h$", "[m]", "Blade hub radius", float),
-            InputVar("$n_r$", "[-]", "Radial sections", int),
-            InputVar("$n_x$", "[-]", "Chordwise elements per section", int)
+            InputVar(r"$B$", "[-]", "Blade number", int),
+            InputVar(r"$r_t$", "[m]", "Blade tip radius", float),
+            InputVar(r"$r_h$", "[m]", "Blade hub radius", float),
+            InputVar(r"$n_r$", "[-]", "Radial sections", int),
+            InputVar(r"$n_x$", "[-]", "Chordwise elements per section", int),
+            InputVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
+            InputVar(r"$\alpha$", "[deg]", "Angle of attack", float),
 
         ]
         super().__init__(vars, parent)
@@ -109,11 +111,14 @@ class PropInputTable(InputTable):
         prop['rh'] = self.vars[2].value
         prop['nr'] = self.vars[3].value # radial sections
         prop['nx'] = self.vars[4].value # chordwise elements per section
+        prop['Omega'] = self.vars[5].value * 2*np.pi/60 # convert RPM to rad/s
+        prop['alpha'] = self.vars[6].value * np.pi/180 # convert deg to rad
 
         xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
         rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
         prop['xc']  = (xc_pts[1:] + xc_pts[:-1]) / 2
-        prop['r0_rt'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
+        prop['r0'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
+        prop['r0_rt'] = prop['r0'] / prop['rt']
         prop['dz'] = np.diff(rarr_pts)
 
         return prop
@@ -124,7 +129,9 @@ class PropInputTable(InputTable):
         self.vars[2].value = prop['rh']
         self.vars[3].value = prop['nr']
         self.vars[4].value = prop['nx']
-
+        self.vars[5].value = prop['Omega'] * 60/(2*np.pi)
+        self.vars[6].value = prop['alpha'] * 180/np.pi
+        
         super().set_values()
 
 class OperInputTable(InputTable):
@@ -133,6 +140,7 @@ class OperInputTable(InputTable):
     def __init__(self, parent):
         vars = [
             InputVar(r"$\rho_0$", "[kg/m3]", "Air density", float),
+            InputVar(r"$\nu$", "[m2/s]", "Kinematic viscosity", float),
             InputVar(r"$c_0$", "[m/s]", "Speed of sound", float),
             InputVar(r"$p_\text{ref}$", "[Pa]", "Reference pressure for SPL", float),
             InputVar(r"$V$", "[m/s]", "Free stream velocity", float),
@@ -147,17 +155,19 @@ class OperInputTable(InputTable):
     def parse_values(self):
         oper = {}
         oper['rho'] = self.vars[0].value
-        oper['c0'] = self.vars[1].value
-        oper['pref'] = self.vars[2].value
-        oper['V'] = self.vars[3].value
+        oper['nu'] = self.vars[1].value
+        oper['c0'] = self.vars[2].value
+        oper['pref'] = self.vars[3].value
+        oper['V'] = self.vars[4].value
 
         return oper
 
     def set_values(self, oper):
         self.vars[0].value = oper['rho']
-        self.vars[1].value = oper['c0']
-        self.vars[2].value = oper['pref']
-        self.vars[3].value = oper['V']
+        self.vars[1].value = oper['nu']
+        self.vars[2].value = oper['c0']
+        self.vars[3].value = oper['pref']
+        self.vars[4].value = oper['V']
 
         super().set_values()
 
@@ -196,6 +206,7 @@ class AirfoilPlotDialog(QDialog):
 class InputWidget(QWidget):
     new_prop = pyqtSignal()
     new_oper = pyqtSignal()
+    new_prop_from_file = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -258,17 +269,29 @@ class InputWidget(QWidget):
         
         try:
             with open(path, 'r') as f:
-                prop = json.load(f)
+                indata = json.load(f)
         except:
             QMessageBox.critical(self, "Error", "Failed to load propeller data from file.")
             return
         
-        for key, item in prop.items():
+        self.prop = indata['prop']
+        for key, item in self.prop.items():
             if isinstance(item, list):
-                prop[key] = np.array(item)
-            
-        self.prop_table.set_values(prop)
-        self.load_foil_from_file(prop['foil_path'])
+                self.prop[key] = np.array(item)
+        self.dist = indata['dist']
+        for key, item in self.dist.items():
+            if isinstance(item, list):
+                self.dist[key] = np.array(item)
+        
+
+        self.prop_table.set_values(self.prop)
+
+        filename = self.prop['foil_path']
+        self.foil_path.setText(filename)
+        airfoil_data = np.loadtxt(filename)
+        self.airfoil_data = airfoil_data
+
+        self.new_prop_from_file.emit()
 
     def load_foil_from_click(self):
         path = QFileDialog.getOpenFileName(self, "Select airfoil file", filter="Airfoil files (*.surf)")[0]
@@ -288,13 +311,6 @@ class InputWidget(QWidget):
             self.foil_path.setText(path)
             self.airfoil_data = airfoil_data
             self.on_new_prop()
-    
-    def load_foil_from_file(self, filename):
-
-        airfoil_data = np.loadtxt(filename)
-        self.foil_path.setText(filename)
-        self.airfoil_data = airfoil_data
-        self.on_new_prop()
 
     def save_prop_to_file(self, avs):
         path = QFileDialog.getSaveFileName(self, "Select propeller file", filter="Propeller files (*.prop)")[0]
@@ -302,17 +318,28 @@ class InputWidget(QWidget):
             return
         
         parsed_prop = {}
+        parsed_prop['foil_path'] = self.foil_path.text()
+
         for key,item in avs.prop.items():
             if isinstance(item, np.ndarray):
                 parsed_prop[key] = item.tolist()
             else:
                 parsed_prop[key] = item
 
-        parsed_prop['foil_path'] = self.foil_path.text()
+        parsed_dist = {}
+        for key,item in avs.dist.items():
+            if isinstance(item, np.ndarray):
+                parsed_dist[key] = item.tolist()
+            else:
+                parsed_dist[key] = item
         
+        out = {
+            'prop': parsed_prop,
+            'dist': parsed_dist
+        }
         try:
             with open(path, 'w') as f:
-                json.dump(parsed_prop, f, indent=4)
+                json.dump(out, f, indent=4)
         except:
             QMessageBox.critical(self, "Error", "Failed to save propeller data to file.")
             return
@@ -326,6 +353,7 @@ class InputWidget(QWidget):
             return False
         self.oper = av['oper']
         self.oper_table.set_values(self.oper)
+        self.on_new_oper()
         return True
 
     def save_oper_to_file(self, filename):

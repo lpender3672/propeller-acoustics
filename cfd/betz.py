@@ -59,7 +59,6 @@ print(f'Advance ratio: {lamda}')
 
 while np.abs(dzeta/zeta) > 1e-3:
 
-
     # 2 calculate F and phi
     phi_t = np.arctan(lamda * (1 + zeta / 2))
     # ensure phi_t is not too small

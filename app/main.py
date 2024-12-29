@@ -3,7 +3,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 from vis import STLViewerWidget
 from input import InputWidget
-from dists import DistributionPlotWidget
+from dists import DistributionsWidget
 from geometry import generate_blade_mesh
 
 import numpy as np
@@ -12,8 +12,8 @@ import json
 import os
 
 class AppVars(QObject):
-    new_oper = pyqtSignal()
-    new_prop = pyqtSignal()
+    #new_oper = pyqtSignal()
+    #new_prop = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -24,6 +24,14 @@ class AppVars(QObject):
         self.prop = {
 
         }
+
+        self.dist = {
+
+        }
+
+        self.airfoil_data = np.array(
+            []
+        )
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -46,18 +54,11 @@ class MainWindow(QWidget):
         layout = QGridLayout(self)
 
         self.input_widget = InputWidget(self)
-        self.stl_viewer = STLViewerWidget()
+        self.dists_widget = DistributionsWidget(self)
+        self.stl_viewer = STLViewerWidget(self)
         
-        self.thickness_plot = DistributionPlotWidget()
-        self.chord_plot = DistributionPlotWidget()
-        self.sweep_plot = DistributionPlotWidget()
-
         layout.addWidget(self.input_widget, 0, 0, 3, 1)
-
-        layout.addWidget(self.thickness_plot, 0, 1, 1, 1)
-        layout.addWidget(self.chord_plot, 1, 1, 1, 1)
-        layout.addWidget(self.sweep_plot, 2, 1, 1, 1)
-
+        layout.addWidget(self.dists_widget, 0, 1, 3, 1)
         layout.addWidget(self.stl_viewer, 0, 2, 3, 1)
 
     def attach_signals(self):
@@ -65,34 +66,33 @@ class MainWindow(QWidget):
         self.input_widget.new_oper.connect(self.update_oper)
         self.input_widget.new_prop.connect(self.update_prop)
 
-        self.thickness_plot.new_dist.connect(self.update_prop)
-        self.chord_plot.new_dist.connect(self.update_prop)
-        self.sweep_plot.new_dist.connect(self.update_prop)
-
+        self.dists_widget.new_dist.connect(self.update_prop)
         self.input_widget.save_prop_btn.clicked.connect(self.save_prop)
+
+        self.input_widget.new_prop_from_file.connect(self.on_new_prop_from_file)
     
     def update_prop(self):
         print("Updating prop")
         
-        self.av.prop = self.input_widget.prop
-        self.av.prop['HX'] = self.thickness_plot.get_distribution(self.av.prop['r0_rt'])
-        self.av.prop['c'] = self.chord_plot.get_distribution(self.av.prop['r0_rt'])
-        self.av.prop['sweep'] = self.sweep_plot.get_distribution(self.av.prop['r0_rt'])
+        self.av.prop.update(self.input_widget.prop)
+        self.av.airfoil_data = self.input_widget.airfoil_data
 
-        # fLX and fDX
-        # interp airfoil data to length prop['nx']
-        xnf, znf = self.input_widget.airfoil_data[:,0], self.input_widget.airfoil_data[:,1]
-        xf = np.interp(np.linspace(0, 1, self.av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
-        zf = np.interp(np.linspace(0, 1, self.av.prop['nx']), np.linspace(0, 1, znf.shape[0]), znf)
+        self.dists_widget.update_avs(self.av)
 
         self.stl_viewer.set_mesh(
-            generate_blade_mesh(self.av.prop['c'], self.av.prop['HX'], self.av.prop['r0_rt'], xf, zf)
+            generate_blade_mesh(self.av)
         )
+    
+    def on_new_prop_from_file(self):
+        self.av.prop.update(self.input_widget.prop)
+        self.av.dist.update(self.input_widget.dist)
+        self.av.airfoil_data = self.input_widget.airfoil_data
 
+        self.dists_widget.set_dists(self.av)
 
     def update_oper(self):
         print("Updating oper")
-        self.av.oper = self.input_widget.oper
+        self.av.oper.update(self.input_widget.oper)
 
     def save_prop(self):
         self.input_widget.save_prop_to_file(self.av)
