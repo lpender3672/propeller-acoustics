@@ -4,6 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionPlotWidget
+from geometry import generate_blade_mesh
 
 import numpy as np
 from scipy.interpolate import interp2d
@@ -24,26 +25,6 @@ class AppVars(QObject):
 
         }
 
-    def load_oper_from_file(self, filename):
-        try:
-            with open(filename, 'r') as f:
-                av = json.load(f)
-        except FileNotFoundError:
-            return False
-        self.oper = av['oper']
-        return True
-
-    def save_oper_to_file(self, filename):
-        av = {
-            'oper': self.oper
-        }
-        try:
-            with open(filename, 'w') as f:
-                json.dump(av, f)
-        except FileNotFoundError:
-            print("Error saving to directory")
-            return
-
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -56,8 +37,8 @@ class MainWindow(QWidget):
         self.attach_signals()
 
         av_file = os.path.join(self.app_dir, "app_vars.json")
-        if self.av.load_oper_from_file(av_file):
-            self.input_widget.oper_table.set_values(self.av.oper)
+        if self.input_widget.load_oper_from_file(av_file):
+            pass
             
         self.stl_viewer.load_stl_file("practical/designs/clarkY.stl")#
 
@@ -91,23 +72,31 @@ class MainWindow(QWidget):
     def update_prop(self):
         print("Updating prop")
         
-        self.av.prop = self.input_widget.prop_table.parse_values()
+        self.av.prop = self.input_widget.prop
         self.av.prop['HX'] = self.thickness_plot.get_distribution(self.av.prop['r0_rt'])
         self.av.prop['c'] = self.chord_plot.get_distribution(self.av.prop['r0_rt'])
         self.av.prop['sweep'] = self.sweep_plot.get_distribution(self.av.prop['r0_rt'])
 
         # fLX and fDX
+        # interp airfoil data to length prop['nx']
+        xnf, znf = self.input_widget.airfoil_data[:,0], self.input_widget.airfoil_data[:,1]
+        xf = np.interp(np.linspace(0, 1, self.av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
+        zf = np.interp(np.linspace(0, 1, self.av.prop['nx']), np.linspace(0, 1, znf.shape[0]), znf)
+
+        self.stl_viewer.set_mesh(
+            generate_blade_mesh(self.av.prop['c'], self.av.prop['HX'], self.av.prop['r0_rt'], xf, zf)
+        )
 
 
     def update_oper(self):
         print("Updating oper")
         
-        self.av.oper = self.input_widget.oper_table.parse_values()
+        self.av.oper = self.input_widget.oper
 
     
     def closeEvent(self, event):
         av_file = os.path.join(self.app_dir, "app_vars.json")
-        self.av.save_oper_to_file(av_file)
+        self.input_widget.save_oper_to_file(av_file)
         event.accept()
 
 

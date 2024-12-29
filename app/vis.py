@@ -37,6 +37,11 @@ class STLViewerWidget(QWidget):
         self.stl_file = stl_file
         self.stl_mesh = mesh.Mesh.from_file(stl_file)
         self.update_mesh_plot()
+    
+    def set_mesh(self, stl_mesh):
+        self.stl_file = None
+        self.stl_mesh = stl_mesh
+        self.update_mesh_plot()
 
     def update_mesh_plot(self):
         # clear the view
