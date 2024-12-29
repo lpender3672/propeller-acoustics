@@ -68,6 +68,8 @@ class MainWindow(QWidget):
         self.thickness_plot.new_dist.connect(self.update_prop)
         self.chord_plot.new_dist.connect(self.update_prop)
         self.sweep_plot.new_dist.connect(self.update_prop)
+
+        self.input_widget.save_prop_btn.clicked.connect(self.save_prop)
     
     def update_prop(self):
         print("Updating prop")
@@ -90,9 +92,10 @@ class MainWindow(QWidget):
 
     def update_oper(self):
         print("Updating oper")
-        
         self.av.oper = self.input_widget.oper
 
+    def save_prop(self):
+        self.input_widget.save_prop_to_file(self.av)
     
     def closeEvent(self, event):
         av_file = os.path.join(self.app_dir, "app_vars.json")

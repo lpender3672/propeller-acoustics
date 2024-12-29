@@ -255,6 +255,20 @@ class InputWidget(QWidget):
         path = QFileDialog.getOpenFileName(self, "Select propeller file", filter="Propeller files (*.prop)")[0]
         if path:
             self.prop_path.setText(path)
+        
+        try:
+            with open(path, 'r') as f:
+                prop = json.load(f)
+        except:
+            QMessageBox.critical(self, "Error", "Failed to load propeller data from file.")
+            return
+        
+        for key, item in prop.items():
+            if isinstance(item, list):
+                prop[key] = np.array(item)
+            
+        self.prop_table.set_values(prop)
+        self.load_foil_from_file(prop['foil_path'])
 
     def load_foil_from_click(self):
         path = QFileDialog.getOpenFileName(self, "Select airfoil file", filter="Airfoil files (*.surf)")[0]
@@ -273,8 +287,36 @@ class InputWidget(QWidget):
         if dialog.result():
             self.foil_path.setText(path)
             self.airfoil_data = airfoil_data
-            self.new_prop.emit()
+            self.on_new_prop()
+    
+    def load_foil_from_file(self, filename):
 
+        airfoil_data = np.loadtxt(filename)
+        self.foil_path.setText(filename)
+        self.airfoil_data = airfoil_data
+        self.on_new_prop()
+
+    def save_prop_to_file(self, avs):
+        path = QFileDialog.getSaveFileName(self, "Select propeller file", filter="Propeller files (*.prop)")[0]
+        if not path:
+            return
+        
+        parsed_prop = {}
+        for key,item in avs.prop.items():
+            if isinstance(item, np.ndarray):
+                parsed_prop[key] = item.tolist()
+            else:
+                parsed_prop[key] = item
+
+        parsed_prop['foil_path'] = self.foil_path.text()
+        
+        try:
+            with open(path, 'w') as f:
+                json.dump(parsed_prop, f, indent=4)
+        except:
+            QMessageBox.critical(self, "Error", "Failed to save propeller data to file.")
+            return
+        
     
     def load_oper_from_file(self, filename):
         try:
@@ -292,7 +334,7 @@ class InputWidget(QWidget):
         }
         try:
             with open(filename, 'w') as f:
-                json.dump(av, f)
+                json.dump(av, f, indent=4)
         except FileNotFoundError:
             print("Error saving to directory")
             return
