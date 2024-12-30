@@ -197,27 +197,9 @@
             ]
         ],
         "CTL_HX_type": "linear",
-        "CTL_c": [
-            [
-                0.0,
-                0.0
-            ],
-            [
-                1.0,
-                1.0
-            ]
-        ],
+        "CTL_c": [],
         "CTL_c_type": "custom",
-        "CTL_twist": [
-            [
-                0.0,
-                0.0
-            ],
-            [
-                1.0,
-                1.0
-            ]
-        ],
+        "CTL_twist": [],
         "CTL_twist_type": "custom",
         "CTL_sweep": [
             [

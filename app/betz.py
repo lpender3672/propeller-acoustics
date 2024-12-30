@@ -1,24 +1,32 @@
 
 import numpy as np
 
-# read data
-xf,zf = np.loadtxt('cfd/clarkY.surf', unpack=True, skiprows=2)
-# split to upper and lower surfaces
-idx = np.where(zf == 0)[0][1]
-xf_upper = xf[:idx]
-zf_upper = zf[:idx]
-xf_lower = xf[idx:]
-zf_lower = zf[idx:]
-xf = np.concatenate((xf_upper, xf_lower[::-1]))
-zf = np.concatenate((zf_upper, zf_lower[::-1]))
-
-# read data
+from xfoil import XFoil
+from xfoil.model import Airfoil
 
 
-def betz(av):
+def foil_data(airfoil_data, alpha, Re):
+    
+    xf = XFoil()
+    xf.airfoil = Airfoil(
+        airfoil_data[:,0],
+        airfoil_data[:,1]
+        )
+    xf.Re = Re
+    xf.M = 0.0
+    xf.max_iter = 100
 
-    print(av.prop)
-    print(av.oper)
+    out = xf.a(alpha[0])
+    print(out)
+    cl, cd, cm = out
+
+    return cl, cd
+
+
+def betz_design(av):
+
+    #print(av.prop)
+    #print(av.oper)
 
     R = av.prop['rt']
     B = av.prop['B']
@@ -30,13 +38,11 @@ def betz(av):
 
     # Select an initial estimate for zeta
     dzeta = 100
-    xi = np.linspace(0.15, 1, Nsect)
+    xi = av.prop['r0_rt']
 
     alpha = av.prop['alpha']
     Cl = 0.5
     Cd = 0.1
-
-    alpha *= np.pi / 180
 
     target_thrust_N = 1 # N
     target_power_W = 50 # W
@@ -132,4 +138,60 @@ def betz(av):
         av.dist['CTL_twist_type'] = 'custom'
         
         return True
-        
+    
+def betz_off_design(av):
+
+    beta = av.prop['twist']
+
+    R = av.prop['rt']
+    B = av.prop['B']
+    Omega = av.prop['Omega']
+    nu = av.oper['nu']
+    ro = av.oper['rho']
+    xi = av.prop['r0_rt']
+    c = av.prop['c']
+
+    V = av.oper['V'] # m/s
+
+    y = xi * R * Omega / V
+    lamda = V / (Omega * R) # advance ratio
+
+    # An initial estimate for phi can be obtained from Eq. (8) by setting zeta = 0
+    phi = np.arctan((1 + 0) * lamda / xi)
+    dphi = np.inf
+
+    while np.abs(dphi / phi).all() > 1e-3:
+
+        # Analysis of Arbitrary Designs
+        # Charles N. Adkins*
+
+        alpha = beta - phi
+        # airfoil coefficients are known from the section data and alpha
+
+        #Cl, Cd = foil_data(
+        #    av.airfoil_data, alpha * 180 / np.pi, 1e6
+        #)
+        Cl = 0.5
+        Cd = 0.01
+
+        Cx = Cl * np.cos(phi) - Cd * np.sin(phi)
+        Cz = Cl * np.sin(phi) + Cd * np.cos(phi)
+        K = Cz / (4 * np.sin(phi)**2)
+        K_prime = Cx / (4 * np.sin(phi) * np.cos(phi))
+        sigma = B * c / (2 * np.pi * xi * R)
+        phi_t = np.arctan( xi * np.tan(phi))
+        F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1 - xi) / np.sin(phi_t))) # Prandtl tip loss factor
+        a = sigma * K * ( F - sigma * K)
+        a_prime = sigma * K_prime * ( F + sigma * K_prime)
+
+        # the Reynolds number is determined from the known chord and W
+        W = V * (1 + a) / np.sin(phi)
+        Re_c = W * c / nu
+        #print(Re_c)
+
+        new_phi = np.arctan(V * (1 + a) / (Omega * R * (1 - a_prime)))
+        dphi = new_phi - phi
+        phi = new_phi
+
+
+    return True

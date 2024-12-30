@@ -1,8 +1,7 @@
 from stl import mesh
 import numpy as np
 
-from matplotlib import pyplot as plt
-
+from scipy.integrate import cumtrapz
 
 def rotate(X,Y,theta):
     # function to rotate coordinates in the X-Y plane
@@ -12,10 +11,15 @@ def rotate(X,Y,theta):
 def generate_blade_mesh(av):
     # adapted from code by Lily Board phd
 
-    chord, twist, radius = av.prop['c'], av.prop['HX'], av.prop['r0_rt']
+    chord, twist, radius = av.prop['c'], av.prop['HX'], av.prop['r0']
     xnf, ynf = av.airfoil_data[:,0], av.airfoil_data[:,1]
     xf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
     yf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, ynf.shape[0]), ynf)
+
+    print(chord, radius)
+
+    xsweep = cumtrapz( av.prop['sweep'], radius, initial=0.0)
+    thickness = av.prop['HX']
 
     nf = xf.shape[0]
     Nsect = radius.shape[0]
@@ -28,8 +32,10 @@ def generate_blade_mesh(av):
     Z[0,:] = 0.0
     for i in range(1,Nsect+1):
         X[i,:], Y[i,:] = rotate(xf*chord[i-1], yf*chord[i-1], twist[i-1])
+        X[i,:] += xsweep[i-1]
         Z[i,:] = radius[i-1]
     X[Nsect+1,:], Y[Nsect+1,:] = rotate(xf*chord[Nsect-1], yf*chord[Nsect-1], twist[Nsect-1])
+    X[Nsect+1,:] += xsweep[Nsect-1]
     Z[Nsect+1,:] = radius[-1]
     
     coords = np.zeros((nf*(Nsect+2),3))

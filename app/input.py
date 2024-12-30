@@ -214,6 +214,9 @@ class InputWidget(QWidget):
         self.prop_table = PropInputTable(self)
         self.oper_table = OperInputTable(self)
 
+        self.prop = {}
+        self.dist = {}
+
         self.assemble_widgets()
         self.connect_signals()
         

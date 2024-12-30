@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QComboBox, QWidget, QPushButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QComboBox, QWidget, QPushButton, QMessageBox
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -26,8 +26,10 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         self.control_points = control_points
         self.dragged_point_index = None
         self.is_spline = False
+        self.finished_dragging = False
 
     def mouseDragEvent(self, ev):
+        
         if ev.button() != pg.QtCore.Qt.MouseButton.LeftButton:
             ev.ignore()
             return
@@ -39,7 +41,9 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         if ev.isStart():
             pos = ev.pos()
             distances = [pg.Point(pos - pg.Point(p)).length() for p in self.control_points]
-            if min(distances) > 0.05:
+            threshold = 0.05 * max(self.viewRect().width(), 
+                                   self.viewRect().height())
+            if min(distances) > threshold:
                 if self.is_spline:
                     self.control_points = np.vstack([self.control_points, [pos.x(), pos.y()]])
                     self.dragged_point_index = self.control_points.shape[0] - 1
@@ -51,12 +55,41 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             ev.accept()
         elif ev.isFinish():
             self.dragged_point_index = None
+            self.finished_dragging = True
+            self.sigPlotChanged.emit(self)
         else:
             if self.dragged_point_index is not None:
                 # Update the position of the dragged point
                 self.control_points[self.dragged_point_index] = [ev.pos().x(), ev.pos().y()]
                 self.setData(pos=self.control_points)
                 self.sigPlotChanged.emit(self)
+    
+    # double click removes point
+    def mouseClickEvent(self, ev):
+        if ev.button() != pg.QtCore.Qt.MouseButton.LeftButton:
+            ev.ignore()
+            return
+        
+        if not ev.double():
+            ev.ignore()
+            return
+        
+        if not self.is_spline:
+            ev.ignore()
+            return
+        
+        if self.control_points.shape[0] < 3:
+            ev.ignore()
+            return
+        
+        pos = ev.pos()
+        distances = [pg.Point(pos - pg.Point(p)).length() for p in self.control_points]
+        threshold = 0.05 * max(self.viewRect().width(), 
+                                self.viewRect().height())
+        if min(distances) < threshold:
+            self.control_points = np.delete(self.control_points, np.argmin(distances), axis=0)
+            self.setData(pos=self.control_points)
+            self.sigPlotChanged.emit(self)
 
 class DistributionPlotWidget(QWidget):
     new_dist = pyqtSignal()
@@ -115,19 +148,21 @@ class DistributionPlotWidget(QWidget):
         self.scatter.show()
 
         if index == 0:  # linear
-            self.scatter.control_points = np.array([[0.0, 0.0], [1.0, 1.0]])
+            self.set_distribution( "linear",
+                    np.array([[0.0, 0.1], [1.0, 0.1]])
+                )
         elif index == 1:  # quadratic
-            self.scatter.control_points = np.array([[0, 0], [0.5, 0.25], [1, 1]])
+            self.set_distribution( "quadratic",
+                np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
+            )
         elif index == 2: # spline
-            self.scatter.control_points = np.array([[0.0, 0.0], [1.0, 1.0]])
-            self.scatter.is_spline = True
+            self.set_distribution( "spline",
+                np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
+                )
         elif index == 3: # custom
-            self.scatter.hide()
-            self.update_curve()
-            return
-
-        self.scatter.setData(pos=self.scatter.control_points)
-        #self.update_curve() # not actually necessary
+            self.set_distribution( "custom",
+                np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
+                )
 
     def get_distribution(self, x_dist):
         x = self.scatter.control_points[:, 0]
@@ -166,6 +201,23 @@ class DistributionPlotWidget(QWidget):
         self.plot_widget.clear()
         self.plot_widget.addItem(self.scatter)
         self.plot_widget.plot(x_plot, y_plot, pen='b')
+
+        if self.scatter.finished_dragging:
+            self.scatter.finished_dragging = False
+            
+            # if control points are outside of the plot range move the plot range
+            ymin, ymax = self.plot_widget.viewRange()[1]
+            ycmin = np.min(self.scatter.control_points[:, 1])
+            ycmax = np.max(self.scatter.control_points[:, 1])
+            update = False
+            if ycmin < ymin:
+                ymin = ycmin - 0.1
+                update = True
+            if ycmax > ymax:
+                ymax = ycmax + 0.1
+                update = True
+            if update:
+                self.plot_widget.setYRange(ymin, ymax)
 
         self.new_dist.emit()
     
@@ -211,12 +263,10 @@ class DistributionsWidget(QWidget):
 
         self.avs = None
         
-        self.thickness_plot = DistributionPlotWidget(self, title="Thickness", ylabel="Normalized Thickness")
-        self.chord_plot = DistributionPlotWidget(self, title="Chord", ylabel="Normalized Chord")
-        self.twist_plot = DistributionPlotWidget(self, title="Twist", ylabel="Normalized Twist")
-        self.sweep_plot = DistributionPlotWidget(self, title="Sweep", ylabel="Normalized Sweep")
+        self.chord_plot = DistributionPlotWidget(self, title="Chord", ylabel="Chord [m]")
+        self.twist_plot = DistributionPlotWidget(self, title="Twist", ylabel="Twist [rad]")
+        self.sweep_plot = DistributionPlotWidget(self, title="Sweep", ylabel="Sweep [rad]")
 
-        layout.addWidget(self.thickness_plot)
         layout.addWidget(self.chord_plot)
         layout.addWidget(self.twist_plot)
         layout.addWidget(self.sweep_plot)
@@ -225,13 +275,11 @@ class DistributionsWidget(QWidget):
 
         
     def attach_dist_signals(self):
-        self.thickness_plot.new_dist.connect(self.on_new_dist)
         self.chord_plot.new_dist.connect(self.on_new_dist)
         self.sweep_plot.new_dist.connect(self.on_new_dist)
         self.twist_plot.new_dist.connect(self.on_new_dist)
     
     def detach_dist_signals(self):
-        self.thickness_plot.new_dist.disconnect(self.on_new_dist)
         self.chord_plot.new_dist.disconnect(self.on_new_dist)
         self.sweep_plot.new_dist.disconnect(self.on_new_dist)
         self.twist_plot.new_dist.disconnect(self.on_new_dist)
@@ -241,8 +289,12 @@ class DistributionsWidget(QWidget):
 
     def update_avs(self, avs):
 
+        try:
+            avs.prop['r0_rt']
+        except KeyError:
+            return
+
         # high resolution distributions
-        avs.prop['HX'] = self.thickness_plot.get_distribution(avs.prop['r0_rt'])
         avs.prop['c'] = self.chord_plot.get_distribution(avs.prop['r0_rt'])
         avs.prop['twist'] = self.twist_plot.get_distribution(avs.prop['r0_rt'])
         avs.prop['sweep'] = self.sweep_plot.get_distribution(avs.prop['r0_rt'])
@@ -254,9 +306,6 @@ class DistributionsWidget(QWidget):
             "custom"
         ]
 
-        avs.dist['CTL_HX'] = self.thickness_plot.scatter.control_points
-        avs.dist['CTL_HX_type'] = distypes[
-            self.thickness_plot.dist_type.currentIndex()]
         avs.dist['CTL_c'] = self.chord_plot.scatter.control_points
         avs.dist['CTL_c_type'] = distypes[
             self.chord_plot.dist_type.currentIndex()]
@@ -273,22 +322,20 @@ class DistributionsWidget(QWidget):
         if self.avs is None:
             return
         
-        if betz.betz(self.avs):
+        if betz.betz_design(self.avs):
             self.set_dists(self.avs)
+
+            betz.betz_off_design(self.avs)
+
+        else:
+            QMessageBox.critical(
+                self, "Error", "Betz Optimisation Failed", QMessageBox.StandardButton.Ok
+            )
 
 
     def set_dists(self, avs):
         self.detach_dist_signals()
 
-        thickness_type = avs.dist['CTL_HX_type']
-        if thickness_type == "custom":
-            self.thickness_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['HX']
-            )
-        else:
-            self.thickness_plot.set_distribution(
-                thickness_type, avs.dist['CTL_HX']
-            )
         
         chord_type = avs.dist['CTL_c_type']
         if chord_type == "custom":
