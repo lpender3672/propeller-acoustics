@@ -193,5 +193,6 @@ def betz_off_design(av):
         dphi = new_phi - phi
         phi = new_phi
 
+    # set interesting values
 
     return True

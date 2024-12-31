@@ -4,6 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionsWidget
+from results import NoiseResultsWidget
 from geometry import generate_blade_mesh
 
 import numpy as np
@@ -56,10 +57,13 @@ class MainWindow(QWidget):
         self.input_widget = InputWidget(self)
         self.dists_widget = DistributionsWidget(self)
         self.stl_viewer = STLViewerWidget(self)
+
+        self.aero_results_widget = NoiseResultsWidget(self)
         
         layout.addWidget(self.input_widget, 0, 0, 3, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
-        layout.addWidget(self.stl_viewer, 0, 2, 3, 1)
+        layout.addWidget(self.stl_viewer, 0, 2, 2, 2)
+        layout.addWidget(self.aero_results_widget, 2, 2, 1, 2)
 
     def attach_signals(self):
 

@@ -32,7 +32,7 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray) -> dict:
     """
 
     dopfac = 1 - oper['Mfl'] * np.cos(obs['theta'])
-    omegaDop = oper['omega'] / dopfac
+    omegaDop = oper['Omega'] / dopfac
 
     Nobs = len(obs['r'])
     Nms = len(ms)
@@ -101,6 +101,40 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray) -> dict:
     out = np.hstack((Vm, Dm, Lm)).T
 
     return out
+
+def hanson_av(avs, obs):
+
+    oper = avs.oper.copy()
+    prop = avs.prop.copy()
+
+    Nobs = len(obs['r'])
+
+    prop['Bd'] = prop['c'] / (2 * prop['rt'])
+    n = avs.airfoil_data.shape[0]
+    xf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), avs.airfoil_data[:, 0])
+    yf = np.interp(np.linspace(0,1, 2 * prop['nx']), np.linspace(0,1, n), avs.airfoil_data[:, 1])
+    prop['HX'] =  yf[:prop['nx']] - yf[prop['nx']:]
+    prop['xc']  = (xf[:prop['nx']] + xf[prop['nx']:][::-1]) / 2 - 0.5
+
+    prop['dz'] = np.diff(prop['r0'])
+
+    prop['FA'] = 0
+    prop['MCA'] = 0
+
+    oper['Min'] = 0;                  #% inflow Mach number [-]
+    oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
+    oper['Mht'] = np.sqrt((prop['Omega']*2*np.pi*prop['rt'])**2 + oper['V']**2)/oper['c0'];                 #% Helical tip Mach number [-]
+
+    oper['Mx'] = oper['Mfl'] + oper['Min']                       # Effective Mach number [-]
+    oper['Mt'] = np.sqrt(oper['Mht']**2 - oper['Mx']**2)     # Tip mach number [-]
+    oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
+    oper['beta'] = np.sqrt(1-oper['Mfl']**2)
+
+    # need
+    # prop['Cl_r']
+    # prop['Cd_r']
+    # prop['dCl_dxc']
+    # prop['dCd_dxc']
 
 
 def main():
