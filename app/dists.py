@@ -26,7 +26,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         self.control_points = control_points
         self.dragged_point_index = None
         self.is_spline = False
-        self.finished_dragging = False
+        self.update_range = False
 
     def mouseDragEvent(self, ev):
         
@@ -55,7 +55,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             ev.accept()
         elif ev.isFinish():
             self.dragged_point_index = None
-            self.finished_dragging = True
+            self.update_range = True
             self.sigPlotChanged.emit(self)
         else:
             if self.dragged_point_index is not None:
@@ -145,6 +145,7 @@ class DistributionPlotWidget(QWidget):
     
     def update_distribution(self, index):
         self.scatter.is_spline = False
+        self.scatter.update_range = True
         self.scatter.show()
 
         if index == 0:  # linear
@@ -202,8 +203,8 @@ class DistributionPlotWidget(QWidget):
         self.plot_widget.addItem(self.scatter)
         self.plot_widget.plot(x_plot, y_plot, pen='b')
 
-        if self.scatter.finished_dragging:
-            self.scatter.finished_dragging = False
+        if self.scatter.update_range:
+            self.scatter.update_range = False
             
             # if control points are outside of the plot range move the plot range
             ymin, ymax = self.plot_widget.viewRange()[1]

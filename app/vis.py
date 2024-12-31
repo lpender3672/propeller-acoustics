@@ -33,14 +33,17 @@ class STLViewerWidget(QWidget):
 
         self.view.setCameraPosition(distance=1)
 
+        self.num_blades = 1
+
     def load_stl_file(self, stl_file):
         self.stl_file = stl_file
         self.stl_mesh = mesh.Mesh.from_file(stl_file)
         self.update_mesh_plot()
     
-    def set_mesh(self, stl_mesh):
+    def set_mesh(self, blade_mesh, num_blades = 1):
         self.stl_file = None
-        self.stl_mesh = stl_mesh
+        self.stl_mesh = blade_mesh
+        self.num_blades = num_blades
         self.update_mesh_plot()
 
     def update_mesh_plot(self):
@@ -68,14 +71,24 @@ class STLViewerWidget(QWidget):
         colors = cm.coolwarm(intensity_per_face)[:, :4]
 
         #print(vertices.shape, faces.shape, colors.shape)
+        for i in range(self.num_blades):
 
-        mesh_item = gl.GLMeshItem(
-            vertexes=vertices,
-            faces=faces,
-            faceColors=colors,
-            smooth= self.smoothToggle.isChecked(),
-            drawEdges= self.edgeToggle.isChecked(),
-            edgeColor=(1, 1, 1, 1)
-        )
-        self.view.addItem(mesh_item)
+            theta = 2 * np.pi * i / self.num_blades
+            
+            y_rot = np.array([
+                [np.cos(theta), 0, np.sin(theta)],
+                [0, 1, 0],
+                [-np.sin(theta), 0, np.cos(theta)]
+            ])
+            rotated_vertices = np.dot(vertices, y_rot)
+
+            mesh_item = gl.GLMeshItem(
+                vertexes=rotated_vertices,
+                faces=faces,
+                faceColors=colors,
+                smooth= self.smoothToggle.isChecked(),
+                drawEdges= self.edgeToggle.isChecked(),
+                edgeColor=(1, 1, 1, 1)
+            )
+            self.view.addItem(mesh_item)
         

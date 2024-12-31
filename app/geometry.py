@@ -16,7 +16,7 @@ def generate_blade_mesh(av):
     xf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
     yf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, ynf.shape[0]), ynf)
 
-    print(chord, radius)
+    xf -= 0.25 # quarter chord
 
     xsweep = cumtrapz( av.prop['sweep'], radius, initial=0.0)
     thickness = av.prop['HX']

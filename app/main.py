@@ -80,7 +80,7 @@ class MainWindow(QWidget):
         self.dists_widget.update_avs(self.av)
 
         self.stl_viewer.set_mesh(
-            generate_blade_mesh(self.av)
+            generate_blade_mesh(self.av), self.av.prop["B"]
         )
     
     def on_new_prop_from_file(self):
