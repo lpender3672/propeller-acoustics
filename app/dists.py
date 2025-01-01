@@ -26,7 +26,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         self.control_points = control_points
         self.dragged_point_index = None
         self.is_spline = False
-        self.update_range = False
+        self.finished_dragging = False
 
     def mouseDragEvent(self, ev):
         
@@ -55,7 +55,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             ev.accept()
         elif ev.isFinish():
             self.dragged_point_index = None
-            self.update_range = True
+            self.finished_dragging = True
             self.sigPlotChanged.emit(self)
         else:
             if self.dragged_point_index is not None:
@@ -92,7 +92,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             self.sigPlotChanged.emit(self)
 
 class DistributionPlotWidget(QWidget):
-    new_dist = pyqtSignal()
+    new_dist = pyqtSignal(bool)
 
     def __init__(self, parent = None, title = None, xlabel = None, ylabel = None):
         super().__init__()
@@ -130,7 +130,7 @@ class DistributionPlotWidget(QWidget):
         layout.addWidget(self.dist_type)
         
         # initially linear
-        control_points = np.array([[0, 0], [1, 1]]).astype(float)  # Two points for linear by default
+        control_points = np.array([[0, 0], [1, 0]]).astype(float)  # Two points for linear by default
         self.scatter = DraggableScatterPlotItem(
             control_points, size=10, brush=pg.mkBrush(255, 0, 0), pen=pg.mkPen(None)
         )
@@ -145,7 +145,7 @@ class DistributionPlotWidget(QWidget):
     
     def update_distribution(self, index):
         self.scatter.is_spline = False
-        self.scatter.update_range = True
+        self.scatter.finished_dragging = True
         self.scatter.show()
 
         if index == 0:  # linear
@@ -183,6 +183,11 @@ class DistributionPlotWidget(QWidget):
             spline = CubicSpline(x[idx], y[idx])
             y_dist = spline(x_dist)
         elif index == 3:
+            # custom
+            if x_dist.shape != self.xb.shape:
+                self.yb = np.interp(x_dist, self.xb, self.yb)
+                self.xb = x_dist
+            
             return self.yb
         else:
             y_dist = np.zeros_like(x_dist)
@@ -203,9 +208,7 @@ class DistributionPlotWidget(QWidget):
         self.plot_widget.addItem(self.scatter)
         self.plot_widget.plot(x_plot, y_plot, pen='b')
 
-        if self.scatter.update_range:
-            self.scatter.update_range = False
-            
+        if self.scatter.finished_dragging:
             # if control points are outside of the plot range move the plot range
             ymin, ymax = self.plot_widget.viewRange()[1]
             ycmin = np.min(self.scatter.control_points[:, 1])
@@ -220,7 +223,8 @@ class DistributionPlotWidget(QWidget):
             if update:
                 self.plot_widget.setYRange(ymin, ymax)
 
-        self.new_dist.emit()
+        self.new_dist.emit(self.scatter.finished_dragging)
+        self.scatter.finished_dragging = False
     
     def set_distribution(self, distype, *args):
         distype = distype.strip().lower()
@@ -251,7 +255,7 @@ class DistributionPlotWidget(QWidget):
         self.dist_type.currentIndexChanged.connect(self.update_distribution)
 
 class DistributionsWidget(QWidget):
-    new_dist = pyqtSignal()
+    new_dist = pyqtSignal(bool)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -285,8 +289,8 @@ class DistributionsWidget(QWidget):
         self.sweep_plot.new_dist.disconnect(self.on_new_dist)
         self.twist_plot.new_dist.disconnect(self.on_new_dist)
 
-    def on_new_dist(self):
-        self.new_dist.emit()
+    def on_new_dist(self, finished_dragging=False):
+        self.new_dist.emit(finished_dragging)
 
     def update_avs(self, avs):
 
@@ -369,7 +373,7 @@ class DistributionsWidget(QWidget):
             )
 
         self.attach_dist_signals()
-        self.new_dist.emit()
+        self.new_dist.emit(True) # full update please
 
 
 

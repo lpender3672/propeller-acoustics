@@ -93,9 +93,6 @@ class PropInputTable(InputTable):
             InputVar(r"$r_h$", "[m]", "Blade hub radius", float),
             InputVar(r"$n_r$", "[-]", "Radial sections", int),
             InputVar(r"$n_x$", "[-]", "Chordwise elements per section", int),
-            InputVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
-            InputVar(r"$\alpha$", "[deg]", "Angle of attack", float),
-
         ]
         super().__init__(vars, parent)
     
@@ -111,8 +108,6 @@ class PropInputTable(InputTable):
         prop['rh'] = self.vars[2].value
         prop['nr'] = self.vars[3].value # radial sections
         prop['nx'] = self.vars[4].value # chordwise elements per section
-        prop['Omega'] = self.vars[5].value * 2*np.pi/60 # convert RPM to rad/s
-        prop['alpha'] = self.vars[6].value * np.pi/180 # convert deg to rad
 
         xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
         rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
@@ -129,9 +124,7 @@ class PropInputTable(InputTable):
         self.vars[2].value = prop['rh']
         self.vars[3].value = prop['nr']
         self.vars[4].value = prop['nx']
-        self.vars[5].value = prop['Omega'] * 60/(2*np.pi)
-        self.vars[6].value = prop['alpha'] * 180/np.pi
-        
+                
         super().set_values()
 
 class OperInputTable(InputTable):
@@ -144,6 +137,7 @@ class OperInputTable(InputTable):
             InputVar(r"$c_0$", "[m/s]", "Speed of sound", float),
             InputVar(r"$p_\text{ref}$", "[Pa]", "Reference pressure for SPL", float),
             InputVar(r"$V$", "[m/s]", "Free stream velocity", float),
+            InputVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
         ]
         super().__init__(vars, parent)
     
@@ -159,6 +153,7 @@ class OperInputTable(InputTable):
         oper['c0'] = self.vars[2].value
         oper['pref'] = self.vars[3].value
         oper['V'] = self.vars[4].value
+        oper['Omega'] = self.vars[5].value * 2*np.pi / 60
 
         return oper
 
@@ -168,6 +163,7 @@ class OperInputTable(InputTable):
         self.vars[2].value = oper['c0']
         self.vars[3].value = oper['pref']
         self.vars[4].value = oper['V']
+        self.vars[5].value = oper['Omega'] * 60/(2*np.pi)
 
         super().set_values()
 
@@ -245,8 +241,6 @@ class InputWidget(QWidget):
 
         self.layout.addWidget(self.oper_table)
 
-        self.setMinimumWidth(400)
-
         self.setLayout(self.layout)
     
     def connect_signals(self):
@@ -266,7 +260,7 @@ class InputWidget(QWidget):
         self.new_oper.emit()
 
     def load_prop_from_click(self):
-        path = QFileDialog.getOpenFileName(self, "Select propeller file", filter="Propeller files (*.prop)")[0]
+        path = QFileDialog.getOpenFileName(self, "Select propeller file", "app/props", filter="Propeller files (*.prop)")[0]
         if path:
             self.prop_path.setText(path)
         
@@ -297,7 +291,7 @@ class InputWidget(QWidget):
         self.new_prop_from_file.emit()
 
     def load_foil_from_click(self):
-        path = QFileDialog.getOpenFileName(self, "Select airfoil file", filter="Airfoil files (*.surf)")[0]
+        path = QFileDialog.getOpenFileName(self, "Select airfoil file", "app/foils", filter="Airfoil files (*.surf)")[0]
         if not path:
             return
         

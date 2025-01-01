@@ -5,6 +5,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 import numpy as np
 
+from hanson import hanson_av
 
 class PolarPlotCanvas(FigureCanvas, QWidget):
     def __init__(self, parent=None):
@@ -17,13 +18,14 @@ class PolarPlotCanvas(FigureCanvas, QWidget):
         QWidget.__init__(self, parent)
 
         self.clear_lines()
+        self.clear_plot()
 
     def add_line(self, line_data, linestyle = None, label = None):
         self.data.append(line_data)
 
         if linestyle:
             if not isinstance(linestyle, list):
-                linestyle = [linestyle]
+                linestyle = [linestyle] * (line_data.shape[0] - 1)
             assert len(linestyle) == line_data.shape[0] - 1 # theta isnt styled
             self.line_styles.append(linestyle)
         else:
@@ -32,7 +34,7 @@ class PolarPlotCanvas(FigureCanvas, QWidget):
         if label:
             if not isinstance(label, list):
                 label = [label]
-            assert len(label) == line_data.shape[0] - 1 # theta isnt labelled
+            assert len(label) == line_data.shape[0] - 1, "Must have unique label" # theta isnt labelled
             self.line_labels.append(label)
         else:
             self.line_labels.append([str(i) for i in range(line_data.shape[0])])
@@ -55,12 +57,20 @@ class PolarPlotCanvas(FigureCanvas, QWidget):
         self.line_colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'cyan', 'magenta']
         self.line_styles = []
         self.line_labels = []
+    
+    def clear_plot(self):
+        self.ax.clear()
+        self.ax.set_theta_zero_location('N')
+        self.ax.set_thetamin(0)
+        self.ax.set_thetamax(180)
 
     def plot_data(self):
         # clear
-        self.ax.clear()
+        self.clear_plot()
+
 
         for i, line_data in enumerate(self.data):
+
             for j in range(line_data.shape[0] - 1):
 
                 self.ax.plot(
@@ -70,6 +80,13 @@ class PolarPlotCanvas(FigureCanvas, QWidget):
                     label= self.line_labels[i][j]
                 )
         
+        miny = np.inf
+        maxy = -np.inf
+        for line_data in self.data:
+            miny = min(miny, np.nanmin(line_data[1:]))
+            maxy = max(maxy, np.nanmax(line_data[1:]))
+        miny = 0
+        self.ax.set_ylim( miny, maxy + 5)
 
         self.ax.set_title('Polar Plot Example', va='bottom')
         self.ax.legend(loc='upper right')
@@ -89,5 +106,17 @@ class NoiseResultsWidget(QWidget):
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.layout.addWidget(self.canvas)
         self.layout.addWidget(self.toolbar)
+
+    def update_results(self, avs):
+        
+        data = hanson_av(avs)
+        self.canvas.line_colors = ['blue', 'red']
+
+        self.canvas.add_line(np.array(data),
+            linestyle=['-', ':', '-.'],
+            label=['Thickness', 'Lift', 'Drag'])
+
+
+        
 
 

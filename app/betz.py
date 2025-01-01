@@ -30,7 +30,7 @@ def betz_design(av):
 
     R = av.prop['rt']
     B = av.prop['B']
-    Omega = av.prop['Omega']
+    Omega = av.oper['Omega']
     nu = av.oper['nu']
     ro = av.oper['rho']
 
@@ -40,7 +40,7 @@ def betz_design(av):
     dzeta = 100
     xi = av.prop['r0_rt']
 
-    alpha = av.prop['alpha']
+    alpha = 5 * np.pi / 180
     Cl = 0.5
     Cd = 0.1
 

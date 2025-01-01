@@ -11,15 +11,16 @@ def rotate(X,Y,theta):
 def generate_blade_mesh(av):
     # adapted from code by Lily Board phd
 
-    chord, twist, radius = av.prop['c'], av.prop['HX'], av.prop['r0']
+    chord, twist, radius = av.prop['c'], av.prop['twist'], av.prop['r0']
     xnf, ynf = av.airfoil_data[:,0], av.airfoil_data[:,1]
     xf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
     yf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, ynf.shape[0]), ynf)
 
-    xf -= 0.25 # quarter chord
+    xf -= 0.5 # quarter chord
 
-    xsweep = cumtrapz( av.prop['sweep'], radius, initial=0.0)
-    thickness = av.prop['HX']
+    sweep_angle = np.cumsum(av.prop['sweep'])
+    
+    assert len(chord) == len(twist) == len(radius) == len(sweep_angle)
 
     nf = xf.shape[0]
     Nsect = radius.shape[0]
@@ -27,16 +28,24 @@ def generate_blade_mesh(av):
     Y = np.zeros((Nsect+2,nf))
     Z = np.zeros((Nsect+2,nf))
 
-    # rotate the airfoil and scale
-    X[0,:], Y[0,:] = rotate(xf*chord[0], yf*chord[0], twist[0])
+    # at 0 only rotate about radial
+    sx, Y[0,:] = rotate(xf*chord[0], yf*chord[0], twist[0])
+    thetas = sx / radius[0] + sweep_angle[0]
+    X[0,:] = radius[0] * np.sin(thetas)
     Z[0,:] = 0.0
     for i in range(1,Nsect+1):
-        X[i,:], Y[i,:] = rotate(xf*chord[i-1], yf*chord[i-1], twist[i-1])
-        X[i,:] += xsweep[i-1]
-        Z[i,:] = radius[i-1]
-    X[Nsect+1,:], Y[Nsect+1,:] = rotate(xf*chord[Nsect-1], yf*chord[Nsect-1], twist[Nsect-1])
-    X[Nsect+1,:] += xsweep[Nsect-1]
-    Z[Nsect+1,:] = radius[-1]
+        # first rotate about radial direction
+        sx, sy = rotate(xf*chord[i-1], yf*chord[i-1], twist[i-1])
+        # warp chordwise foil to at current radius
+        thetas = sx / radius[i-1] + sweep_angle[i-1] # appy sweep
+        Y[i,:] = sy
+        X[i,:] = radius[i-1] * np.sin(thetas)
+        Z[i,:] = radius[i-1] * np.cos(thetas)
+    sx, sy = rotate(xf*chord[Nsect-1], yf*chord[Nsect-1], twist[Nsect-1])
+    thetas = sx / radius[Nsect-1] + sweep_angle[Nsect-1]
+    Y[Nsect+1,:] = sy
+    X[Nsect+1,:] = radius[Nsect-1] * np.sin(thetas)
+    Z[Nsect+1,:] = Z[Nsect,:]
     
     coords = np.zeros((nf*(Nsect+2),3))
     # loop over blade elements

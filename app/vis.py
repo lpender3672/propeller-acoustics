@@ -28,9 +28,6 @@ class STLViewerWidget(QWidget):
         layout.addWidget(viewSettingWidget)
         layout.addWidget(self.view)
 
-        self.setMinimumHeight(400)
-        self.setMinimumWidth(400)
-
         self.view.setCameraPosition(distance=1)
 
         self.num_blades = 1
@@ -66,21 +63,49 @@ class STLViewerWidget(QWidget):
         light_dir = np.array([1, 1, 1]) 
         light_dir = light_dir / np.linalg.norm(light_dir)
 
-        intensity = np.dot(normals, light_dir)
-        intensity_per_face = intensity[::3]
-        colors = cm.coolwarm(intensity_per_face)[:, :4]
+        min_intensity = np.inf
+        max_intensity = -np.inf
+
+        intensities = np.zeros((self.num_blades, len(vertices) // 3))
+
+        
+
+        # first compute intensities to get colour range
+        for i in range(self.num_blades):
+
+            theta = 2 * np.pi * i / self.num_blades
+            y_rot = np.array([
+                [np.cos(theta), 0, np.sin(theta)],
+                [0, 1, 0],
+                [-np.sin(theta), 0, np.cos(theta)]
+            ])
+            
+            rotated_normals = np.dot(normals, y_rot)
+            intensity = np.dot(rotated_normals, light_dir)
+            intensity_per_face = intensity[::3]
+
+            min_intensity = min(min_intensity, np.nanmin(intensity_per_face))
+            max_intensity = max(max_intensity, np.nanmax(intensity_per_face))
+
+            intensities[i] = intensity_per_face
 
         #print(vertices.shape, faces.shape, colors.shape)
         for i in range(self.num_blades):
 
             theta = 2 * np.pi * i / self.num_blades
-            
             y_rot = np.array([
                 [np.cos(theta), 0, np.sin(theta)],
                 [0, 1, 0],
                 [-np.sin(theta), 0, np.cos(theta)]
             ])
             rotated_vertices = np.dot(vertices, y_rot)
+        
+            intensity_normalized = (intensities[i] - min_intensity) / (
+            max_intensity - min_intensity + 1e-8
+            )
+
+            # Map to colormap
+            colors = cm.coolwarm(intensity_normalized)[:, :4]
 
             mesh_item = gl.GLMeshItem(
                 vertexes=rotated_vertices,

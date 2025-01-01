@@ -58,12 +58,17 @@ class MainWindow(QWidget):
         self.dists_widget = DistributionsWidget(self)
         self.stl_viewer = STLViewerWidget(self)
 
-        self.aero_results_widget = NoiseResultsWidget(self)
+        self.dists_widget.setMaximumWidth(500)
+        self.input_widget.setMinimumWidth(400)
+        self.stl_viewer.setMinimumHeight(400)
+        self.stl_viewer.setMinimumWidth(400)
+
+        self.noise_results_widget = NoiseResultsWidget(self)
         
         layout.addWidget(self.input_widget, 0, 0, 3, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
         layout.addWidget(self.stl_viewer, 0, 2, 2, 2)
-        layout.addWidget(self.aero_results_widget, 2, 2, 1, 2)
+        layout.addWidget(self.noise_results_widget, 2, 2, 1, 2)
 
     def attach_signals(self):
 
@@ -75,7 +80,7 @@ class MainWindow(QWidget):
 
         self.input_widget.new_prop_from_file.connect(self.on_new_prop_from_file)
     
-    def update_prop(self):
+    def update_prop(self, update_results = False):
         print("Updating prop")
         
         self.av.prop.update(self.input_widget.prop)
@@ -83,9 +88,14 @@ class MainWindow(QWidget):
 
         self.dists_widget.update_avs(self.av)
 
+        # update mesh
+
         self.stl_viewer.set_mesh(
             generate_blade_mesh(self.av), self.av.prop["B"]
         )
+
+        if update_results:
+            self.noise_results_widget.update_results(self.av)
     
     def on_new_prop_from_file(self):
         self.av.prop.update(self.input_widget.prop)
@@ -97,6 +107,16 @@ class MainWindow(QWidget):
     def update_oper(self):
         print("Updating oper")
         self.av.oper.update(self.input_widget.oper)
+
+        # update results
+
+        self.noise_results_widget.update_results(self.av)
+
+        # update mesh
+
+        self.stl_viewer.set_mesh(
+            generate_blade_mesh(self.av), self.av.prop["B"]
+        )
 
     def save_prop(self):
         self.input_widget.save_prop_to_file(self.av)
