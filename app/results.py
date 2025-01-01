@@ -6,12 +6,13 @@ from matplotlib.figure import Figure
 import numpy as np
 
 from hanson import hanson_av
+from betz import betz_off_design
 
-class PolarPlotCanvas(FigureCanvas, QWidget):
+class PlotCanvas(FigureCanvas, QWidget):
     def __init__(self, parent=None):
 
         self.fig = Figure()
-        self.ax = self.fig.add_subplot(111, polar=True)
+        self.ax = self.fig.add_subplot(111)
         self.fig.tight_layout()
 
         FigureCanvas.__init__(self, self.fig)
@@ -60,9 +61,6 @@ class PolarPlotCanvas(FigureCanvas, QWidget):
     
     def clear_plot(self):
         self.ax.clear()
-        self.ax.set_theta_zero_location('N')
-        self.ax.set_thetamin(0)
-        self.ax.set_thetamax(180)
 
     def plot_data(self):
         # clear
@@ -95,6 +93,26 @@ class PolarPlotCanvas(FigureCanvas, QWidget):
         self.draw()
 
 
+class PolarPlotCanvas(PlotCanvas):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        if self.ax:
+            self.fig.delaxes(self.ax)
+        
+        self.ax = self.fig.add_subplot(111, polar=True)
+
+        self.clear_lines()
+        self.clear_plot()
+
+    def clear_plot(self):
+        super().clear_plot()
+        if self.ax.name == 'polar':
+            self.ax.set_theta_zero_location('N')
+            self.ax.set_thetamin(0)
+            self.ax.set_thetamax(180)
+
+
 class NoiseResultsWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -117,6 +135,21 @@ class NoiseResultsWidget(QWidget):
             label=['Thickness', 'Lift', 'Drag'])
 
 
+class AerodynamicResultsWidget(QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.layout = QVBoxLayout(self)
+        self.setLayout(self.layout)
+
+        self.canvas = PlotCanvas(self)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.layout.addWidget(self.canvas)
+        self.layout.addWidget(self.toolbar)
+
+    def update_results(self, avs):
+        
+        betz_off_design(avs)
         
 
 

@@ -263,6 +263,8 @@ class InputWidget(QWidget):
         path = QFileDialog.getOpenFileName(self, "Select propeller file", "app/props", filter="Propeller files (*.prop)")[0]
         if path:
             self.prop_path.setText(path)
+        else:
+            return
         
         try:
             with open(path, 'r') as f:
@@ -292,7 +294,9 @@ class InputWidget(QWidget):
 
     def load_foil_from_click(self):
         path = QFileDialog.getOpenFileName(self, "Select airfoil file", "app/foils", filter="Airfoil files (*.surf)")[0]
-        if not path:
+        if path:
+            self.foil_path.setText(path)
+        else:
             return
         
         try:

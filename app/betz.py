@@ -4,6 +4,8 @@ import numpy as np
 from xfoil import XFoil
 from xfoil.model import Airfoil
 
+from matplotlib import pyplot as plt
+
 
 def foil_data(airfoil_data, alpha, Re):
     
@@ -15,12 +17,24 @@ def foil_data(airfoil_data, alpha, Re):
     xf.Re = Re
     xf.M = 0.0
     xf.max_iter = 100
+    xf.verbose = False
 
-    out = xf.a(alpha[0])
-    print(out)
-    cl, cd, cm = out
+    if isinstance(alpha, float):
+        cls = np.zeros(1)
+        cds = np.zeros(1)
+        alpha = [alpha]
+    else:
+        cls = np.zeros(len(alpha))
+        cds = np.zeros(len(alpha))
 
-    return cl, cd
+    for i, a in enumerate(alpha):
+        out = xf.a(a)
+        print(out)
+        cl, cd, _, _ = out
+        cls[i] = cl
+        cds[i] = cd
+
+    return cls, cds
 
 
 def betz_design(av):
@@ -145,7 +159,7 @@ def betz_off_design(av):
 
     R = av.prop['rt']
     B = av.prop['B']
-    Omega = av.prop['Omega']
+    Omega = av.oper['Omega']
     nu = av.oper['nu']
     ro = av.oper['rho']
     xi = av.prop['r0_rt']
@@ -160,6 +174,10 @@ def betz_off_design(av):
     phi = np.arctan((1 + 0) * lamda / xi)
     dphi = np.inf
 
+    Cl0, Cd0 = foil_data(
+        av.airfoil_data, 0.0, 1e6
+    )
+
     while np.abs(dphi / phi).all() > 1e-3:
 
         # Analysis of Arbitrary Designs
@@ -168,11 +186,9 @@ def betz_off_design(av):
         alpha = beta - phi
         # airfoil coefficients are known from the section data and alpha
 
-        #Cl, Cd = foil_data(
-        #    av.airfoil_data, alpha * 180 / np.pi, 1e6
-        #)
-        Cl = 0.5
-        Cd = 0.01
+        Cl = Cl0 + alpha * 2 * np.pi
+        Cd = Cd0
+
 
         Cx = Cl * np.cos(phi) - Cd * np.sin(phi)
         Cz = Cl * np.sin(phi) + Cd * np.cos(phi)
@@ -183,6 +199,9 @@ def betz_off_design(av):
         F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1 - xi) / np.sin(phi_t))) # Prandtl tip loss factor
         a = sigma * K * ( F - sigma * K)
         a_prime = sigma * K_prime * ( F + sigma * K_prime)
+        # Viterna and Janetzke clip a and a_prime to 0.7
+        a = np.clip(a, -0.7, 0.7)
+        a_prime = np.clip(a_prime, -0.7, 0.7)
 
         # the Reynolds number is determined from the known chord and W
         W = V * (1 + a) / np.sin(phi)
@@ -194,5 +213,39 @@ def betz_off_design(av):
         phi = new_phi
 
     # set interesting values
+    
+    CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F / ((F + sigma * K_prime) * np.cos(phi))**2
+    CP_prime = CT_prime * np.pi * xi * Cx / Cz
+
+    print(phi)
+
+    CT = np.trapz(CT_prime, R * xi)
+    CP = np.trapz(CP_prime, R * xi)
+
+    FM = np.abs(CT) ** (2/3) / np.abs(CP)
+
+    print(f"CP: {CP}, CT: {CT}, FM: {FM}")
 
     return True
+
+
+
+def main():
+
+    xzf = np.loadtxt('app/foils/naca0012.surf')
+    alpha = np.arange(-10,10,2)
+    Cl,Cd = foil_data(
+        xzf, alpha , 1e6
+    )
+    fig, ax = plt.subplots()
+    ax.plot(alpha,Cl)
+    ax.set_xlabel('Cl')
+    ax.set_ylabel('Cd')
+
+    plt.show()
+
+
+
+if __name__ == '__main__':
+
+    main()

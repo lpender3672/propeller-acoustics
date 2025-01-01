@@ -31,6 +31,7 @@ def generate_blade_mesh(av):
     # at 0 only rotate about radial
     sx, Y[0,:] = rotate(xf*chord[0], yf*chord[0], twist[0])
     thetas = sx / radius[0] + sweep_angle[0]
+    thetas = np.clip(thetas, -np.pi/2, np.pi/2)
     X[0,:] = radius[0] * np.sin(thetas)
     Z[0,:] = 0.0
     for i in range(1,Nsect+1):
@@ -38,11 +39,13 @@ def generate_blade_mesh(av):
         sx, sy = rotate(xf*chord[i-1], yf*chord[i-1], twist[i-1])
         # warp chordwise foil to at current radius
         thetas = sx / radius[i-1] + sweep_angle[i-1] # appy sweep
+        thetas = np.clip(thetas, -np.pi/2, np.pi/2)
         Y[i,:] = sy
         X[i,:] = radius[i-1] * np.sin(thetas)
         Z[i,:] = radius[i-1] * np.cos(thetas)
     sx, sy = rotate(xf*chord[Nsect-1], yf*chord[Nsect-1], twist[Nsect-1])
     thetas = sx / radius[Nsect-1] + sweep_angle[Nsect-1]
+    thetas = np.clip(thetas, -np.pi/2, np.pi/2)
     Y[Nsect+1,:] = sy
     X[Nsect+1,:] = radius[Nsect-1] * np.sin(thetas)
     Z[Nsect+1,:] = Z[Nsect,:]

@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget, QGridLayout, QCheckBox
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QCheckBox, QFileDialog, QPushButton, QMessageBox
 import pyqtgraph.opengl as gl
 import numpy as np
 from stl import mesh
@@ -21,10 +21,15 @@ class STLViewerWidget(QWidget):
         self.edgeToggle.setChecked(False)
         self.edgeToggle.stateChanged.connect(self.update_mesh_plot)
 
+        self.save_button = QPushButton("Save to .stl")
+        self.save_button.clicked.connect(self.save_stl_file)
+
+
         #viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
         viewSettingLayout.addWidget(self.edgeToggle, 0, 1)
+        viewSettingLayout.addWidget(self.save_button, 0, 2)
 
-        viewSettingWidget.setMaximumHeight(30)
+        viewSettingWidget.setMaximumHeight(50)
         layout.addWidget(viewSettingWidget)
         layout.addWidget(self.view)
 
@@ -37,6 +42,17 @@ class STLViewerWidget(QWidget):
         self.stl_mesh = mesh.Mesh.from_file(stl_file)
         self.update_mesh_plot()
     
+    def save_stl_file(self, stl_file):
+        path = QFileDialog.getSaveFileName(self, "Select propeller file", filter="Stereolithography file (*.stl)")[0]
+        if not path:
+            return
+        
+        try:
+            self.stl_mesh.save(path)
+        except FileNotFoundError:
+            QMessageBox.critical(self, "Error", "Failed to save stl file")
+            return
+
     def set_mesh(self, blade_mesh, num_blades = 1):
         self.stl_file = None
         self.stl_mesh = blade_mesh

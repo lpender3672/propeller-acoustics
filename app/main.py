@@ -4,7 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionsWidget
-from results import NoiseResultsWidget
+from results import NoiseResultsWidget, AerodynamicResultsWidget
 from geometry import generate_blade_mesh
 
 import numpy as np
@@ -57,18 +57,21 @@ class MainWindow(QWidget):
         self.input_widget = InputWidget(self)
         self.dists_widget = DistributionsWidget(self)
         self.stl_viewer = STLViewerWidget(self)
+        self.noise_results_widget = NoiseResultsWidget(self)
+        self.aerodynamic_results_widget = AerodynamicResultsWidget(self)
 
         self.dists_widget.setMaximumWidth(500)
         self.input_widget.setMinimumWidth(400)
         self.stl_viewer.setMinimumHeight(400)
         self.stl_viewer.setMinimumWidth(400)
+        self.noise_results_widget.setMinimumWidth(400)
 
-        self.noise_results_widget = NoiseResultsWidget(self)
         
         layout.addWidget(self.input_widget, 0, 0, 3, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
-        layout.addWidget(self.stl_viewer, 0, 2, 2, 2)
-        layout.addWidget(self.noise_results_widget, 2, 2, 1, 2)
+        layout.addWidget(self.stl_viewer, 0, 2, 2, 1)
+        layout.addWidget(self.noise_results_widget, 0, 4, 2, 1)
+        layout.addWidget(self.aerodynamic_results_widget, 2, 2, 1, 3)
 
     def attach_signals(self):
 
@@ -80,7 +83,7 @@ class MainWindow(QWidget):
 
         self.input_widget.new_prop_from_file.connect(self.on_new_prop_from_file)
     
-    def update_prop(self, update_results = False):
+    def update_prop(self, update_results = True):
         print("Updating prop")
         
         self.av.prop.update(self.input_widget.prop)
@@ -96,6 +99,7 @@ class MainWindow(QWidget):
 
         if update_results:
             self.noise_results_widget.update_results(self.av)
+            self.aerodynamic_results_widget.update_results(self.av)
     
     def on_new_prop_from_file(self):
         self.av.prop.update(self.input_widget.prop)

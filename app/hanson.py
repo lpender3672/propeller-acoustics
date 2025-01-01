@@ -57,6 +57,11 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
     PVm = np.zeros((Nobs, Nms), dtype=complex)
     PDm = np.zeros((Nobs, Nms), dtype=complex)
     PLm = np.zeros((Nobs, Nms), dtype=complex)
+
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
+    if prop['HX'].shape != prop['xc'].shape:
+        prop['HX'].reshape(prop['xc'].shape[0], 1)
     
     for o in range(Nobs):
 
@@ -85,8 +90,6 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
             term2 = oper['Mr']**2 * np.exp(1j * (phi0 + phis)) * bess
 
             terms1and2 = term1 * term2
-
-            _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
             psiVKx = Psi(kx, xc, prop['HX'])
             psiLKx = Psi(kx, xc, prop['dCl_dxc'])
@@ -247,11 +250,7 @@ def validate():
 
     out = hanson(oper, prop, obs, ms)
 
-  
-
-    pref = oper['pref']
-
-
+    V, D, L = calc_noise_components(out, oper['pref'])
 
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
