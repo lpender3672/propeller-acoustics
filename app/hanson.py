@@ -60,7 +60,7 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
 
     _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
-    if prop['HX'].shape != prop['xc'].shape:
+    if prop['HX'].shape != xc.shape:
         prop['HX'].reshape(prop['xc'].shape[0], 1)
     
     for o in range(Nobs):
