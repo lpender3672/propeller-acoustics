@@ -174,11 +174,18 @@ def betz_off_design(av):
     phi = np.arctan((1 + 0) * lamda / xi)
     dphi = np.inf
 
-    Cl0, Cd0 = foil_data(
-        av.airfoil_data, 0.0, 1e6
-    )
+    alphas = np.arange(-10, 20, 2.5)
 
-    while np.abs(dphi / phi).all() > 1e-3:
+    Cl0, Cd0 = foil_data(
+        av.airfoil_data, alphas, 1e6
+    )
+    Cl_valid = ~np.isnan(Cl0)
+    Cd_valid = ~np.isnan(Cd0)
+    print(alphas, Cl0, Cd0)
+    iters = 0
+
+    while (np.abs(dphi / phi).all() > 1e-3 and
+           iters < 1000):
 
         # Analysis of Arbitrary Designs
         # Charles N. Adkins*
@@ -186,9 +193,13 @@ def betz_off_design(av):
         alpha = beta - phi
         # airfoil coefficients are known from the section data and alpha
 
-        Cl = Cl0 + alpha * 2 * np.pi
-        Cd = Cd0
+        #Cl = Cl0 + alpha * 2 * np.pi
+        #Cd = Cd0
+        Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
+        Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
 
+        # better to wait and see if its out of bounds
+        # phi = np.clip(phi, beta - alphas.min() * np.pi / 180, beta - alphas.max() * np.pi / 180)
 
         Cx = Cl * np.cos(phi) - Cd * np.sin(phi)
         Cz = Cl * np.sin(phi) + Cd * np.cos(phi)
@@ -211,13 +222,14 @@ def betz_off_design(av):
         new_phi = np.arctan(V * (1 + a) / (Omega * R * (1 - a_prime)))
         dphi = new_phi - phi
         phi = new_phi
+        iters += 1
 
     # set interesting values
     
     CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F / ((F + sigma * K_prime) * np.cos(phi))**2
     CP_prime = CT_prime * np.pi * xi * Cx / Cz
 
-    print(phi)
+    print(np.cos(phi))
 
     CT = np.trapz(CT_prime, R * xi)
     CP = np.trapz(CP_prime, R * xi)

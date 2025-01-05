@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -9,7 +9,7 @@ from hanson import hanson_av
 from betz import betz_off_design
 
 class PlotCanvas(FigureCanvas, QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, xlabel = "", ylabel = "", title = ""):
 
         self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
@@ -17,6 +17,10 @@ class PlotCanvas(FigureCanvas, QWidget):
 
         FigureCanvas.__init__(self, self.fig)
         QWidget.__init__(self, parent)
+
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.title = title
 
         self.clear_lines()
         self.clear_plot()
@@ -61,6 +65,12 @@ class PlotCanvas(FigureCanvas, QWidget):
     
     def clear_plot(self):
         self.ax.clear()
+        self.ax.grid(True)
+        self.ax.set_xlabel(self.xlabel)
+        self.ax.set_ylabel(self.ylabel)
+        self.ax.set_title(self.title)
+        self.fig.tight_layout()
+        self.draw()
 
     def plot_data(self):
         # clear
@@ -86,10 +96,9 @@ class PlotCanvas(FigureCanvas, QWidget):
         miny = 0
         self.ax.set_ylim( miny, maxy + 5)
 
-        self.ax.set_title('Polar Plot Example', va='bottom')
         self.ax.legend(loc='upper right')
         self.ax.grid(True)
-
+        self.fig.tight_layout()
         self.draw()
 
 
@@ -114,8 +123,8 @@ class PolarPlotCanvas(PlotCanvas):
 
 
 class NoiseResultsWidget(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, parent, *args):
+        super().__init__(parent,  *args)
 
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
@@ -139,13 +148,18 @@ class AerodynamicResultsWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.layout = QVBoxLayout(self)
-        self.setLayout(self.layout)
+        self.layout = QGridLayout(self)
 
-        self.canvas = PlotCanvas(self)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-        self.layout.addWidget(self.canvas)
-        self.layout.addWidget(self.toolbar)
+        self.profile = PlotCanvas(self, "$r/r_t$", "Sectional Coefficients ")
+        self.profile_toolbar = NavigationToolbar(self.profile, self)
+
+        self.performance = PlotCanvas(self, "Advance Ratio?", "Performance Coefficients?")
+        self.performance_toolbar = NavigationToolbar(self.performance, self)
+
+        self.layout.addWidget(self.profile, 0, 0, 2, 1)
+        self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
+        self.layout.addWidget(self.performance, 0, 1, 2, 1)
+        self.layout.addWidget(self.performance_toolbar, 2, 1, 1, 1)
 
     def update_results(self, avs):
         

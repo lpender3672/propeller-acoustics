@@ -61,7 +61,7 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
     _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
     if prop['HX'].shape != xc.shape:
-        prop['HX'].reshape(prop['xc'].shape[0], 1)
+        prop['HX'] = prop['HX'].reshape(prop['xc'].shape[0], 1)
     
     for o in range(Nobs):
 
@@ -178,8 +178,8 @@ def hanson_av(avs):
 
     dx = prop['r0'] * np.sin( np.cumsum(prop['sweep']) )
     phi = np.arcsin(oper['Mx'] / oper['Mr'])
-    prop['FA'] = dx * np.cos(phi)
-    prop['MCA'] = dx * np.sin(phi)
+    prop['FA'] = dx * np.sin(phi)
+    prop['MCA'] = dx * np.cos(phi)
 
     ms = np.arange(1, 3)
 

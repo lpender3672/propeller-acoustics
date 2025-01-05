@@ -256,6 +256,7 @@ class DistributionPlotWidget(QWidget):
 
 class DistributionsWidget(QWidget):
     new_dist = pyqtSignal(bool)
+    new_prop = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)

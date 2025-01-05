@@ -65,7 +65,7 @@ $V_n$ is the surface normal velocity which will be called the monopole term depi
 the fact that it behaves like higher order terms when in motion \cite{goldstein_aeroacoustics}.
 
 The dipole source term $f_i$ is the $i$th component of force exerted on the boundary by the fluid.
-The quadrupole is the stress tensor $T_{ij}$ which is neglected from here on WHY?.
+The quadrupole is the stress tensor $T_{ij}$ which is neglected for simplicity.
 
 Greens function G for the free space wave equation is given by
 
@@ -78,7 +78,7 @@ For a stationary drone propeller it is convenient to replace the Cartesian sourc
 This is done with the helicoidal coordinates $(\gamma_0, \xi_0, r_0)$.
 
 \begin{align}
-    y_1 &= \frac{\Omega r_0}{U} \\
+    y_1 &= \frac{\Omega r_0 \xi_0}{U} = \xi_0\\
     y_2 &= r_0 \cos \left( \frac{\Omega \gamma_0}{U} \right) \\
     y_3 &= r_0 \sin \left( \frac{\Omega \gamma_0}{U} \right)
 \end{align}
@@ -91,7 +91,7 @@ This is done with the helicoidal coordinates $(\gamma_0, \xi_0, r_0)$.
 In the following section thin airfoil theory is used to apply boundary conditions to a \textit{mean surface}.
 This means the source strengths $V_n$ and $f_i$ act on the mean helicoidal surface.
 
-Then $ dS = d\gamma_0 dr_0 $ neglecting the 2D coordinate transformation Jacobian which is reduced to 0?!.
+Then $ dS = d\gamma_0 dr_0 $ as the coordinate transformation Jacobian is 1.
 
 This then turns equation \ref{eq:goldstein} into
 \begin{equation}
