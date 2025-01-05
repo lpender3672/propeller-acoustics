@@ -65,20 +65,20 @@ $V_n$ is the surface normal velocity which will be called the monopole term depi
 the fact that it behaves like higher order terms when in motion \cite{goldstein_aeroacoustics}.
 
 The dipole source term $f_i$ is the $i$th component of force exerted on the boundary by the fluid.
-The quadrupole is the stress tensor $T_{ij}$ which is neglected from here on WHY?.
+The quadrupole is the stress tensor $T_{ij}$ which is neglected for simplicity.
 
 Greens function G for the free space wave equation is given by
 
 \begin{equation}
     G = \frac{\delta(t - \tau - R/c_0)}{4\pi R}
 \end{equation}
-Where $R = |x - y|$ is the distance between the source and observer points.
+Where $R = |\mathbf{x} - \mathbf{y}|$ is the distance between the source and observer points.
 
 For a stationary drone propeller it is convenient to replace the Cartesian source coordinates to be in the propeller plane.
 This is done with the helicoidal coordinates $(\gamma_0, \xi_0, r_0)$.
 
 \begin{align}
-    y_1 &= \frac{\Omega r_0}{U} \\
+    y_1 &= \frac{\Omega r_0 \xi_0}{U} = \xi_0\\
     y_2 &= r_0 \cos \left( \frac{\Omega \gamma_0}{U} \right) \\
     y_3 &= r_0 \sin \left( \frac{\Omega \gamma_0}{U} \right)
 \end{align}
@@ -91,11 +91,11 @@ This is done with the helicoidal coordinates $(\gamma_0, \xi_0, r_0)$.
 In the following section thin airfoil theory is used to apply boundary conditions to a \textit{mean surface}.
 This means the source strengths $V_n$ and $f_i$ act on the mean helicoidal surface.
 
-Then $ dS = d\gamma_0 dr_0 $ neglecting the 2D coordinate transformation Jacobian which is reduced to 0?!.
+Then $ dS = d\gamma_0 dr_0 $ as the coordinate transformation Jacobian is 1.
 
 This then turns equation \ref{eq:goldstein} into
 \begin{equation}
-p'(x, t) = -\int_{-\infty}^\infty \int_0^T \int_{-\infty}^\infty \left( \rho_0 V_n \frac{\partial G}{\partial \tau} + f_i \frac{\partial G}{\partial \gamma_i} \right)d\gamma_0 dr_0 d\tau
+p'(x, t) = -\int_{-\infty}^\infty \int_0^{r_t} \int_{-\infty}^\infty \left( \rho_0 V_n \frac{\partial G}{\partial \tau} + f_i \frac{\partial G}{\partial \gamma_i} \right)d\gamma_0 dr_0 d\tau
 \end{equation}
 
 For convenience the surface sources will be rewritten as volume sources using generalised functions.
@@ -128,7 +128,7 @@ However, it must first be in a generalised form similar to the dipole source
 \end{equation}
 Integration by parts
 \begin{equation}
-    p' = \iiiint G \left(\frac{\partial Q}{\partial \tau} + \frac{\partial R_i}{\partial \boldsymbol{\gamma}_i} \right) d\tau d\xi_0 d\gamma_0 dr_0 - \iiint \Big[ QG \Big]_{-T}^{+T} dV(\tau) - \int_{-T}^{+T} \iint R_i G n_i dS(\tau) d\tau
+    p' = \iiiint G \left(\frac{\partial Q}{\partial \tau} + \frac{\partial R_i}{\partial \boldsymbol{\gamma}_i} \right) d\tau d\xi_0 d\gamma_0 dr_0 - \Bigg[ \iiint  QG  dV(\tau) \Bigg]_{-\infty}^{\infty} - \iiint R_i G n_i dS(\tau) d\tau
 \end{equation}
 With $n_i$ normal vector to surface and terms $Q$ and $R_i$ defined 
 \begin{align}
@@ -168,6 +168,7 @@ Then a spatial fourier transform of the generalised source function is taken in 
 
 \begin{equation}
     \psi \left(\frac{\omega}{U}, r_0, \xi_0\right) = \int_{-\infty}^\infty g(\gamma_0, r_0, \xi_0) \exp \left(j \frac{\omega}{U} \gamma_0 \right) d\gamma_0
+    \label{eq:fourier}
 \end{equation}
 Then similarly the inverse
 \begin{equation}
@@ -221,9 +222,10 @@ Where $P_n$ is the nth complex Fourier coefficient of acoustic pressure then
         \int \psi\left(\frac{n\Omega}{U}, r_0, \xi_0\right) 
         \exp\left(-j \frac{n\Omega}{c_0} \frac{\Omega r_0}{U} \xi_0 \cos\theta\right)
          d\xi_0 dr_0
+         \label{eq:fourier_coefficient}
 \end{equation}
 This is the general far-field result for any helically convected source as given by g in equation \ref{eq:generalised_source}.
-For B blades, the mih harmonic of blade passing
+For B blades, the m-th harmonic of blade passing
 frequency is found by setting $n = mB$ and multiplying by $B$
 Waveforms can be computed from the Fourier series
 
@@ -247,12 +249,12 @@ The normalised section shape is written as
 Where $X = \gamma_0/b$ and $H$ is the normalised section shape function.
 The associated wavenumber distribution of the thickness sources is:
 \begin{equation}
-    \psi_V\left( \frac{mB\Omega}{U}, r_0, \xi_0 \right) = \rho_0 U^2 \int \frac{\partial^2 }{\partial \eta^2} \bigg[ h(\eta, r_0) \delta(FA + \xi_0) \bigg] \exp\left( j \frac{mB\Omega}{U} \eta \right) d\eta
+    \psi_V\left( \frac{mB\Omega}{U}, \xi_0, r_0 \right) = \rho_0 U^2 \int \frac{\partial^2 }{\partial \eta^2} \bigg[ h(\eta, r_0) \delta(FA + \xi_0) \bigg] \exp\left( j \frac{mB\Omega}{U} \eta \right) d\eta
 \end{equation}
 Integration by parts twice gives
 
 \begin{equation}
-    \psi_V\left( \frac{mB\Omega}{U}, r_0, \xi_0 \right) = - \rho_0 U^2 k_x^2 t_b \delta(FA + \xi_0) \exp\left( j k_x \frac{MCA}{b} \right) \Psi_V(k_x)
+    \psi_V\left( \frac{mB\Omega}{U}, \xi_0, r_0 \right) = - \rho_0 U^2 k_x^2 t_b \delta(FA + \xi_0) \exp\left( j k_x \frac{MCA}{b} \right) \Psi_V(k_x)
 \end{equation}
 Where
 \begin{equation}
@@ -260,20 +262,70 @@ Where
 \end{equation}
 and $k_x$ is a dimensionless chordwise wavenumber given by
 \begin{equation}
-    k_x = \frac{2mB B_D M_T}{M_r}
+    k_x = \frac{2mB B_D}{z}
 \end{equation}
-Similarly for drag
+Similarly for drag, using
+\begin{align}
+    f_1(\gamma_0, r_0) = \frac{1}{2}\rho_0 U^2 C_D f_D \left(X - \frac{MCA}{b} \right) \\
+    f_2(\gamma_0, r_0) = \frac{1}{2}\rho_0 U^2 C_L f_L \left(X - \frac{MCA}{b} \right)
+\end{align}
+
 \begin{equation}
-    \psi_D\left( \frac{mB\Omega}{U}, r_0, \xi_0 \right) = \rho_0 U^2 \int \frac{\partial }{\partial \gamma_0} \Big[ \frac{1}{2}\rho_0U^2 C_D f_D\left(X-\frac{MCA}{b}\right) \delta(FA + \xi_0) \Big] \exp\left( j \frac{mB\Omega}{U} \gamma_0 \right) d\gamma_0
+    \frac{\partial}{\partial \gamma_i} \Big[ f_i(\eta, r_0) \delta(FA + \xi_0) \Big] = \frac{\partial f_1}{\partial \gamma_0} \delta(FA + \xi_0) + f_2 \frac{\partial}{\partial \xi_0} \Big[ \delta(FA + \xi_0) \Big]
+    \label{eq:expanded_dipole}
 \end{equation}
-And again integration by parts gives
+When equation \ref{eq:expanded_dipole} is substituted into equations \ref{eq:generalised_source} and \ref{eq:fourier}, with the $f_1$ drag term isolated,
 \begin{equation}
-    \psi_D\left( \frac{mB\Omega}{U}, r_0, \xi_0 \right) = \frac{1}{2} \rho_0 U^2 K_x C_D \int f_L(X) \exp(jk_x X) dX
+    \psi_D\left( \frac{mB\Omega}{U}, \xi_0, r_0 \right) = \frac{1}{2} \rho_0 U^2 C_D \delta(FA + \xi_0) \int \frac{\partial }{\partial \gamma_0} \Big[ f_D\left(X-\frac{MCA}{b}\right) \Big] \exp\left( j \frac{mB\Omega}{U} \gamma_0 \right) d\gamma_0
 \end{equation}
-Lift is slightly different as $f_2$ is in the $\xi_0$ direction instead of $\gamma_0$.
+And changing variable and integrating by parts gives
 \begin{equation}
-    \psi_D\left( \frac{mB\Omega}{U}, r_0, \xi_0 \right) = \rho_0 U^2 \int \frac{\partial }{\partial \xi_0} \Big[ \frac{1}{2}\rho_0U^2 C_L f_L\left(X-\frac{MCA}{b}\right) \delta(FA + \xi_0) \Big] \exp\left( j \frac{mB\Omega}{U} \xi_0 \right) d\xi_0
+    \psi_D = \frac{1}{2} \rho_0 U^2 C_D \delta(FA + \xi_0) \left( \Big[ f_D\left(X\right) \exp(jk_xX) \Big]_{-1/2}^{1/2} - jk_x \Psi_D(k_x) \right) \exp\left( j k_x \frac{MCA}{b} \right)
 \end{equation}
+Which simplifies to 
+\begin{equation}
+    \psi_D = \frac{1}{2} \rho_0 U^2 C_D \delta(FA + \xi_0) (-jk_x \Psi_D(k_x)) \exp\left( j k_x \frac{MCA}{b} \right)
+\end{equation}
+Lift is found using the right term
+\begin{equation}
+    \psi_L\left( \frac{mB\Omega}{U}, \xi_0, r_0  \right) = \frac{1}{2} \rho_0 U^2 C_L \frac{\partial }{\partial \xi_0} \Big[ \delta(FA + \xi_0) \Big] \int \Big[  f_L\left(X-\frac{MCA}{b}\right) \Big] \exp\left( j \frac{mB\Omega}{U} \gamma_0 \right) d\gamma_0
+\end{equation}
+A change in variable and rewriting in terms of $\Psi$
+\begin{equation}
+    \psi_L = \frac{1}{2} \rho_0 U^2 C_L b \frac{\partial }{\partial \xi_0} \Big[ \delta(FA + \xi_0) \Big] \Psi_L (k_x) \exp\left( j \frac{mB\Omega}{U} \frac{MCA}{b} \right)
+\end{equation}
+The $\xi_0$ intergral in equation \ref{eq:fourier_coefficient} is then found by integration by parts with the definite term equating to zero, leaving
+\begin{equation}
+    \frac{1}{2} \rho_0 U^2 C_L b \left( j \frac{n\Omega}{c_0}  \cos\theta \right) \exp\left( j \frac{mB\Omega}{U} \frac{MCA}{b} \right) \Psi_L (k_x) \int \delta(FA + \xi_0) \exp\left(-j \frac{n\Omega}{c_0}  \xi_0 \cos\theta\right) d\xi_0
+\end{equation}
+Then by the sifting property of the delta function, the integral is solved to give
+\begin{equation}
+    \frac{1}{2} \rho_0 U^2 C_L b \left( j \frac{n\Omega}{c_0}  \cos\theta \right) \exp\left(j \frac{n\Omega}{c_0}  FA \cos\theta + j \frac{mB\Omega}{U} \frac{MCA}{b}\right)
+\end{equation}
+Then all equations can be combined to a final integral in $r_0$ for the Fourier coefficients of each noise component.
+
+\begin{equation}
+    \begin{aligned}
+        \begin{bmatrix}
+            P_{Vm} \\
+            P_{Dm} \\
+            P_{Lm}
+        \end{bmatrix} = - \frac{\rho_0 c_0^2 \sin(\theta )\exp\left(jn \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right)}{4\pi r} \\
+        \times \int M_r^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB\Omega r_0}{c_0} \sin \theta \right) \begin{bmatrix}
+            k_x^2 t_b \Psi_V(k_x) \\
+            jk_x (C_D / 2) \Psi_D(k_x) \\
+            -jk_y (C_L / 2) \Psi_L(k_x)
+        \end{bmatrix}dz
+    \end{aligned}
+\end{equation}
+
+With
+\begin{align}
+    k_x &= \frac{mB b}{r_0}, \quad
+    k_y = \frac{mB\Omega b}{z c_0} \cos \theta \\
+    \phi_0 &= k_y \frac{FA}{b}, \quad
+    \phi_s = k_x \frac{MCA}{b} \\
+\end{align}
 
 \section{Superposition of Propellers with Even Blade Spacing}
 
