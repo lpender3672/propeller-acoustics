@@ -1,3 +1,7 @@
+! ZachMontgomery 2018
+! A Propeller Model Based on a Modern Numerical Lifting-LineA Propeller Model Based on a Modern Numerical Lifting-Line
+! Algorithm with an Iterative Semi-Free Wake SolverAlgorithm with an Iterative Semi-Free Wake Solver
+! https://github.com/ZachMontgomery/PropellerLiftingLineMethod/tree/master
 module propeller_mod
 use points_mod
 implicit none
