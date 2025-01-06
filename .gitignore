@@ -1,6 +1,10 @@
 
 james_dyson_foundation_bursary_application_oct_2023.docx
 
+build_loading/
+build_app/
+build/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
