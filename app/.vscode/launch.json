@@ -8,7 +8,8 @@
             // cmake target name
             "program": "${workspaceFolder}/build/propeller_lifting_line.exe",
             "args": [
-                "C:/Users/louis/source/repos/propeller-acoustics/app/input.txt"
+                "C:/Users/louis/source/repos/propeller-acoustics/app/props/betz.prop",
+                "C:/Users/louis/source/repos/propeller-acoustics/app/app_vars.json",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

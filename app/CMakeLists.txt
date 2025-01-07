@@ -13,6 +13,7 @@ file(GLOB SOURCES
     pll/points_mod.f90
     pll/propeller.f90
     pll/operating.f90
+    json-lib/*.f90
 )
 
 add_library(pll SHARED pll/pll.f90 ${SOURCES})

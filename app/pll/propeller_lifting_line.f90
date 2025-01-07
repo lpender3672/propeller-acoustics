@@ -9,13 +9,15 @@ use propeller_mod
 implicit none
 !***************************************************************************
 type(propeller) :: prop
-character(100) :: filename
+character(100) :: propfname, operfname
 real :: cpu1, cpu2
 integer :: i
 !***************************************************************************
 call cpu_time(cpu1)
-call get_command_argument(1,filename)
-call get_data(prop, filename)
+call get_command_argument(1,propfname)
+call get_command_argument(2,operfname)
+call get_json_data2(prop, propfname, operfname)
+!call get_data(prop, filename)
 call allocate_propeller(prop)
 call propeller_points(prop)
 prop%G = 100._wp

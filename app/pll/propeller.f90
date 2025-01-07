@@ -276,6 +276,68 @@ end subroutine get_data
 !	write(*,*) prop%nblades, prop%ncontrolpoint
 !
 !end subroutine get_json_data
+subroutine get_json_data2(prop, propfname, operfname)
+	use points_mod
+	use json_module, only: json_file, json_value, json_array
+	implicit none
+	type(propeller), intent(out) :: prop
+	character(100), intent(in) :: propfname, operfname
+
+    type(json_file) :: jprop, joper
+	!type(json_file), pointer :: joper
+	character(len=:), allocatable :: foil_path
+
+	integer :: B, nr, nx
+    real(wp), allocatable :: xc(:), r0(:), r0_rt(:), dz(:), c(:), twist(:), sweep(:)
+    real(wp) :: V, Omega, rho, c0, pref, nu
+
+	! OPERATING DATA
+	call joper%initialize()
+	call joper%load_file(trim(operfname))
+
+	call joper%get('oper.V', V)
+	call joper%get('oper.Omega', Omega)
+	call joper%get('oper.rho', prop%rho)
+	call joper%get('oper.c0', c0)
+	call joper%get('oper.pref', pref)
+	call joper%get('oper.nu', nu)
+
+	prop%Vinf%z = V
+	prop%w%z = Omega
+
+	call joper%destroy()
+
+	! PROPELLER DATA
+	call jprop%initialize()
+	call jprop%load_file(trim(propfname))
+
+	call jprop%print()
+
+    call jprop%get('prop.B', prop%nblades)
+	call jprop%get('prop.nr', prop%ncontrolpoint)
+	!r_prop, r_hub, blade_offset, rot_dir, J, b, phi, n, m, p, relax_factor, rho
+	call jprop%get('prop.rt', prop%r_prop)
+	call jprop%get('prop.rh', prop%r_hub)
+	prop%blade_offset = 0._wp
+	prop%rot_dir = 1
+	prop%phi = 0
+	prop%int_type = 'r' ! or t for trapz
+	prop%p = 1.2 ! power clustering factor
+	prop%relax_factor = 0.7 ! relaxation factor for newtons method
+	prop%n = 100 ! number of loops
+	prop%m = 10 ! number steps per loop
+
+	! arrays
+	!call jprop%get('prop.c', prop%chord)
+	!call jprop%get('prop.twist', prop%twist)
+
+	prop%J = .5_wp*prop%b/prop%r_prop
+
+
+	call jprop%destroy()
+	
+
+end subroutine get_json_data2
 !***************************************************************************
 function nu(prop, i, j)
 use points_mod
