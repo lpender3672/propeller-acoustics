@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug C++ and Fortran with MSVC and Intel Fortran",
+            "type": "cppvsdbg",
+            "request": "launch",
+            // cmake target name
+            "program": "${workspaceFolder}/build/propeller_lifting_line.exe",
+            "args": [
+                "C:/Users/louis/source/repos/propeller-acoustics/app/input.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "integratedTerminal",
+            //"preLaunchTask": "build",  // From tasks.json for building
+            "visualizerFile": "${workspaceFolder}/path/to/.natvis", // Optional: Visualizer for complex data structures
+            "logging": {
+                "moduleLoad": false,
+                "trace": true
+            }
+        }
+    ]
+}

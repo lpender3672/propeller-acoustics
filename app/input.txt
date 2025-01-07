@@ -1,0 +1,19 @@
+		2										number of blades
+		25										number of control points
+	1.0									radius of propeller
+	0.1									radius of hub
+		0.000									blade offset (should be <= radius of hub)
+		righthanded								rotation direction of propeller (righthanded/lefthanded)
+	20.0								Freestream Velocity
+	2400.0								RPM's
+		.0023769								density of air (lbm/ft^3)
+		00.0									start rotation (deg)
+	100.								number of loops
+	10.									number of steps per loop
+		1.2										power clustering factor
+		r										integration type (t for trapezoidal/r for rk4)
+	0.7									relaxation factor for newtons method
+	chord.txt							chord input file
+		twist.txt								twist input file
+		cl.txt									Cl input file
+

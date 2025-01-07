@@ -1,0 +1,4 @@
+		radial coordinate percent		chord length
+		0.								.5
+		1.								.3
+

@@ -2,22 +2,30 @@
 ! A Propeller Model Based on a Modern Numerical Lifting-LineA Propeller Model Based on a Modern Numerical Lifting-Line
 ! Algorithm with an Iterative Semi-Free Wake SolverAlgorithm with an Iterative Semi-Free Wake Solver
 ! https://github.com/ZachMontgomery/PropellerLiftingLineMethod/tree/master
-program propeller_lifting_line
+module pll
+use iso_c_binding
+implicit none
+contains
+
+subroutine propeller_lifting_line(prop, oper) bind(C)
 use points_mod
 use helix_func
 use propeller_mod
+use operating_mod
 implicit none
 !***************************************************************************
-type(propeller) :: prop
+type(propeller), intent(inout) :: prop
+type(operating), intent(in) :: oper
 character(100) :: filename
 real(wp) :: J, CT, CP, CL
 integer :: i
 !***************************************************************************
 
-call get_command_argument(1,filename)
-call get_data(prop, filename)
-call allocate_propeller(prop)
-call propeller_points(prop)
+! all done in python now
+!call get_command_argument(1,filename)
+!call get_data(prop, filename)
+!call allocate_propeller(prop)
+!call propeller_points(prop)
 prop%G = 100._wp
 
 !open(unit = 10, file = 'variable_n_J_.25.txt')
@@ -49,7 +57,6 @@ contains
 !***************************************************************************
 
 !***************************************************************************
-end program propeller_lifting_line
+end subroutine propeller_lifting_line
 
-
-
+end module pll

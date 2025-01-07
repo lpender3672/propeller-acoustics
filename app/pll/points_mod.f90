@@ -5,8 +5,8 @@
 module points_mod
 implicit none
 !***************************************************************************
-integer, parameter :: sp = selected_real_kind(p=6)
-integer, parameter :: wp = selected_real_kind(p=16)
+integer, parameter :: sp = kind(1.0)
+integer, parameter :: wp = kind(1.0d0)
 real(wp), parameter :: pi = 3.14159265358979323846264338327950288419716939937510582_wp
 !***************************************************************************
 type point

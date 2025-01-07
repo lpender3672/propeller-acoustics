@@ -1,0 +1,4 @@
+		radial coordinate percent		twist (deg)
+		0.								71.
+		1.								30.
+

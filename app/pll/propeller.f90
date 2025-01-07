@@ -16,9 +16,9 @@ type propeller
 	real(wp), allocatable, dimension(:) :: twist, cla, G, al0, Clmax, R, dG
 	type(vector),allocatable,dimension(:) :: V, Vp, un, ua, dF, dM
 	type(vector),allocatable,dimension(:,:) :: v_ng
-	character(100) :: chord_f, twist_f, cl_f
 	type(vector) :: Vinf, w, Force_Total, Moment_Total
 	character :: int_type
+	character(100) :: chord_f, twist_f, cl_f
 end type propeller
 !***************************************************************************
 
@@ -253,6 +253,29 @@ subroutine get_data(prop, filename)
 	read(10,*) prop%cl_f
 	close(10)
 end subroutine get_data
+! failed attempt at reading json file
+!subroutine get_json_data(prop, filename)
+!	use json_module, only: json_file, json_value
+!	use points_mod
+!	implicit none
+!	type(propeller), intent(out) :: prop
+!	character(100), intent(in) :: filename
+!
+!	type(json_file) :: json
+!	integer :: ierr, test
+!
+!	call json%load_file(trim(filename), ierr)
+!
+!
+!	call json%get('test', test)
+!	write(*,*) test
+!
+!	!call json%get('prop.foil_path', prop%foil_path)
+!	call json%get('prop.B', prop%nblades)
+!	call json%get('prop.nr', prop%ncontrolpoint)
+!	write(*,*) prop%nblades, prop%ncontrolpoint
+!
+!end subroutine get_json_data
 !***************************************************************************
 function nu(prop, i, j)
 use points_mod
@@ -430,14 +453,16 @@ end subroutine jacobian
 !***************************************************************************
 subroutine calc_dG(prop)
 	use points_mod
-	use matrix_mod
+	use iso_c_binding, only : c_int
+	use ieee_arithmetic, only: ieee_is_nan, ieee_is_finite
 	implicit none
 	type(propeller),intent(inout) :: prop
 	real(wp),allocatable,dimension(:,:) :: a
 	real(wp) :: tol
 	integer,allocatable,dimension(:) :: o
 	real(wp),allocatable,dimension(:) :: b, x
-	integer :: er, n
+	integer(c_int) :: er, n, info
+
 	n = prop%nblades*prop%ncontrolpoint
 	allocate(a(n,n), o(n), b(n), x(n))
 	x = 0._wp
@@ -446,11 +471,33 @@ subroutine calc_dG(prop)
 	tol = .0001_wp
 	er = 0
 	o = 0
-	call ludecomp(a, n, tol, o, er)
-	if (er /= -1) then
-		call substitute(a, o, n, b, x)
+
+!	call ludecomp(a, n, tol, o, er)
+!	if (er /= -1) then
+!		call substitute(a, o, n, b, x)
+!	end if
+!	prop%dG = x
+
+	! print matrix a and vector b
+
+	if (has_nan_matrix(a) .or. has_nan_vector(b)) then
+		print *, "Error: Matrix or vector contains NaNs or Infs!"
+		stop
 	end if
-	prop%dG = x
+
+	call dgesv(n, 1, a, n, o, b, n, info)
+
+    if (info /= 0) then
+        print *, "Error in dgesv: Matrix may be singular or input error. Info:", info
+        er = -1
+	else if (info < 0) then
+        print *, "Error: Invalid argument passed to dgesv. Info:", info
+        er = -1
+    else
+        er = 0
+        prop%dG = b  ! Solution stored in b after dgesv call
+    end if
+
 	deallocate(a, o, b, x)
 end subroutine calc_dG
 !***************************************************************************
@@ -570,6 +617,37 @@ subroutine iter(prop, J)
 	
 end subroutine iter
 !***************************************************************************
+
+logical function has_nan_matrix(a)
+implicit none
+real(wp), intent(in) :: a(:,:)
+integer :: i, j
+has_nan_matrix = .false.
+do i = 1, size(a, 1)
+    do j = 1, size(a, 2)
+        if (isnan(a(i, j))) then
+            has_nan_matrix = .true.
+			write(*,*) 'NaN found in matrix at ',i,j
+            return
+        end if
+    end do
+end do
+end function has_nan_matrix
+
+logical function has_nan_vector(b)
+implicit none
+real(wp), intent(in) :: b(:)
+integer :: i
+has_nan_vector = .false.
+do i = 1, size(b)
+    if (isnan(b(i))) then
+        has_nan_vector = .true.
+		write(*,*) 'NaN found in vector at ',i
+        return
+    end if
+end do
+end function has_nan_vector
+
 end module propeller_mod
 
 

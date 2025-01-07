@@ -1,0 +1,12 @@
+		radial coordinate percent		Cla (rad)
+		0.								6.28
+		1.								6.28
+
+		radial coordinate percent		al0 (deg)
+		0.								-3.
+		1.								-3.
+
+		radial coordinate percent		Clmax
+		0.								1.8
+		1.								1.8
+
