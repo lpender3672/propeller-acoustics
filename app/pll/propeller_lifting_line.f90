@@ -16,8 +16,8 @@ integer :: i
 call cpu_time(cpu1)
 call get_command_argument(1,propfname)
 call get_command_argument(2,operfname)
-call get_json_data2(prop, propfname, operfname)
-!call get_data(prop, filename)
+!call get_json_data2(prop, propfname, operfname)
+call get_data(prop, propfname)
 call allocate_propeller(prop)
 call propeller_points(prop)
 prop%G = 100._wp

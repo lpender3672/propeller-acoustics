@@ -1,11 +1,16 @@
 
 import numpy as np
 
-from xfoil import XFoil
-from xfoil.model import Airfoil
-
 from matplotlib import pyplot as plt
 
+XFOIL_INSTALLED = True
+try: 
+    from xfoil import XFoil
+    from xfoil.model import Airfoil
+except ModuleNotFoundError:
+    XFOIL_INSTALLED = False
+    print("Warning Xfoil not installed - betz.py")
+    
 
 def foil_data(airfoil_data, alpha, Re):
     
@@ -85,7 +90,7 @@ def betz_design(av):
 
         f = B/2 * (1 - xi) / np.sin(phi_t)
         F = 2 / np.pi * np.arccos(np.exp(-f))
-        phi = np.arctan( np.tan(phi_t) / xi)
+        phi = np.arctan2( np.tan(phi_t), xi)
 
         # 3 calculate Wc and Re_c
         G = F * np.cos(phi) * np.sin(phi)
@@ -174,14 +179,14 @@ def betz_off_design(av):
     phi = np.arctan((1 + 0) * lamda / xi)
     dphi = np.inf
 
-    alphas = np.arange(-10, 20, 2.5)
+    if XFOIL_INSTALLED:
+        alphas = np.arange(-10, 20, 2.5)
+        Cl0, Cd0 = foil_data(
+            av.airfoil_data, alphas, 1e6
+        )
+        Cl_valid = ~np.isnan(Cl0)
+        Cd_valid = ~np.isnan(Cd0)
 
-    Cl0, Cd0 = foil_data(
-        av.airfoil_data, alphas, 1e6
-    )
-    Cl_valid = ~np.isnan(Cl0)
-    Cd_valid = ~np.isnan(Cd0)
-    print(alphas, Cl0, Cd0)
     iters = 0
 
     while (np.abs(dphi / phi).all() > 1e-3 and
@@ -195,8 +200,12 @@ def betz_off_design(av):
 
         #Cl = Cl0 + alpha * 2 * np.pi
         #Cd = Cd0
-        Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
-        Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
+        if XFOIL_INSTALLED:
+            Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
+            Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
+        else:
+            Cl = 0.5
+            Cd = 0.1
 
         # better to wait and see if its out of bounds
         # phi = np.clip(phi, beta - alphas.min() * np.pi / 180, beta - alphas.max() * np.pi / 180)

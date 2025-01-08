@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeader
 from PyQt6 import QtWidgets
 from PyQt6 import QtGui, QtCore
 
-def mathTex_to_QPixmap(mathTex, fs):
+def mathTex_to_QPixmap(mathTex, fs, font_colour = None):
 
     #---- set up a mpl figure instance ----
 
@@ -24,7 +24,7 @@ def mathTex_to_QPixmap(mathTex, fs):
     ax = fig.add_axes([0, 0, 1, 1])
     ax.axis('off')
     ax.patch.set_facecolor('none')
-    t = ax.text(0, 0, mathTex, ha='left', va='bottom', fontsize=fs)
+    t = ax.text(0, 0, mathTex, ha='left', va='bottom', fontsize=fs, color = font_colour)
 
     #---- fit figure size to text artist ----
 
@@ -53,8 +53,13 @@ def mathTex_to_QPixmap(mathTex, fs):
     return qpixmap
 
 class TexQTableWidget(QTableWidget):   
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, font_colour = None):
         super(TexQTableWidget, self).__init__(parent)
+
+        font_colour = self.palette().color(QtGui.QPalette.ColorRole.Text)
+        # convert QColor to hex matplotlib style
+        hexcolour = "#{:02x}{:02x}{:02x}".format(font_colour.red(), font_colour.green(), font_colour.blue())
+        self.font_hexcolour = hexcolour
 
         self.setHorizontalHeader(TexHorizHeader(self))
         self.setVerticalHeader(TexVertHeader(self))
@@ -64,7 +69,7 @@ class TexQTableWidget(QTableWidget):
         qpixmaps = []
         indx = 0
         for labels in headerLabels:
-            qpixmaps.append(mathTex_to_QPixmap(labels, fontsize))            
+            qpixmaps.append(mathTex_to_QPixmap(labels, fontsize, self.font_hexcolour))            
             self.setColumnWidth(indx, qpixmaps[indx].size().width() + 16)
             indx += 1
 
@@ -78,7 +83,7 @@ class TexQTableWidget(QTableWidget):
         widths = []
         indx = 0
         for labels in rowLabels:
-            qpixmaps.append(mathTex_to_QPixmap(labels, fontsize))
+            qpixmaps.append(mathTex_to_QPixmap(labels, fontsize, self.font_hexcolour))
             widths.append(qpixmaps[indx].size().width() + 16)
             indx += 1
 

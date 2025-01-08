@@ -114,6 +114,7 @@ subroutine propeller_points(prop)
 	read(10,*) r, clmax2
 	close(10)
 	do i = 0, prop%ncontrolpoint
+		! node cosine distribution
 		r = (prop%r_prop - prop%r_hub) * (1._wp - cos(real(i,wp)*pi/real(prop%ncontrolpoint,wp))) / 2._wp + prop%r_hub
 		if (i > 0) then
 			prop%node(i,2) = offset_chord(r,prop%r_hub,prop%r_prop,prop%blade_offset)
@@ -125,6 +126,7 @@ subroutine propeller_points(prop)
 		end if
 	end do
 	do i = 1, prop%ncontrolpoint
+		! cell cosine distribution
 		r = (prop%r_prop - prop%r_hub) * (1._wp - cos(real(i,wp)*pi/real(prop%ncontrolpoint,wp) &
 			- pi/2._wp/real(prop%ncontrolpoint,wp)))/2._wp + prop%r_hub
 		prop%cp(i) = offset_chord(r,prop%r_hub,prop%r_prop,prop%blade_offset)
@@ -133,7 +135,10 @@ subroutine propeller_points(prop)
 		prop%al0(i) = interpolate(prop%r_hub, prop%r_prop, r, al01, al02) * pi / 180._wp
 		prop%Clmax(i) = interpolate(prop%r_hub, prop%r_prop, r, clmax1, clmax2)
 	end do
+
 	call rotate_blade(prop)
+	write(*,*) 'Node(:,1) ', prop%node(:,1)
+	write(*,*) 'cp(:,1) ', prop%cp(:)
 end subroutine propeller_points
 !***************************************************************************
 function offset_chord(r,rh,rp,k)
@@ -287,9 +292,9 @@ subroutine get_json_data2(prop, propfname, operfname)
 	!type(json_file), pointer :: joper
 	character(len=:), allocatable :: foil_path
 
-	integer :: B, nr, nx
-    real(wp), allocatable :: xc(:), r0(:), r0_rt(:), dz(:), c(:), twist(:), sweep(:)
-    real(wp) :: V, Omega, rho, c0, pref, nu
+	integer :: B, nr, nx, i
+    real(wp), allocatable :: xc(:), r0(:), r0_rt(:), dz(:), chord(:), twist(:), sweep(:)
+    real(wp) :: V, Omega, rho0, c0, pref, nu0
 
 	! OPERATING DATA
 	call joper%initialize()
@@ -300,10 +305,19 @@ subroutine get_json_data2(prop, propfname, operfname)
 	call joper%get('oper.rho', prop%rho)
 	call joper%get('oper.c0', c0)
 	call joper%get('oper.pref', pref)
-	call joper%get('oper.nu', nu)
+	call joper%get('oper.nu', nu0)
 
 	prop%Vinf%z = V
+	prop%Vinf%x = 0._wp
+	prop%Vinf%y = 0._wp
+	prop%Vinf%mag = prop%Vinf%z
+	
+	prop%w%x = 0._wp
+	prop%w%y = 0._wp
 	prop%w%z = Omega
+	prop%w%mag = abs(prop%w%z)
+
+	prop%b = 2._wp*pi*prop%Vinf%z/abs(prop%w%z)
 
 	call joper%destroy()
 
@@ -311,7 +325,7 @@ subroutine get_json_data2(prop, propfname, operfname)
 	call jprop%initialize()
 	call jprop%load_file(trim(propfname))
 
-	call jprop%print()
+	!call jprop%print()
 
     call jprop%get('prop.B', prop%nblades)
 	call jprop%get('prop.nr', prop%ncontrolpoint)
@@ -328,11 +342,27 @@ subroutine get_json_data2(prop, propfname, operfname)
 	prop%m = 10 ! number steps per loop
 
 	! arrays
-	!call jprop%get('prop.c', prop%chord)
-	!call jprop%get('prop.twist', prop%twist)
+	call jprop%get('prop.r0_rt', r0_rt)
+	call jprop%get('prop.c', chord)
+	call jprop%get('prop.twist', twist)
+	call jprop%get('prop.sweep', sweep)
 
 	prop%J = .5_wp*prop%b/prop%r_prop
 
+	call allocate_propeller(prop)
+
+	r0_rt_nodes = linspace(0._wp, 1._wp, prop%ncontrolpoint)
+
+	do i=1, prop%ncontrolpoint
+		prop%node(i,1)%x = r0_rt_nodes(i)
+		prop%node(i,1)%y = 0._wp
+		prop%node(i,1)%z = 0._wp
+		prop%twist(i) = twist(i) * pi / 180._wp
+
+		prop%cp(i)%x = r0_rt(i)
+		prop%cp(i)%y = 0._wp
+		prop%cp(i)%z = 0._wp
+	end do
 
 	call jprop%destroy()
 	
@@ -709,6 +739,19 @@ do i = 1, size(b)
     end if
 end do
 end function has_nan_vector
+
+function linspace(a, b, n)
+use points_mod
+implicit none
+real(wp), intent(in) :: a, b
+integer, intent(in) :: n
+real(wp), allocatable :: linspace(:)
+integer :: i
+allocate(linspace(n))
+do i = 1, n
+	linspace(i) = a + (b-a) * real(i-1,wp) / real(n-1,wp)
+end do
+end function linspace
 
 end module propeller_mod
 

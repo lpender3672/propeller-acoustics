@@ -82,7 +82,7 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
             phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
 
             # large term top of p5
-            term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / (8 * np.pi * y / (2 * prop['rt']) * dopfac_o)
+            term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o) + 1e-10)
 
             bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
             
@@ -176,7 +176,7 @@ def hanson_av(avs):
     prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0) # normalize by area under curve
     prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
 
-    dx = prop['r0'] * np.sin( np.cumsum(prop['sweep']) )
+    dx = prop['r0'] * np.sin( prop['sweep'] )
     phi = np.arcsin(oper['Mx'] / oper['Mr'])
     prop['FA'] = dx * np.sin(phi)
     prop['MCA'] = dx * np.cos(phi)

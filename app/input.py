@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QTableWidgetItem, QWidget, QVBoxLayout, QLineEdit, QPushButton, QFileDialog, QDialog, QDialogButtonBox, QMessageBox
+from PyQt6.QtWidgets import QTableWidgetItem, QWidget, QVBoxLayout, QLineEdit, QPushButton, QFileDialog, QDialog, QDialogButtonBox, QMessageBox, QComboBox
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6 import QtGui
 
@@ -7,6 +7,8 @@ import pyqtgraph as pg
 
 import numpy as np
 import json
+from pathlib import Path
+import os
 
 from table import TexQTableWidget
 
@@ -16,6 +18,17 @@ class InputVar():
         self.unit = unit
         self.description = description
         self.dtype = dtype
+        self.value = None
+
+class InputBox(QComboBox):
+    def __init__(self, items, symbol, description):
+        super().__init__()
+        self.addItems(items)
+
+        self.symbol = symbol
+        self.description = description
+        self.unit = ""
+        self.dtype = str
         self.value = None
 
 class InputTable(TexQTableWidget):
@@ -37,9 +50,17 @@ class InputTable(TexQTableWidget):
         row_names = []
         for i,v in enumerate(self.vars):
             row_names.append(v.symbol)
-            self.setItem(
-                i, 0, QTableWidgetItem()
-            )
+            if isinstance(v, InputVar):
+                self.setItem(
+                    i, 0, QTableWidgetItem()
+                )
+            elif isinstance(v, InputBox):
+                self.setCellWidget(
+                    i, 0, v
+                )
+                v.currentIndexChanged.connect(
+                        lambda index, r=i, c=0: self.on_cell_changed(r, c, index)
+                )
             self.setItem(
                 i, 1, QTableWidgetItem(v.unit)
             )
@@ -49,7 +70,7 @@ class InputTable(TexQTableWidget):
         if len(row_names) > 0:
             self.setVerticalHeaderLabels(row_names)
     
-    def on_cell_changed(self, row, col):
+    def on_cell_changed(self, row, col, index = None):
         if col != 0:
             return
         
@@ -60,17 +81,23 @@ class InputTable(TexQTableWidget):
         
         self.cellChanged.disconnect(self.on_cell_changed)
 
-        try:
-            v.dtype(self.item(row, col).text())
-        except ValueError:
-            self.item(row, col).setBackground(QtGui.QColor(255, 0, 0))
-            self.clearSelection()
-        except AttributeError:
-            print(self.item(row, col))
-        else:
-            v.value = v.dtype(self.item(row, col).text())
-            self.item(row, col).setBackground(QtGui.QColor(255, 255, 255))
-            self.item(row, col).setText(str(v.value))
+        if isinstance(v, InputBox):
+            v.value = v.currentText()
+        
+        elif isinstance(v, InputVar):
+            try:
+                v.dtype(self.item(row, col).text())
+            except ValueError:
+                self.item(row, col).setBackground(QtGui.QColor(255, 0, 0))
+                self.clearSelection()
+            except AttributeError:
+                print(self.item(row, col))
+            else:
+                v.value = v.dtype(self.item(row, col).text())
+                # get color of theme
+                colour = self.palette().color(QtGui.QPalette.ColorRole.Base)
+                self.item(row, col).setBackground(colour)
+                self.item(row, col).setText(str(v.value))
 
         self.cellChanged.connect(self.on_cell_changed)
     
@@ -78,7 +105,11 @@ class InputTable(TexQTableWidget):
         self.cellChanged.disconnect(self.on_cell_changed)
 
         for i,v in enumerate(self.vars):
-            self.item(i, 0).setText(str(v.value))
+            if isinstance(v, InputVar):
+                self.item(i, 0).setText(str(v.value))
+            elif isinstance(v, InputBox):
+                # set index of combobox
+                self.cellWidget(i, 0).setCurrentText(v.value)
 
         self.cellChanged.connect(self.on_cell_changed)
 
@@ -93,11 +124,12 @@ class PropInputTable(InputTable):
             InputVar(r"$r_h$", "[m]", "Blade hub radius", float),
             InputVar(r"$n_r$", "[-]", "Radial sections", int),
             InputVar(r"$n_x$", "[-]", "Chordwise elements per section", int),
+            InputBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
         ]
         super().__init__(vars, parent)
     
-    def on_cell_changed(self, row, col):
-        super().on_cell_changed(row, col)
+    def on_cell_changed(self, row, col, index=None):
+        super().on_cell_changed(row, col, index)
         self.new_prop.emit()
 
     
@@ -108,9 +140,14 @@ class PropInputTable(InputTable):
         prop['rh'] = self.vars[2].value
         prop['nr'] = self.vars[3].value # radial sections
         prop['nx'] = self.vars[4].value # chordwise elements per section
+        prop['rdist'] = self.vars[5].value
 
         xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
-        rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
+        if prop['rdist'] == "Linear":
+            rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
+        elif prop['rdist'] == "Cosine":
+            rarr_pts = prop['rh'] + (prop['rt']-prop['rh'])/2 * (1 - np.cos(np.linspace(0,np.pi,prop['nr']+1)))
+
         prop['xc']  = (xc_pts[1:] + xc_pts[:-1]) / 2
         prop['r0'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
         prop['r0_rt'] = prop['r0'] / prop['rt']
@@ -124,6 +161,7 @@ class PropInputTable(InputTable):
         self.vars[2].value = prop['rh']
         self.vars[3].value = prop['nr']
         self.vars[4].value = prop['nx']
+        self.vars[5].value = prop['rdist']
                 
         super().set_values()
 
@@ -135,14 +173,14 @@ class OperInputTable(InputTable):
             InputVar(r"$\rho_0$", "[kg/m3]", "Air density", float),
             InputVar(r"$\nu$", "[m2/s]", "Kinematic viscosity", float),
             InputVar(r"$c_0$", "[m/s]", "Speed of sound", float),
-            InputVar(r"$p_\text{ref}$", "[Pa]", "Reference pressure for SPL", float),
+            InputVar(r"$p_{ref}$", "[Pa]", "Reference pressure for SPL", float),
             InputVar(r"$V$", "[m/s]", "Free stream velocity", float),
             InputVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
         ]
         super().__init__(vars, parent)
     
-    def on_cell_changed(self, row, col):
-        super().on_cell_changed(row, col)
+    def on_cell_changed(self, row, col, index=None):
+        super().on_cell_changed(row, col, index)
         self.new_oper.emit()
 
     
@@ -273,6 +311,30 @@ class InputWidget(QWidget):
             QMessageBox.critical(self, "Error", "Failed to load propeller data from file.")
             return
         
+        try:
+            filepath = indata['prop']['foil_path']
+            airfoil_data = np.loadtxt(filepath)
+        except (KeyError, IndexError):
+            QMessageBox.critical(self, "Error", "Failed to load airfoil data from file for propeller.")
+            return
+        except FileNotFoundError:
+            # search for file name in current directory
+            current_dir = Path(os.getcwd())
+            filepath = Path(filepath)
+            # call some kind of recursive search function
+            for file in current_dir.rglob('*.surf'):
+                if file.name == filepath.name:
+                    filename = str(file)
+                    break
+            else:
+                QMessageBox.critical(self, "Error", "Failed to find airfoil file in current directory.")
+                return
+            airfoil_data = np.loadtxt(filename)
+
+        
+        self.foil_path.setText(filename)
+        self.airfoil_data = airfoil_data
+        
         self.prop = indata['prop']
         for key, item in self.prop.items():
             if isinstance(item, list):
@@ -284,12 +346,6 @@ class InputWidget(QWidget):
         
 
         self.prop_table.set_values(self.prop)
-
-        filename = self.prop['foil_path']
-        self.foil_path.setText(filename)
-        airfoil_data = np.loadtxt(filename)
-        self.airfoil_data = airfoil_data
-
         self.new_prop_from_file.emit()
 
     def load_foil_from_click(self):

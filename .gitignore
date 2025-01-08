@@ -5,6 +5,9 @@ build_loading/
 build_app/
 build/
 
+# py env
+propeller_env/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

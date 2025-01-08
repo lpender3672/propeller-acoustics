@@ -18,7 +18,7 @@ def generate_blade_mesh(av):
 
     xf -= 0.5 # quarter chord
 
-    sweep_angle = np.cumsum(av.prop['sweep'])
+    sweep_angle = av.prop['sweep']
     
     assert len(chord) == len(twist) == len(radius) == len(sweep_angle)
 

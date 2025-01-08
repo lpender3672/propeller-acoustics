@@ -61,6 +61,7 @@ class MainWindow(QWidget):
         self.aerodynamic_results_widget = AerodynamicResultsWidget(self)
 
         self.dists_widget.setMaximumWidth(500)
+        self.dists_widget.setMinimumWidth(400)
         self.input_widget.setMinimumWidth(400)
         self.stl_viewer.setMinimumHeight(400)
         self.stl_viewer.setMinimumWidth(400)
