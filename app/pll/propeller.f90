@@ -341,9 +341,9 @@ subroutine get_app_data(prop, filename)
 	end do
 
 	call allocate_propeller(prop)
-	prop%node(1:prop%ncontrolpoint,1)%x = r0_nodes(1:prop%ncontrolpoint)
-	prop%node(1:prop%ncontrolpoint,2)%x = r0_nodes(2:prop%ncontrolpoint+1)
-	prop%cp(1:prop%ncontrolpoint)%x = r0_rt
+	prop%node(1:prop%ncontrolpoint,1)%x = r0_nodes(1:prop%ncontrolpoint) * prop%r_prop
+	prop%node(1:prop%ncontrolpoint,2)%x = r0_nodes(2:prop%ncontrolpoint+1) * prop%r_prop
+	prop%cp(1:prop%ncontrolpoint)%x = r0_rt * prop%r_prop
 	prop%chord(1:prop%ncontrolpoint,1) = chord
 	prop%twist(1:prop%ncontrolpoint) = twist
 	prop%cla(1:prop%ncontrolpoint) = 2._wp*pi ! dCl/dalpha at each control point

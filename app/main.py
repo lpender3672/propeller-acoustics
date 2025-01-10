@@ -11,6 +11,7 @@ import numpy as np
 from scipy.interpolate import interp2d
 import json
 import os
+import subprocess
 from pathlib import Path
 
 class AppVars(QObject):
@@ -51,6 +52,9 @@ class MainWindow(QWidget):
         self.attach_signals()
 
         av_file = self.app_dir / "app_vars.json"
+        self.ft_input_file = self.app_dir / "ft_input.dat"
+        self.ft_output_file = self.app_dir / "ft_output.dat"
+
         if not self.input_widget.load_oper_from_file(av_file):
             pass
             
@@ -104,7 +108,8 @@ class MainWindow(QWidget):
         )
 
         if update_results:
-            self.input_widget.save_to_fortran(self.app_dir / "ft_input.dat", self.av)
+            self.input_widget.save_to_fortran(self.ft_input_file, self.av)
+            subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.noise_results_widget.update_results(self.av)
             self.aerodynamic_results_widget.update_results(self.av)
     
@@ -126,7 +131,8 @@ class MainWindow(QWidget):
         )
 
         if update_results:
-            self.input_widget.save_to_fortran(self.app_dir / "ft_input.dat", self.av)
+            self.input_widget.save_to_fortran(self.ft_input_file, self.av)
+            subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
 
