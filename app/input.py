@@ -10,6 +10,16 @@ import json
 from pathlib import Path
 import os
 
+
+XFOIL_INSTALLED = True
+try: 
+    from xfoil import XFoil
+    from xfoil.model import Airfoil
+except ModuleNotFoundError:
+    XFOIL_INSTALLED = False
+    print("Warning Xfoil not installed - betz.py")
+
+
 from table import TexQTableWidget
 
 class InputVar():
@@ -30,6 +40,36 @@ class InputBox(QComboBox):
         self.unit = ""
         self.dtype = str
         self.value = None
+
+
+def foil_data(airfoil_data, alpha, Re):
+    
+    xf = XFoil()
+    xf.airfoil = Airfoil(
+        airfoil_data[:,0],
+        airfoil_data[:,1]
+        )
+    xf.Re = Re
+    xf.M = 0.0
+    xf.max_iter = 100
+    xf.verbose = False
+
+    if isinstance(alpha, float):
+        cls = np.zeros(1)
+        cds = np.zeros(1)
+        alpha = [alpha]
+    else:
+        cls = np.zeros(len(alpha))
+        cds = np.zeros(len(alpha))
+
+    for i, a in enumerate(alpha):
+        out = xf.a(a)
+        print(out)
+        cl, cd, _, _ = out
+        cls[i] = cl
+        cds[i] = cd
+
+    return cls, cds
 
 class InputTable(TexQTableWidget):
     def __init__(self, vars, parent):
@@ -125,6 +165,7 @@ class PropInputTable(InputTable):
             InputVar(r"$n_r$", "[-]", "Radial sections", int),
             InputVar(r"$n_x$", "[-]", "Chordwise elements per section", int),
             InputBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
+            InputVar(r"$c_{75}$", "[m]", "75% Chord", float),
         ]
         super().__init__(vars, parent)
     
@@ -141,6 +182,7 @@ class PropInputTable(InputTable):
         prop['nr'] = self.vars[3].value # radial sections
         prop['nx'] = self.vars[4].value # chordwise elements per section
         prop['rdist'] = self.vars[5].value
+        prop['c75'] = self.vars[6].value
 
         xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
         if prop['rdist'] == "Linear":
@@ -162,6 +204,7 @@ class PropInputTable(InputTable):
         self.vars[3].value = prop['nr']
         self.vars[4].value = prop['nx']
         self.vars[5].value = prop['rdist']
+        self.vars[6].value = prop['c75']
                 
         super().set_values()
 
@@ -324,16 +367,18 @@ class InputWidget(QWidget):
             # call some kind of recursive search function
             for file in current_dir.rglob('*.surf'):
                 if file.name == filepath.name:
-                    filename = str(file)
+                    filepath = str(file)
+                    indata['prop']['foil_path'] = filepath
                     break
             else:
                 QMessageBox.critical(self, "Error", "Failed to find airfoil file in current directory.")
                 return
-            airfoil_data = np.loadtxt(filename)
+            airfoil_data = np.loadtxt(filepath)
 
         
-        self.foil_path.setText(filename)
+        self.foil_path.setText(filepath)
         self.airfoil_data = airfoil_data
+        self.run_xfoil()
         
         self.prop = indata['prop']
         for key, item in self.prop.items():
@@ -367,6 +412,7 @@ class InputWidget(QWidget):
         if dialog.result():
             self.foil_path.setText(path)
             self.airfoil_data = airfoil_data
+            self.run_xfoil()
             self.on_new_prop()
 
     def save_prop_to_file(self, avs):
@@ -400,7 +446,13 @@ class InputWidget(QWidget):
         except:
             QMessageBox.critical(self, "Error", "Failed to save propeller data to file.")
             return
-        
+    
+    def run_xfoil(self):
+
+        alphas = np.linspace(-20, 20, self.airfoil_data.shape[0])
+        cls, cds = foil_data(self.airfoil_data, alphas, 1e6)
+        self.airfoil_data = np.column_stack((self.airfoil_data, alphas, cls, cds))
+
     
     def load_oper_from_file(self, filename):
         try:
@@ -424,4 +476,41 @@ class InputWidget(QWidget):
             print("Error saving to directory")
             return
 
-        
+    def save_to_fortran(self, fname, avs):
+
+        prop = avs.prop
+        oper = avs.oper
+
+        with open(fname, 'w') as f:
+            f.write(f"{prop['B']}\n")
+            f.write(f"{prop['nr']}\n")
+            f.write(f"{prop['nx']}\n")
+            f.write(f"{prop['rt']}\n")
+            f.write(f"{prop['rh']}\n")
+
+            f.write(f"{oper['V']}\n")
+            f.write(f"{oper['Omega']}\n")
+            f.write(f"{oper['rho']}\n")
+
+            f.write(f"{prop['foil_path']}\n")
+            f.write(f"{prop['rdist']}\n")
+
+            f.write(f"r0_r0\n")
+            for r in prop['r0_rt']:
+                f.write(f"{r}\n")
+            f.write(f"xc\n")
+            for c in prop['xc']:
+                f.write(f"{c}\n")
+            f.write(f"dz\n")
+            for dz in prop['dz']:
+                f.write(f"{dz}\n")
+            f.write(f"chord\n")
+            for c in prop['c']:
+                f.write(f"{c}\n")
+            f.write(f"twist\n")
+            for t in prop['twist']:
+                f.write(f"{t}\n")
+            f.write(f"sweep\n")
+            for s in prop['sweep']:
+                f.write(f"{s}\n")
+                

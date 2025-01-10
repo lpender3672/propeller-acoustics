@@ -7,7 +7,7 @@ use points_mod
 implicit none
 !***************************************************************************
 type propeller
-	integer :: nblades, ncontrolpoint
+	integer :: nblades, ncontrolpoint, nfoilpoint
 	real(wp) :: r_prop, r_hub, blade_offset, rot_dir, J, b, phi, n, m, p, relax_factor, rho
 	character(11) :: rotation_direction
 	type(point),allocatable,dimension(:,:) :: node
@@ -258,6 +258,124 @@ subroutine get_data(prop, filename)
 	read(10,*) prop%cl_f
 	close(10)
 end subroutine get_data
+
+subroutine get_app_data(prop, filename)
+	use points_mod
+	implicit none
+	type(propeller), intent(out) :: prop
+	character(100), intent(in) :: filename
+	character(100) :: foil_path, rdist
+
+	real(wp), allocatable :: r0_nodes(:), r0_rt_nodes(:), r0(:), r0_rt(:), chord(:), twist(:), sweep(:), xc(:), dz(:)
+	integer :: i
+	
+	open(unit = 10, file = filename, action = 'read')
+	read(10,*) prop%nblades
+	read(10,*) prop%ncontrolpoint
+	read(10,*) prop%nfoilpoint
+	read(10,*) prop%r_prop
+	read(10,*) prop%r_hub
+
+	prop%blade_offset = 0._wp
+	prop%rotation_direction = 'righthanded'
+	prop%rot_dir = 1
+	read(10,*) prop%Vinf%z
+	prop%Vinf%x = 0._wp
+	prop%Vinf%y = 0._wp
+	prop%Vinf%mag = prop%Vinf%z
+	read(10,*) prop%w%z
+	prop%w%x = 0._wp
+	prop%w%y = 0._wp
+	prop%w%z = prop%w%z
+	prop%w%mag = abs(prop%w%z)
+	prop%b = 2._wp*pi*prop%Vinf%z/abs(prop%w%z)
+	prop%J = .5_wp*prop%b/prop%r_prop
+	read(10,*) prop%rho
+	prop%phi = 0
+	prop%int_type = 'r' ! or t for trapz
+	prop%p = 1.2 ! power clustering factor
+	prop%relax_factor = 0.7 ! relaxation factor for newtons method
+	prop%n = 100 ! number of loops
+	prop%m = 10 ! number steps per loop
+
+	! now read arrays
+	read(10,*) foil_path
+	read(10,*) rdist
+
+	if (trim(rdist) == 'Linear') then
+		r0_nodes = linspace(prop%r_hub, prop%r_prop, prop%ncontrolpoint+1)
+	else if (trim(rdist) == 'Cosine') then
+		r0_nodes = prop%r_hub + (prop%r_prop-prop%r_hub)/2._wp * (1._wp - cos(linspace(0._wp,pi, prop%ncontrolpoint+1)))
+	end if
+
+	!r0_r0
+	!xc
+	!dz
+	!chord
+	!twist
+	!sweep
+	read(10,*)
+	allocate(r0_rt(prop%ncontrolpoint), xc(prop%nfoilpoint), dz(prop%nfoilpoint), chord(prop%ncontrolpoint), twist(prop%ncontrolpoint), sweep(prop%ncontrolpoint))
+	do i=1, prop%ncontrolpoint
+		read(10,*) r0_rt(i)
+	end do
+	read(10,*)
+	do i=1, prop%nfoilpoint
+		read(10,*) xc(i)
+	end do
+	read(10,*)
+	do i=1, prop%nfoilpoint
+		read(10,*) dz(i)
+	end do
+	read(10,*)
+	do i=1, prop%ncontrolpoint
+		read(10,*) chord(i)
+	end do
+	read(10,*)
+	do i=1, prop%ncontrolpoint
+		read(10,*) twist(i)
+	end do
+	read(10,*)
+	do i=1, prop%ncontrolpoint
+		read(10,*) sweep(i)
+	end do
+
+	call allocate_propeller(prop)
+	prop%node(1:prop%ncontrolpoint,1)%x = r0_nodes(1:prop%ncontrolpoint)
+	prop%node(1:prop%ncontrolpoint,2)%x = r0_nodes(2:prop%ncontrolpoint+1)
+	prop%cp(1:prop%ncontrolpoint)%x = r0_rt
+	prop%chord(1:prop%ncontrolpoint,1) = chord
+	prop%twist(1:prop%ncontrolpoint) = twist
+	prop%cla(1:prop%ncontrolpoint) = 2._wp*pi ! dCl/dalpha at each control point
+
+	call rotate_blade(prop)
+
+end subroutine get_app_data
+
+subroutine write_output(prop, filename)
+	use points_mod
+	implicit none
+	type(propeller), intent(in) :: prop
+	character(100), intent(in) :: filename
+	character(100) :: foil_path, rdist
+	real(wp) :: CT, CL, CP
+	
+	real(wp), allocatable :: r0_nodes(:), r0_rt_nodes(:), r0(:), r0_rt(:), chord(:), twist(:), sweep(:), xc(:), dz(:)
+	integer :: i
+	
+	open(unit = 10, file = filename, action = 'write')
+
+	CT = prop%Force_Total%mag / prop%rho / prop%w%mag **2._wp / (prop%r_prop * 2._wp) ** 4._wp * 4._wp * pi ** 2._wp
+	CL = prop%Moment_Total%mag / prop%rho / prop%w%mag **2._wp / (prop%r_prop * 2._wp) ** 5._wp * 4._wp * pi ** 2._wp
+	CP = CL * 2._wp * pi
+	write(10,*) 'CT = ',CT
+	write(10,*) 'CL = ',CL
+	write(10,*) 'CP = ',CP
+
+	close(10)
+
+end subroutine write_output
+
 ! failed attempt at reading json file
 !subroutine get_json_data(prop, filename)
 !	use json_module, only: json_file, json_value
@@ -281,93 +399,117 @@ end subroutine get_data
 !	write(*,*) prop%nblades, prop%ncontrolpoint
 !
 !end subroutine get_json_data
-subroutine get_json_data2(prop, propfname, operfname)
-	use points_mod
-	use json_module, only: json_file, json_value, json_array
-	implicit none
-	type(propeller), intent(out) :: prop
-	character(100), intent(in) :: propfname, operfname
-
-    type(json_file) :: jprop, joper
-	!type(json_file), pointer :: joper
-	character(len=:), allocatable :: foil_path
-
-	integer :: B, nr, nx, i
-    real(wp), allocatable :: xc(:), r0(:), r0_rt(:), dz(:), chord(:), twist(:), sweep(:)
-    real(wp) :: V, Omega, rho0, c0, pref, nu0
-
-	! OPERATING DATA
-	call joper%initialize()
-	call joper%load_file(trim(operfname))
-
-	call joper%get('oper.V', V)
-	call joper%get('oper.Omega', Omega)
-	call joper%get('oper.rho', prop%rho)
-	call joper%get('oper.c0', c0)
-	call joper%get('oper.pref', pref)
-	call joper%get('oper.nu', nu0)
-
-	prop%Vinf%z = V
-	prop%Vinf%x = 0._wp
-	prop%Vinf%y = 0._wp
-	prop%Vinf%mag = prop%Vinf%z
-	
-	prop%w%x = 0._wp
-	prop%w%y = 0._wp
-	prop%w%z = Omega
-	prop%w%mag = abs(prop%w%z)
-
-	prop%b = 2._wp*pi*prop%Vinf%z/abs(prop%w%z)
-
-	call joper%destroy()
-
-	! PROPELLER DATA
-	call jprop%initialize()
-	call jprop%load_file(trim(propfname))
-
-	!call jprop%print()
-
-    call jprop%get('prop.B', prop%nblades)
-	call jprop%get('prop.nr', prop%ncontrolpoint)
-	!r_prop, r_hub, blade_offset, rot_dir, J, b, phi, n, m, p, relax_factor, rho
-	call jprop%get('prop.rt', prop%r_prop)
-	call jprop%get('prop.rh', prop%r_hub)
-	prop%blade_offset = 0._wp
-	prop%rot_dir = 1
-	prop%phi = 0
-	prop%int_type = 'r' ! or t for trapz
-	prop%p = 1.2 ! power clustering factor
-	prop%relax_factor = 0.7 ! relaxation factor for newtons method
-	prop%n = 100 ! number of loops
-	prop%m = 10 ! number steps per loop
-
-	! arrays
-	call jprop%get('prop.r0_rt', r0_rt)
-	call jprop%get('prop.c', chord)
-	call jprop%get('prop.twist', twist)
-	call jprop%get('prop.sweep', sweep)
-
-	prop%J = .5_wp*prop%b/prop%r_prop
-
-	call allocate_propeller(prop)
-
-	r0_rt_nodes = linspace(0._wp, 1._wp, prop%ncontrolpoint)
-
-	do i=1, prop%ncontrolpoint
-		prop%node(i,1)%x = r0_rt_nodes(i)
-		prop%node(i,1)%y = 0._wp
-		prop%node(i,1)%z = 0._wp
-		prop%twist(i) = twist(i) * pi / 180._wp
-
-		prop%cp(i)%x = r0_rt(i)
-		prop%cp(i)%y = 0._wp
-		prop%cp(i)%z = 0._wp
-	end do
-
-	call jprop%destroy()
-	
-
-end subroutine get_json_data2
+!subroutine get_json_data2(prop, propfname, operfname)
+!	use points_mod
+!	use json_module, only: json_file, json_value, json_array
+!	implicit none
+!	type(propeller), intent(out) :: prop
+!	character(100), intent(in) :: propfname, operfname
+!
+!    type(json_file) :: jprop, joper
+!	!type(json_file), pointer :: joper
+!	character(len=:), allocatable :: foil_path, rdist, error_message
+!
+!	integer :: nr, nx, i
+!    real(wp), allocatable :: xc(:), r0_nodes(:), r0_rt_nodes(:), r0(:), r0_rt(:), dz(:), chord(:), twist(:), sweep(:)
+!    real(wp) :: V, Omega, rho0, c0, pref, nu0
+!	logical :: found
+!
+!	! OPERATING DATA
+!	call joper%initialize()
+!	call joper%load_file(trim(operfname))
+!	found = .false.
+!
+!	call joper%get('oper.V', V)
+!	call joper%get('oper.Omega', Omega)
+!	call joper%get('oper.rho', prop%rho)
+!	call joper%get('oper.c0', c0)
+!	call joper%get('oper.pref', pref)
+!	call joper%get('oper.nu', nu0)
+!
+!	prop%Vinf%z = V
+!	prop%Vinf%x = 0._wp
+!	prop%Vinf%y = 0._wp
+!	prop%Vinf%mag = prop%Vinf%z
+!	
+!	prop%w%x = 0._wp
+!	prop%w%y = 0._wp
+!	prop%w%z = Omega
+!	prop%w%mag = abs(prop%w%z)
+!
+!	prop%b = 2._wp*pi*prop%Vinf%z/abs(prop%w%z)
+!
+!	call joper%destroy()
+!
+!	! PROPELLER DATA
+!	call jprop%initialize()
+!	call jprop%load_file(trim(propfname))
+!	call jprop%check_for_errors(found, error_message)
+!	if (.not. found) then
+!		write(*,*) error_message
+!		stop
+!	end if
+!
+!	call jprop%print()
+!
+!	!call jprop%print()
+!	call jprop%get('prop.foil_path', foil_path)
+!    call jprop%get('prop.B', prop%nblades)
+!	call jprop%get('prop.nr', prop%ncontrolpoint)
+!	!r_prop, r_hub, blade_offset, rot_dir, J, b, phi, n, m, p, relax_factor, rho
+!	call jprop%get('prop.rt', prop%r_prop)
+!	call jprop%get('prop.rh', prop%r_hub)
+!	call jprop%get('prop.rdist', rdist)
+!	prop%blade_offset = 0._wp
+!	prop%rot_dir = 1
+!	prop%phi = 0
+!	prop%int_type = 'r' ! or t for trapz
+!	prop%p = 1.2 ! power clustering factor
+!	prop%relax_factor = 0.7 ! relaxation factor for newtons method
+!	prop%n = 100 ! number of loops
+!	prop%m = 10 ! number steps per loop
+!
+!	!allocate(twist(prop%ncontrolpoint))
+!
+!	! arrays
+!	!call jprop%get('prop.r0_rt', r0_rt)
+!	!call jprop%get('prop.c', chord)
+!	!call jprop%get('prop.twist', twist)
+!	call jprop%get('prop.twist', pref, found)
+!	write(*,*) i, " ", pref
+!	!call jprop%get('prop.sweep', sweep)
+!
+!	prop%J = .5_wp*prop%b/prop%r_prop
+!
+!	call allocate_propeller(prop)
+!
+!	!if prop['rdist'] == "Linear":
+!    !        rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
+!	!elif prop['rdist'] == "Cosine":
+!	!	rarr_pts = prop['rh'] + (prop['rt']-prop['rh'])/2 * (1 - np.cos(np.linspace(0,np.pi,prop['nr']+1)))
+!	if (rdist == 'Linear') then
+!		r0_nodes = linspace(prop%r_hub, prop%r_prop, prop%ncontrolpoint+1)
+!	else if (rdist == 'Cosine') then
+!		r0_nodes = prop%r_hub + (prop%r_prop-prop%r_hub)/2._wp * (1._wp - cos(linspace(0._wp,pi, prop%ncontrolpoint+1)))
+!	end if
+!
+!	r0_rt_nodes = r0_nodes / prop%r_prop
+!
+!	do i=1, prop%ncontrolpoint
+!		prop%node(i,1)%x = r0_rt_nodes(i)
+!		prop%node(i,1)%y = 0._wp
+!		prop%node(i,1)%z = 0._wp
+!		prop%twist(i) = twist(i) * pi / 180._wp
+!
+!		prop%cp(i)%x = r0_rt(i)
+!		prop%cp(i)%y = 0._wp
+!		prop%cp(i)%z = 0._wp
+!	end do
+!
+!	call jprop%destroy()
+!	
+!
+!end subroutine get_json_data2
 !***************************************************************************
 function nu(prop, i, j)
 use points_mod
@@ -740,17 +882,19 @@ do i = 1, size(b)
 end do
 end function has_nan_vector
 
-function linspace(a, b, n)
-use points_mod
-implicit none
-real(wp), intent(in) :: a, b
-integer, intent(in) :: n
-real(wp), allocatable :: linspace(:)
-integer :: i
-allocate(linspace(n))
-do i = 1, n
-	linspace(i) = a + (b-a) * real(i-1,wp) / real(n-1,wp)
-end do
+function linspace(a, b, n) result(linspace_arr)
+    use points_mod
+    implicit none
+    real(wp), intent(in) :: a, b
+    integer, intent(in) :: n
+    real(wp), allocatable :: linspace_arr(:)
+    integer :: i
+
+    allocate(linspace_arr(n))
+	linspace_arr = 0.0_wp
+    do i = 1, n
+        linspace_arr(i) = a + (b-a) * real(i-1,wp) / real(n-1,wp)
+    end do
 end function linspace
 
 end module propeller_mod

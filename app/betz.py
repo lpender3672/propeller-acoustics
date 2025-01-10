@@ -179,18 +179,20 @@ def betz_off_design(av):
     phi = np.arctan((1 + 0) * lamda / xi)
     dphi = np.inf
 
+    loss_model = 'Prantl'
+
     if XFOIL_INSTALLED:
-        alphas = np.arange(-10, 20, 2.5)
-        Cl0, Cd0 = foil_data(
-            av.airfoil_data, alphas, 1e6
-        )
+        alphas = av.airfoil_data[:, 2]
+        Cl0 = av.airfoil_data[:, 3]
+        Cd0 = av.airfoil_data[:, 4]
         Cl_valid = ~np.isnan(Cl0)
         Cd_valid = ~np.isnan(Cd0)
 
     iters = 0
 
-    while (np.abs(dphi / phi).all() > 1e-3 and
-           iters < 1000):
+    while (iters < 1000):
+        if (np.max(dphi / phi) < 1e-3):
+            break
 
         # Analysis of Arbitrary Designs
         # Charles N. Adkins*
@@ -216,7 +218,13 @@ def betz_off_design(av):
         K_prime = Cx / (4 * np.sin(phi) * np.cos(phi))
         sigma = B * c / (2 * np.pi * xi * R)
         phi_t = np.arctan( xi * np.tan(phi))
-        F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1 - xi) / np.sin(phi_t))) # Prandtl tip loss factor
+        if loss_model == 'Prantl':
+            F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1 - xi) / np.sin(phi_t))) # Prandtl tip loss factor
+        elif loss_model == 'Viterna':
+            pass
+        else:
+            F = 1 # no tip loss factor
+
         a = sigma * K * ( F - sigma * K)
         a_prime = sigma * K_prime * ( F + sigma * K_prime)
         # Viterna and Janetzke clip a and a_prime to 0.7
@@ -233,6 +241,12 @@ def betz_off_design(av):
         phi = new_phi
         iters += 1
 
+    else:
+        # never broke out of loop
+        av.res['converged'] = False
+        return av
+    
+    av.res['converged'] = True
     # set interesting values
     
     CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F / ((F + sigma * K_prime) * np.cos(phi))**2
@@ -245,9 +259,15 @@ def betz_off_design(av):
 
     FM = np.abs(CT) ** (2/3) / np.abs(CP)
 
+    av.res['CT'] = CT
+    av.res['CP'] = CP
+    av.res['FM'] = FM
+    av.res['Cx'] = CP_prime
+    av.res['Cz'] = CT_prime
+
     print(f"CP: {CP}, CT: {CT}, FM: {FM}")
 
-    return True
+    return av
 
 
 

@@ -11,6 +11,7 @@ import numpy as np
 from scipy.interpolate import interp2d
 import json
 import os
+from pathlib import Path
 
 class AppVars(QObject):
     #new_oper = pyqtSignal()
@@ -30,6 +31,10 @@ class AppVars(QObject):
 
         }
 
+        self.res = {
+            
+        }
+
         self.airfoil_data = np.array(
             []
         )
@@ -40,13 +45,13 @@ class MainWindow(QWidget):
 
         self.av = AppVars()
 
-        self.app_dir = os.path.dirname(os.path.realpath(__file__))
+        self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
         
         self.assemble_widgets()
         self.attach_signals()
 
-        av_file = os.path.join(self.app_dir, "app_vars.json")
-        if self.input_widget.load_oper_from_file(av_file):
+        av_file = self.app_dir / "app_vars.json"
+        if not self.input_widget.load_oper_from_file(av_file):
             pass
             
         self.stl_viewer.load_stl_file("practical/designs/clarkY.stl")#
@@ -99,6 +104,7 @@ class MainWindow(QWidget):
         )
 
         if update_results:
+            self.input_widget.save_to_fortran(self.app_dir / "ft_input.dat", self.av)
             self.noise_results_widget.update_results(self.av)
             self.aerodynamic_results_widget.update_results(self.av)
     
@@ -109,19 +115,20 @@ class MainWindow(QWidget):
 
         self.dists_widget.set_dists(self.av)
 
-    def update_oper(self):
+    def update_oper(self, update_results = True):
         print("Updating oper")
         self.av.oper.update(self.input_widget.oper)
-
-        # update results
-
-        self.noise_results_widget.update_results(self.av)
 
         # update mesh
 
         self.stl_viewer.set_mesh(
             generate_blade_mesh(self.av), self.av.prop["B"]
         )
+
+        if update_results:
+            self.input_widget.save_to_fortran(self.app_dir / "ft_input.dat", self.av)
+            self.aerodynamic_results_widget.update_results(self.av)
+            self.noise_results_widget.update_results(self.av)
 
     def save_prop(self):
         self.input_widget.save_prop_to_file(self.av)

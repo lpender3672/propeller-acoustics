@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.16)
-set (CMAKE_Fortran_COMPILER "ifx")
+set (CMAKE_Fortran_COMPILER "ifx.exe")
 
 project(pll_solver VERSION 1.2.0 LANGUAGES CXX Fortran)
 
@@ -34,11 +34,11 @@ if(MKL_INCLUDE_DIR AND MKL_LIBRARY)
 
     target_link_libraries(pll PRIVATE ${MKL_LIBRARY})
     
-    target_link_options(pll PRIVATE "-Wl,--start-group ${MKL_LIBRARY} -Wl,--end-group")
+    #target_link_options(pll PRIVATE "-Wl,--start-group ${MKL_LIBRARY} -Wl,--end-group")
 
     target_link_libraries(propeller_lifting_line PRIVATE ${MKL_LIBRARY})
 
-    target_link_options(propeller_lifting_line PRIVATE "-Wl,--start-group ${MKL_LIBRARY} -Wl,--end-group")
+    #target_link_options(propeller_lifting_line PRIVATE "-Wl,--start-group ${MKL_LIBRARY} -Wl,--end-group")
 else()
     message(FATAL_ERROR "MKL not found. Please ensure MKL is installed and MKLROOT is set.")
 endif()

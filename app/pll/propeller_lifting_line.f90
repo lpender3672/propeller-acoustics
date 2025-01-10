@@ -9,17 +9,18 @@ use propeller_mod
 implicit none
 !***************************************************************************
 type(propeller) :: prop
-character(100) :: propfname, operfname
+character(100) :: propfname, operfname, outfname
 real :: cpu1, cpu2
 integer :: i
+real(wp) :: J, CT, CP, CL
 !***************************************************************************
 call cpu_time(cpu1)
 call get_command_argument(1,propfname)
 call get_command_argument(2,operfname)
-!call get_json_data2(prop, propfname, operfname)
-call get_data(prop, propfname)
-call allocate_propeller(prop)
-call propeller_points(prop)
+call get_app_data(prop, propfname)
+!call get_data(prop, propfname)
+!call allocate_propeller(prop)
+!call propeller_points(prop)
 prop%G = 100._wp
 call propeller_velocities(prop)
 
@@ -38,11 +39,21 @@ write(*,*)
 write(*,*) 'Advance Ratio'
 write(*,*) prop%J
 
-
 call cpu_time(cpu2)
 write(*,*)
 write(*,*) 'Computation time ',cpu2-cpu1, ' sec'
 write(*,*) 'Ran helix function ',2*(prop%nblades*prop%ncontrolpoint)**2, ' times'
+
+CT = prop%Force_Total%mag / prop%rho / prop%w%mag **2._wp / (prop%r_prop * 2._wp) ** 4._wp * 4._wp * pi ** 2._wp
+CL = prop%Moment_Total%mag / prop%rho / prop%w%mag **2._wp / (prop%r_prop * 2._wp) ** 5._wp * 4._wp * pi ** 2._wp
+CP = CL * 2._wp * pi
+write(*,*)
+write(*,*) 'CT = ',CT
+write(*,*) 'CL = ',CL
+write(*,*) 'CP = ',CP
+
+write(outfname, *), 'ft_output.dat'
+call write_output(prop, outfname)
 !***************************************************************************
 !call display_graph(prop)
 !call lift_dist(prop)

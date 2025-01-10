@@ -26,6 +26,9 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.clear_plot()
 
     def add_line(self, line_data, linestyle = None, label = None):
+        if isinstance(line_data, list):
+            line_data = np.array(line_data)
+
         self.data.append(line_data)
 
         if linestyle:
@@ -87,19 +90,29 @@ class PlotCanvas(FigureCanvas, QWidget):
                     color= self.line_colors[i],
                     label= self.line_labels[i][j]
                 )
+
+        self.set_ylim()
+
+        self.ax.legend(loc='upper right')
+        self.ax.grid(True)
+        self.fig.tight_layout()
+        self.draw()
+
+    def set_ylim(self):
         
         miny = np.inf
         maxy = -np.inf
         for line_data in self.data:
             miny = min(miny, np.nanmin(line_data[1:]))
             maxy = max(maxy, np.nanmax(line_data[1:]))
-        miny = 0
-        self.ax.set_ylim( miny, maxy + 5)
+        
+        if np.abs(miny) == np.inf:
+            miny = np.sign(maxy)
+        if np.abs(maxy) == np.inf:
+            maxy = np.sign(miny)
 
-        self.ax.legend(loc='upper right')
-        self.ax.grid(True)
-        self.fig.tight_layout()
-        self.draw()
+        self.ax.set_ylim( min(0.95 * miny, 1.05 * miny), 
+                          max(0.95 * maxy, 1.05 * maxy) )
 
 
 class PolarPlotCanvas(PlotCanvas):
@@ -153,6 +166,8 @@ class AerodynamicResultsWidget(QWidget):
         self.profile = PlotCanvas(self, "$r/r_t$", "Sectional Coefficients ")
         self.profile_toolbar = NavigationToolbar(self.profile, self)
 
+        self.profile.line_colors = ['blue', 'red']
+
         self.performance = PlotCanvas(self, "Advance Ratio?", "Performance Coefficients?")
         self.performance_toolbar = NavigationToolbar(self.performance, self)
 
@@ -163,7 +178,27 @@ class AerodynamicResultsWidget(QWidget):
 
     def update_results(self, avs):
         
-        betz_off_design(avs)
+        avs = betz_off_design(avs)
+            # plot Cx and Cz against r0_rt
+        self.profile.clear_lines()
+        self.profile.clear_plot()
+
+        
+
+        if avs.res['converged']:
+            
+            self.profile.add_line(
+                [avs.prop['r0_rt'],
+                avs.res['Cx']],
+                label = 'Cx'
+            )
+            self.profile.add_line(
+                [avs.prop['r0_rt'],
+                avs.res['Cz']],
+                label = 'Cz'
+            )
+        
+
         
 
 

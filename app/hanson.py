@@ -95,7 +95,6 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
             psiLKx = Psi(kx, xc, prop['dCl_dxc'])
             psiDKx = Psi(kx, xc, prop['dCd_dxc'])
 
-
             I1 = terms1and2 * kx**2 * prop['tb'] * psiVKx
             I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
             I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
@@ -151,10 +150,17 @@ def hanson_av(avs):
     n = avs.airfoil_data.shape[0]
     xf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), avs.airfoil_data[:, 0])
     yf = np.interp(np.linspace(0,1, 2 * prop['nx']), np.linspace(0,1, n), avs.airfoil_data[:, 1])
-    prop['HX'] =  yf[:prop['nx']] - yf[prop['nx']:]
+    tf = yf[:prop['nx']] - yf[prop['nx']:]
+    _, hf = np.meshgrid(prop['c'], tf)
+    prop['HX'] = hf
+
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
+    prop['HX'] /= simps(prop['HX'], xc, axis=0) # normalize by area under curve
+
     prop['xc']  = (xf[:prop['nx']] + xf[prop['nx']:][::-1]) / 2 - 0.5
 
-    prop['tb'] = np.max(prop['HX']) * prop['c']
+    prop['tb'] = np.max(tf) * prop['c']
 
     prop['dz'] = np.diff(prop['r0'])
 
@@ -172,7 +178,7 @@ def hanson_av(avs):
     prop['Cd_r'] = 0.01 * np.ones((prop['nr']))
     prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
     prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
-    r0_rt, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
     prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0) # normalize by area under curve
     prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
 
@@ -181,7 +187,7 @@ def hanson_av(avs):
     prop['FA'] = dx * np.sin(phi)
     prop['MCA'] = dx * np.cos(phi)
 
-    ms = np.arange(1, 3)
+    ms = np.arange(1, 5)
 
     out = hanson(oper, prop, obs, ms, False)
 
@@ -241,7 +247,7 @@ def validate():
     obs = {}
     nobs = 180
     obs['r'] = 10 * np.ones(nobs) * prop['rt']
-    obs['theta'] = np.pi / 180 * np.arange(1, 181, 1)
+    obs['theta'] = np.pi / 180 * np.arange(1, 179, (179 - 1) / nobs)
     #obs['theta'] = np.array([0.017453292519943])
 
     oper['pref'] = 2e-5

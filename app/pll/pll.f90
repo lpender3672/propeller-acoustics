@@ -7,7 +7,7 @@ use iso_c_binding
 implicit none
 contains
 
-subroutine propeller_lifting_line(prop, oper) bind(C)
+subroutine propeller_lifting_line(prop, oper)
 use points_mod
 use helix_func
 use propeller_mod

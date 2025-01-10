@@ -301,7 +301,7 @@ class DistributionsWidget(QWidget):
             return
 
         # high resolution distributions
-        avs.prop['c'] = self.chord_plot.get_distribution(avs.prop['r0_rt'])
+        avs.prop['c'] = self.chord_plot.get_distribution(avs.prop['r0_rt']) * avs.prop['c75']
         avs.prop['twist'] = self.twist_plot.get_distribution(avs.prop['r0_rt'])
         avs.prop['sweep'] = self.sweep_plot.get_distribution(avs.prop['r0_rt'])
 
