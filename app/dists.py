@@ -89,6 +89,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         if min(distances) < threshold:
             self.control_points = np.delete(self.control_points, np.argmin(distances), axis=0)
             self.setData(pos=self.control_points)
+            self.finished_dragging = True # not strictly true but we want to update the curve
             self.sigPlotChanged.emit(self)
 
 class DistributionPlotWidget(QWidget):
@@ -109,6 +110,7 @@ class DistributionPlotWidget(QWidget):
         custom_item = QStandardItem("Custom")
         custom_item.setFlags( custom_item.flags() & ~Qt.ItemFlag.ItemIsSelectable )
         self.dist_model.appendRow(custom_item)
+        self.dist_model.appendRow(QStandardItem("Inverse"))
         self.dist_type.setModel(self.dist_model)
         self.dist_type.currentIndexChanged.connect(self.update_distribution)
         
@@ -164,6 +166,11 @@ class DistributionPlotWidget(QWidget):
             self.set_distribution( "custom",
                 np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
                 )
+        elif index == 4: # inverse
+            self.set_distribution( "inverse",
+                np.array([[0.0, 0.1], [0.5, 0.2]])
+                )
+            
 
     def get_distribution(self, x_dist):
         x = self.scatter.control_points[:, 0]
@@ -189,6 +196,11 @@ class DistributionPlotWidget(QWidget):
                 self.xb = x_dist
             
             return self.yb
+        elif index == 4:
+            # y = a/x + b
+            a = (y[0] - y[1]) / (1/x[0] - 1/x[1])
+            b = y[0] - a / x[0]
+            y_dist = a / x_dist + b
         else:
             y_dist = np.zeros_like(x_dist)
 
@@ -249,6 +261,9 @@ class DistributionPlotWidget(QWidget):
             self.xb = args[0]
             self.yb = args[1]
             self.scatter.hide()
+        elif distype == "inverse":
+            self.dist_type.setCurrentIndex(4)
+            self.scatter.control_points = args[0]
         
         self.scatter.setData(pos=self.scatter.control_points)
 
@@ -309,7 +324,8 @@ class DistributionsWidget(QWidget):
             "linear",
             "quadratic",
             "spline",
-            "custom"
+            "custom",
+            "inverse"
         ]
 
         avs.dist['CTL_c'] = self.chord_plot.scatter.control_points

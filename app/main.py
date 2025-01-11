@@ -109,7 +109,7 @@ class MainWindow(QWidget):
 
         if update_results:
             self.input_widget.save_to_fortran(self.ft_input_file, self.av)
-            subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
+            #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.noise_results_widget.update_results(self.av)
             self.aerodynamic_results_widget.update_results(self.av)
     
@@ -132,7 +132,7 @@ class MainWindow(QWidget):
 
         if update_results:
             self.input_widget.save_to_fortran(self.ft_input_file, self.av)
-            subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
+            #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
 

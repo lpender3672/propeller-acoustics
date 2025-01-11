@@ -120,7 +120,7 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
     #plt.legend()
     #plt.show()
 
-    out = np.array([PVm, PDm, PLm])
+    out = np.array([PVm, PDm, PLm], dtype=complex)
 
     return out
 
@@ -130,9 +130,9 @@ def calc_noise_components(arr, pref):
     Dm = arr[1]
     Lm = arr[2]
 
-    V = 20*np.log10(np.sqrt(np.sum((2*np.abs(Vm))**2, axis=1))/pref)
-    L = 20*np.log10(np.sqrt(np.sum((2*np.abs(Lm))**2, axis=1))/pref)
-    D = 20*np.log10(np.sqrt(np.sum((2*np.abs(Dm))**2, axis=1))/pref)
+    V = 20*np.log10(np.sqrt(np.sum(2*Vm*np.conj(Vm), axis=1))/pref)
+    L = 20*np.log10(np.sqrt(np.sum(2*Lm*np.conj(Lm), axis=1))/pref)
+    D = 20*np.log10(np.sqrt(np.sum(2*Dm*np.conj(Dm), axis=1))/pref)
 
     return V, L, D
 

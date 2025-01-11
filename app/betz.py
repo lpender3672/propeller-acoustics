@@ -254,21 +254,72 @@ def betz_off_design(av):
 
     print(np.cos(phi))
 
-    CT = np.trapz(CT_prime, R * xi)
-    CP = np.trapz(CP_prime, R * xi)
+    CT = np.trapz(CT_prime, xi)
+    CP = np.trapz(CP_prime, xi)
 
     FM = np.abs(CT) ** (2/3) / np.abs(CP)
 
     av.res['CT'] = CT
     av.res['CP'] = CP
     av.res['FM'] = FM
-    av.res['Cx'] = CP_prime
-    av.res['Cz'] = CT_prime
+    av.res['dCP'] = CP_prime
+    av.res['dCT'] = CT_prime
 
     print(f"CP: {CP}, CT: {CT}, FM: {FM}")
 
     return av
 
+def bem(av):
+
+    # nonuniform inflow distribution obtained by considering the
+    # differential form of momentum theory
+    #  induced velocity at radial station r is assumed to be due only to the thrust dT at that station
+    Omega = av.oper['Omega']
+    nu = av.oper['nu']
+    ro = av.oper['rho']
+    B = av.prop['B']
+    c = av.prop['c']
+    r0_rt = av.prop['r0_rt']
+    rt = av.prop['rt']
+    Nsect = av.prop['nr']
+    V = av.oper['V']
+    beta = av.prop['twist']
+    sweep = av.prop['sweep']
+
+    # the slope of the blade two-dimensional lift curve; typically a = 5.7, including real flow effects
+    a = 5.7 * np.cos(sweep) ** 2 # correction for sweep
+
+    # 3.96
+    sigma = B * c / (np.pi * r0_rt * rt)
+    lamda_c = V / (Omega * rt * np.cos(sweep))
+    lamda = np.sqrt((sigma * a / 16 - lamda_c/2)**2 + sigma * a / 8 * beta * r0_rt ) - (sigma * a / 16 - lamda_c/2)
+    lamda_i = lamda - lamda_c
+    dCT = 4 * lamda * lamda_i * r0_rt
+    CT = np.trapz(dCT, r0_rt)
+
+    alpha = beta - lamda / r0_rt # small angle approximation
+    if XFOIL_INSTALLED:
+        pass # interp Cd
+    else:
+        pass
+
+    # Baileys numerical example
+    Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
+    Cd = Cd * np.cos(sweep) ** 2
+    # profile power
+    dCP = dCT * lamda + sigma / 2 * r0_rt ** 3 * Cd * np.cos(sweep)
+    CP = np.trapz( dCP, r0_rt)
+
+    FM = CT ** (2/3) / CP
+
+    av.res['converged'] = True
+    av.res['CT'] = CT
+    av.res['CP'] = CP
+    av.res['FM'] = FM
+    av.res['dCP'] = dCP
+    av.res['dCT'] = dCT
+
+    return av
 
 
 def main():
