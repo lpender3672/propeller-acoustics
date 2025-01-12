@@ -167,6 +167,7 @@ class PropInputTable(InputTable):
             InputBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
             InputVar(r"$c_{75}$", "[m]", "75% Chord", float),
         ]
+        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75"]
         super().__init__(vars, parent)
     
     def on_cell_changed(self, row, col, index=None):
@@ -176,14 +177,13 @@ class PropInputTable(InputTable):
     
     def parse_values(self):
         prop = {}
-        prop['B'] = self.vars[0].value
-        prop['rt'] = self.vars[1].value
-        prop['rh'] = self.vars[2].value
-        prop['nr'] = self.vars[3].value # radial sections
-        prop['nx'] = self.vars[4].value # chordwise elements per section
-        prop['rdist'] = self.vars[5].value
-        prop['c75'] = self.vars[6].value
+        vals = [self.vars[i].value for i in range(7)]
+        if None in vals:
+            return {}
 
+        for i, key in enumerate(self.keys):
+            prop[key] = vals[i]
+        
         xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
         if prop['rdist'] == "Linear":
             rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
@@ -198,13 +198,9 @@ class PropInputTable(InputTable):
         return prop
     
     def set_values(self, prop):
-        self.vars[0].value = prop['B']
-        self.vars[1].value = prop['rt']
-        self.vars[2].value = prop['rh']
-        self.vars[3].value = prop['nr']
-        self.vars[4].value = prop['nx']
-        self.vars[5].value = prop['rdist']
-        self.vars[6].value = prop['c75']
+
+        for i, key in enumerate(self.keys):
+            self.vars[i].value = prop[key]
                 
         super().set_values()
 

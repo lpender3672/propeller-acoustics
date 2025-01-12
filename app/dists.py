@@ -27,6 +27,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         self.dragged_point_index = None
         self.is_spline = False
         self.finished_dragging = False
+        self.grid_snap = False
 
     def mouseDragEvent(self, ev):
         
@@ -37,6 +38,10 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         if not self.isVisible():
             ev.ignore()
             return
+        
+        mouspos = [ev.pos().x(), ev.pos().y()]
+        if self.grid_snap:
+            mouspos = np.round(mouspos, 1)            
 
         if ev.isStart():
             pos = ev.pos()
@@ -45,7 +50,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
                                    self.viewRect().height())
             if min(distances) > threshold:
                 if self.is_spline:
-                    self.control_points = np.vstack([self.control_points, [pos.x(), pos.y()]])
+                    self.control_points = np.vstack([self.control_points, mouspos])
                     self.dragged_point_index = self.control_points.shape[0] - 1
                 else:
                     ev.ignore()
@@ -60,7 +65,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         else:
             if self.dragged_point_index is not None:
                 # Update the position of the dragged point
-                self.control_points[self.dragged_point_index] = [ev.pos().x(), ev.pos().y()]
+                self.control_points[self.dragged_point_index] = mouspos
                 self.setData(pos=self.control_points)
                 self.sigPlotChanged.emit(self)
     
@@ -392,5 +397,17 @@ class DistributionsWidget(QWidget):
         self.attach_dist_signals()
         self.new_dist.emit(True) # full update please
 
-
+    def keyPressEvent(self, a0):
+        if a0.key() == Qt.Key.Key_Shift:
+            self.chord_plot.scatter.grid_snap = True
+            self.twist_plot.scatter.grid_snap = True
+            self.sweep_plot.scatter.grid_snap = True
+        return super().keyPressEvent(a0)
+    
+    def keyReleaseEvent(self, a0):
+        if a0.key() == Qt.Key.Key_Shift:
+            self.chord_plot.scatter.grid_snap = False
+            self.twist_plot.scatter.grid_snap = False
+            self.sweep_plot.scatter.grid_snap = False
+        return super().keyReleaseEvent(a0)
 

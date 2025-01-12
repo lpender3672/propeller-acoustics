@@ -67,6 +67,9 @@ def betz_design(av):
     target_power_W = 50 # W
 
     V = av.oper['V'] # m/s
+    if V == 0:
+        print("V is zero, unanble to find betz optimal solution")
+        return False
     T_c = 2 * target_thrust_N / (ro * V**2 * np.pi * R**2)
     P_c = 2 * target_power_W / (ro * V**3 * np.pi * R**2)
     y = xi * R * Omega / V
@@ -206,8 +209,8 @@ def betz_off_design(av):
             Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
             Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
         else:
-            Cl = 0.5
-            Cd = 0.1
+            Cl = 2 * np.pi * alpha
+            Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
 
         # better to wait and see if its out of bounds
         # phi = np.clip(phi, beta - alphas.min() * np.pi / 180, beta - alphas.max() * np.pi / 180)
@@ -252,7 +255,7 @@ def betz_off_design(av):
     CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F / ((F + sigma * K_prime) * np.cos(phi))**2
     CP_prime = CT_prime * np.pi * xi * Cx / Cz
 
-    print(np.cos(phi))
+    print(phi)
 
     CT = np.trapz(CT_prime, xi)
     CP = np.trapz(CP_prime, xi)
@@ -275,7 +278,6 @@ def bem(av):
     # differential form of momentum theory
     #  induced velocity at radial station r is assumed to be due only to the thrust dT at that station
     Omega = av.oper['Omega']
-    nu = av.oper['nu']
     ro = av.oper['rho']
     B = av.prop['B']
     c = av.prop['c']
@@ -298,20 +300,26 @@ def bem(av):
     CT = np.trapz(dCT, r0_rt)
 
     alpha = beta - lamda / r0_rt # small angle approximation
-    if XFOIL_INSTALLED:
-        pass # interp Cd
+    print(alpha)
+    if XFOIL_INSTALLED and av.airfoil_data.shape[1] > 2:
+        alphas = av.airfoil_data[:, 2]
+        Cl0 = av.airfoil_data[:, 3]
+        Cd0 = av.airfoil_data[:, 4]
+        Cl_valid = ~np.isnan(Cl0)
+        Cd_valid = ~np.isnan(Cd0)
+        Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
+        Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
     else:
-        pass
+        # Baileys numerical example
+        Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
 
-    # Baileys numerical example
-    Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
     Cd = Cd * np.cos(sweep) ** 2
     # profile power
     dCP = dCT * lamda + sigma / 2 * r0_rt ** 3 * Cd * np.cos(sweep)
     CP = np.trapz( dCP, r0_rt)
 
     FM = CT ** (2/3) / CP
-
+    av.res['alpha'] = alpha
     av.res['converged'] = True
     av.res['CT'] = CT
     av.res['CP'] = CP

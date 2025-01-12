@@ -7,6 +7,15 @@ from matplotlib import pyplot as plt
 
 from scipy.io import loadmat
 
+XFOIL_INSTALLED = True
+try: 
+    from xfoil import XFoil
+    from xfoil.model import Airfoil
+except ModuleNotFoundError:
+    XFOIL_INSTALLED = False
+    print("Warning Xfoil not installed - hanson.py")
+    
+
 def Psi(kx, X, fX):
     f = fX * np.exp(1j * kx * X)
     ans = simps(f, x=X, axis=0)
@@ -61,7 +70,8 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
     _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
     if prop['HX'].shape != xc.shape:
-        prop['HX'] = prop['HX'].reshape(prop['xc'].shape[0], 1)
+        pass
+        #prop['HX'] = prop['HX'].reshape(prop['xc'].shape[0], 1)
     
     for o in range(Nobs):
 
@@ -99,9 +109,13 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
             I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
             I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-            PVm[o, i] = trapz( prop['r0_rt'], I1)
-            PDm[o, i] = trapz( prop['r0_rt'], I2)
-            PLm[o, i] = trapz( prop['r0_rt'], I3)
+            I1plt = cumtrapz(I1, prop['r0_rt'], initial=0)[0]
+            I2plt = cumtrapz(I2, prop['r0_rt'], initial=0)[0]
+            I3plt = cumtrapz(I3, prop['r0_rt'], initial=0)[0]
+
+            PVm[o, i] = trapz( I1, prop['r0_rt'])
+            PDm[o, i] = trapz( I2, prop['r0_rt'])
+            PLm[o, i] = trapz( I3, prop['r0_rt'])
 
     pref = oper['pref']
 
@@ -140,6 +154,15 @@ def hanson_av(avs):
 
     oper = avs.oper.copy()
     prop = avs.prop.copy()
+    res = avs.res.copy()
+    print(res)
+
+    if XFOIL_INSTALLED:
+        alphas = avs.airfoil_data[:, 2]
+        Cl0 = avs.airfoil_data[:, 3]
+        Cd0 = avs.airfoil_data[:, 4]
+        Cl_valid = ~np.isnan(Cl0)
+        Cd_valid = ~np.isnan(Cd0)
 
     obs = {}
     Nobs = 100
@@ -158,8 +181,6 @@ def hanson_av(avs):
 
     prop['HX'] /= simps(prop['HX'], xc, axis=0) # normalize by area under curve
 
-    prop['xc']  = (xf[:prop['nx']] + xf[prop['nx']:][::-1]) / 2 - 0.5
-
     prop['tb'] = np.max(tf) * prop['c']
 
     prop['dz'] = np.diff(prop['r0'])
@@ -173,9 +194,16 @@ def hanson_av(avs):
     oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
     oper['beta'] = np.sqrt(1-oper['Mfl']**2)
 
-    # need
-    prop['Cl_r'] = 0.5 * np.ones((prop['nr']))
-    prop['Cd_r'] = 0.01 * np.ones((prop['nr']))
+    alpha = res['alpha']
+    if XFOIL_INSTALLED:
+        Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
+        Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
+    else:
+        Cl = 2 * np.pi * alpha
+        Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
+
+    prop['Cl_r'] = Cl
+    prop['Cd_r'] = Cd
     prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
     prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
 
@@ -212,14 +240,14 @@ def validate():
 
     prop['dCl_dxc'] = matf[23]
     prop['dCd_dxc'] = matf[24]
-    prop['Cl_r'] = matf[17]
-    prop['Cd_r'] = matf[18]
+    prop['Cl_r'] =  matf[17]
+    prop['Cd_r'] =  matf[18]
     prop['r0_rt'] = matf[10]
-    prop['HX'] = matf[22]
+    prop['HX'] =  matf[22]
     prop['r0'] = prop['r0_rt'] * prop['rt']
     prop['xc'] = matf[11]
     prop['Bd'] = matf[13]
-    prop['c'] = prop['Bd'] * 2 * prop['rt']
+    prop['c'] = np.max(prop['Bd']) * 2 * prop['rt']
     prop['tb'] = matf[14]
 
     oper['rho'] = 1.225
@@ -239,15 +267,18 @@ def validate():
     oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
     oper['beta'] = np.sqrt(1-oper['Mfl']**2)
 
-    prop['FA'] = 0
-    prop['MCA'] = 0
+    prop['sweep'] = np.linspace(0, np.pi/2, prop['nr'])
+    dx = prop['r0'] * np.sin( prop['sweep'] )
+    phi = np.arcsin(oper['Mx'] / oper['Mr'])
+    prop['FA'] = dx * np.sin(phi)
+    prop['MCA'] = dx * np.cos(phi)
 
-    prop['twist'] = np.linspace(0, 0.01, prop['nr'])
+    prop['twist'] = np.linspace(0, 0.05, prop['nr'])
 
     obs = {}
     nobs = 180
     obs['r'] = 10 * np.ones(nobs) * prop['rt']
-    obs['theta'] = np.pi / 180 * np.arange(1, 179, (179 - 1) / nobs)
+    obs['theta'] = np.pi / 180 * np.arange(120, 179, (179 - 120) / nobs)
     #obs['theta'] = np.array([0.017453292519943])
 
     oper['pref'] = 2e-5

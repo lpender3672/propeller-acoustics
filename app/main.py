@@ -110,8 +110,8 @@ class MainWindow(QWidget):
         if update_results:
             self.input_widget.save_to_fortran(self.ft_input_file, self.av)
             #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
-            self.noise_results_widget.update_results(self.av)
             self.aerodynamic_results_widget.update_results(self.av)
+            self.noise_results_widget.update_results(self.av)
     
     def on_new_prop_from_file(self):
         self.av.prop.update(self.input_widget.prop)
@@ -133,7 +133,7 @@ class MainWindow(QWidget):
         if update_results:
             self.input_widget.save_to_fortran(self.ft_input_file, self.av)
             #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
-            self.aerodynamic_results_widget.update_results(self.av)
+            self.av = self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
 
     def save_prop(self):
