@@ -138,6 +138,65 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
 
     return out
 
+
+def radial_noise_contributions(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = False) -> np.ndarray:
+    """
+    Hansons Helicoidal Surface Theory for Harmonic Noise of Propellers in the Far Field
+
+    oper: dict - Gas properties and operating conditions
+    prop: dict - Propeller geometry
+    obs: dict - Observer locations
+    ms: np.ndarray - Harmonic numbers to calculate noise for
+    """
+
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
+
+    theta = obs['theta']
+    r = obs['r']
+    y = r * np.sin(theta)
+    dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
+    omegaDop_o = oper['Omega'] / dopfac_o
+
+    I1plt_sum = np.zeros((prop['r0_rt'].shape), dtype=complex)
+    I2plt_sum = np.zeros((prop['r0_rt'].shape), dtype=complex)
+    I3plt_sum = np.zeros((prop['r0_rt'].shape), dtype=complex)
+
+    for i, m in enumerate(ms):
+        fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
+        yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
+
+        kx = fac * prop['Bd'] * oper['Mt']
+        ky = fac * yofac * prop['Bd'] / prop['r0_rt']
+        phi0 = fac * yofac * prop['FA'] / (prop['r0_rt'] * 2 * prop['rt'])
+        phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
+
+        # large term top of p5
+        term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o) + 1e-10)
+
+        bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
+        
+
+        term2 = oper['Mr']**2 * np.exp(1j * (phi0 + phis)) * bess
+
+        terms1and2 = term1 * term2
+
+        psiVKx = Psi(kx, xc, prop['HX'])
+        psiLKx = Psi(kx, xc, prop['dCl_dxc'])
+        psiDKx = Psi(kx, xc, prop['dCd_dxc'])
+
+        I1 = terms1and2 * kx**2 * prop['tb'] * psiVKx
+        I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
+        I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
+
+        I1plt_sum += cumtrapz(I1, prop['r0_rt'], initial=0)
+        I2plt_sum += cumtrapz(I2, prop['r0_rt'], initial=0)
+        I3plt_sum += cumtrapz(I3, prop['r0_rt'], initial=0)
+
+    out = np.array([I1plt_sum, I2plt_sum, I3plt_sum], dtype=complex)
+
+    return out
+
 def calc_noise_components(arr, pref):
 
     Vm = arr[0]
@@ -148,14 +207,17 @@ def calc_noise_components(arr, pref):
     L = 20*np.log10(np.sqrt(np.sum(2*Lm*np.conj(Lm), axis=1))/pref)
     D = 20*np.log10(np.sqrt(np.sum(2*Dm*np.conj(Dm), axis=1))/pref)
 
-    return V, L, D
+    csum = Vm + Dm + Lm
+    total = 20*np.log10(np.sqrt(np.sum(2*csum*np.conj(csum), axis=1))/pref)
+
+    return V, L, D, total
 
 def hanson_av(avs):
 
     oper = avs.oper.copy()
     prop = avs.prop.copy()
     res = avs.res.copy()
-    print(res)
+    #print(res)
 
     if XFOIL_INSTALLED:
         alphas = avs.airfoil_data[:, 2]
@@ -194,16 +256,9 @@ def hanson_av(avs):
     oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
     oper['beta'] = np.sqrt(1-oper['Mfl']**2)
 
-    alpha = res['alpha']
-    if XFOIL_INSTALLED:
-        Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
-        Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
-    else:
-        Cl = 2 * np.pi * alpha
-        Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
 
-    prop['Cl_r'] = Cl
-    prop['Cd_r'] = Cd
+    prop['Cl_r'] = avs.res['Cl']
+    prop['Cd_r'] = avs.res['Cd']
     prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
     prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
 
@@ -219,9 +274,17 @@ def hanson_av(avs):
 
     out = hanson(oper, prop, obs, ms, False)
 
-    V, L, D = calc_noise_components(out, oper['pref'])
+    V, L, D, total = calc_noise_components(out, oper['pref'])
 
-    return obs['theta'], V, L, D
+    peak_index = np.nanargmax(total)
+    peak_observer = {
+        'r': obs['r'][peak_index],
+        'theta': 3 * np.pi / 4
+    }
+    #print("peak observer", peak_observer)
+    vector_contributions = radial_noise_contributions(oper, prop, peak_observer, ms, False)
+
+    return obs['theta'], V, L, D, peak_observer['theta'], vector_contributions
 
 def validate():
 

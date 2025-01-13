@@ -80,8 +80,8 @@ class MainWindow(QWidget):
         layout.addWidget(self.input_widget, 0, 0, 3, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
         layout.addWidget(self.stl_viewer, 0, 2, 2, 1)
-        layout.addWidget(self.noise_results_widget, 0, 4, 2, 1)
-        layout.addWidget(self.aerodynamic_results_widget, 2, 2, 1, 3)
+        layout.addWidget(self.noise_results_widget, 0, 4, 3, 1)
+        layout.addWidget(self.aerodynamic_results_widget, 2, 2, 1, 1)
 
     def attach_signals(self):
 
@@ -124,16 +124,18 @@ class MainWindow(QWidget):
         print("Updating oper")
         self.av.oper.update(self.input_widget.oper)
 
-        # update mesh
-
-        self.stl_viewer.set_mesh(
-            generate_blade_mesh(self.av), self.av.prop["B"]
-        )
-
+        # dont need to update mesh, conditions were not changed
+        #self.stl_viewer.set_mesh(
+        #    generate_blade_mesh(self.av), self.av.prop["B"]
+        #)
+        # do need to update results if prop is defined
+        if not self.input_widget.prop_defined:
+            return # no prop defined
+        
         if update_results:
             self.input_widget.save_to_fortran(self.ft_input_file, self.av)
             #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
-            self.av = self.aerodynamic_results_widget.update_results(self.av)
+            self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
 
     def save_prop(self):

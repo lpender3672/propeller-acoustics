@@ -71,7 +71,7 @@ class STLViewerWidget(QWidget):
         faces = np.arange(len(vertices)).reshape(-1, 3)
 
         recalculated_normals = np.cross(stl_mesh.v1 - stl_mesh.v0, stl_mesh.v2 - stl_mesh.v0)
-        recalculated_normals = recalculated_normals / np.linalg.norm(recalculated_normals, axis=1)[:, None]
+        recalculated_normals = recalculated_normals / (np.linalg.norm(recalculated_normals, axis=1)[:, None] + 1e-8)
 
         normals = np.repeat(recalculated_normals, 3, axis=0)
 

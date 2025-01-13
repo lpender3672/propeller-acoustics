@@ -179,7 +179,7 @@ class PropInputTable(InputTable):
         prop = {}
         vals = [self.vars[i].value for i in range(7)]
         if None in vals:
-            return {}
+            return None
 
         for i, key in enumerate(self.keys):
             prop[key] = vals[i]
@@ -216,6 +216,7 @@ class OperInputTable(InputTable):
             InputVar(r"$V$", "[m/s]", "Free stream velocity", float),
             InputVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
         ]
+        self.keys = ["rho", "nu", "c0", "pref", "V", "Omega"]
         super().__init__(vars, parent)
     
     def on_cell_changed(self, row, col, index=None):
@@ -225,21 +226,22 @@ class OperInputTable(InputTable):
     
     def parse_values(self):
         oper = {}
-        oper['rho'] = self.vars[0].value
-        oper['nu'] = self.vars[1].value
-        oper['c0'] = self.vars[2].value
-        oper['pref'] = self.vars[3].value
-        oper['V'] = self.vars[4].value
-        oper['Omega'] = self.vars[5].value * 2*np.pi / 60
+        vals = [self.vars[i].value for i in range(6)]
+        if None in vals:
+            return None
+        
+        for i, key in enumerate(self.keys):
+            oper[key] = vals[i]
+
+        oper['Omega'] = oper['Omega'] * 2*np.pi / 60
 
         return oper
 
     def set_values(self, oper):
-        self.vars[0].value = oper['rho']
-        self.vars[1].value = oper['nu']
-        self.vars[2].value = oper['c0']
-        self.vars[3].value = oper['pref']
-        self.vars[4].value = oper['V']
+
+        for i, key in enumerate(self.keys):
+            self.vars[i].value = oper[key]
+        
         self.vars[5].value = oper['Omega'] * 60/(2*np.pi)
 
         super().set_values()
@@ -255,10 +257,12 @@ class AirfoilPlotDialog(QDialog):
         
         self.plot_widget = pg.PlotWidget()
         layout.addWidget(self.plot_widget)
-
+        self.swap_plot_btn = QPushButton("Swap Plot")
+        self.swap_plot_btn.clicked.connect(self.plot_airfoil)
         self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
+        layout.addWidget(self.swap_plot_btn)
         layout.addWidget(self.button_box)
 
         self.setLayout(layout)
@@ -267,6 +271,9 @@ class AirfoilPlotDialog(QDialog):
             self.plot_airfoil()
 
     def plot_airfoil(self):
+        self.swap_plot_btn.clicked.disconnect(self.plot_airfoil)
+        self.swap_plot_btn.clicked.connect(self.plot_polar)
+
         x, z = self.airfoil_data[:, 0], self.airfoil_data[:, 1]
         self.plot_widget.clear()
         self.plot_widget.plot(x, z, pen=pg.mkPen(color='b', width=2), name="Airfoil Shape")
@@ -274,6 +281,27 @@ class AirfoilPlotDialog(QDialog):
         self.plot_widget.setLabel("bottom", "x-coordinate")
         self.plot_widget.setTitle("Airfoil Shape")
         self.plot_widget.setAspectLocked(True)
+        self.plot_widget.showGrid(x=True, y=True)
+    
+    def plot_polar(self):
+
+        if self.airfoil_data.shape[1] < 4:
+            return
+        
+        self.swap_plot_btn.clicked.disconnect(self.plot_polar)
+        self.swap_plot_btn.clicked.connect(self.plot_airfoil)
+        
+        alpha = self.airfoil_data[:, 2]
+        Cl = self.airfoil_data[:, 3]
+        Cd = self.airfoil_data[:, 4]
+
+        self.plot_widget.clear()
+        self.plot_widget.plot(alpha, Cl, pen=pg.mkPen(color='b', width=2), name="Cl")
+        self.plot_widget.plot(alpha, Cd, pen=pg.mkPen(color='r', width=2), name="Cd")
+        self.plot_widget.setLabel("left", "Coefficient")
+        self.plot_widget.setLabel("bottom", "Angle of Attack")
+        self.plot_widget.setTitle("Polar")
+        self.plot_widget.setAspectLocked(False)
         self.plot_widget.showGrid(x=True, y=True)
 
 class InputWidget(QWidget):
@@ -289,6 +317,8 @@ class InputWidget(QWidget):
 
         self.prop = {}
         self.dist = {}
+        self.prop_defined = False
+        self.oper_defined = False
 
         self.assemble_widgets()
         self.connect_signals()
@@ -329,12 +359,18 @@ class InputWidget(QWidget):
         self.load_foil_btn.clicked.connect(self.load_foil_from_click)
 
     def on_new_prop(self):
-        self.prop = self.prop_table.parse_values()
-        self.new_prop.emit()
+        prop = self.prop_table.parse_values()
+        if prop is not None:
+            self.prop_defined = True
+            self.prop.update(prop)
+            self.new_prop.emit()
     
     def on_new_oper(self):
-        self.oper = self.oper_table.parse_values()
-        self.new_oper.emit()
+        oper = self.oper_table.parse_values()
+        if oper is not None:
+            self.oper_defined = True
+            self.oper.update(oper)
+            self.new_oper.emit()
 
     def load_prop_from_click(self):
         path = QFileDialog.getOpenFileName(self, "Select propeller file", "app/props", filter="Propeller files (*.prop)")[0]
@@ -373,8 +409,7 @@ class InputWidget(QWidget):
 
         
         self.foil_path.setText(filepath)
-        self.airfoil_data = airfoil_data
-        self.run_xfoil()
+        self.airfoil_data = self.run_xfoil(airfoil_data)
         
         self.prop = indata['prop']
         for key, item in self.prop.items():
@@ -402,13 +437,14 @@ class InputWidget(QWidget):
             QMessageBox.critical(self, "Error", "Failed to load airfoil data from file.")
             return
         
+        airfoil_data = self.run_xfoil(airfoil_data)
         dialog = AirfoilPlotDialog(self, airfoil_data)
         dialog.exec()
 
         if dialog.result():
             self.foil_path.setText(path)
             self.airfoil_data = airfoil_data
-            self.run_xfoil()
+            self.prop['foil_path'] = path
             self.on_new_prop()
 
     def save_prop_to_file(self, avs):
@@ -443,11 +479,11 @@ class InputWidget(QWidget):
             QMessageBox.critical(self, "Error", "Failed to save propeller data to file.")
             return
     
-    def run_xfoil(self):
+    def run_xfoil(self, airfoil_data):
 
-        alphas = np.linspace(-20, 20, self.airfoil_data.shape[0])
-        cls, cds = foil_data(self.airfoil_data, alphas, 1e6)
-        self.airfoil_data = np.column_stack((self.airfoil_data, alphas, cls, cds))
+        alphas = np.linspace(-20, 20, airfoil_data.shape[0])
+        cls, cds = foil_data(airfoil_data, alphas, 1e6)
+        return np.column_stack((airfoil_data, alphas, cls, cds))
 
     
     def load_oper_from_file(self, filename):

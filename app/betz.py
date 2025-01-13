@@ -34,7 +34,6 @@ def foil_data(airfoil_data, alpha, Re):
 
     for i, a in enumerate(alpha):
         out = xf.a(a)
-        print(out)
         cl, cd, _, _ = out
         cls[i] = cl
         cds[i] = cd
@@ -163,7 +162,6 @@ def betz_design(av):
     
 def betz_off_design(av):
 
-    beta = av.prop['twist']
 
     R = av.prop['rt']
     B = av.prop['B']
@@ -172,11 +170,13 @@ def betz_off_design(av):
     ro = av.oper['rho']
     xi = av.prop['r0_rt']
     c = av.prop['c']
+    sweep = av.prop['sweep']
+    beta = av.prop['twist']
 
     V = av.oper['V'] # m/s
 
     y = xi * R * Omega / V
-    lamda = V / (Omega * R) # advance ratio
+    lamda = V / (Omega * R * np.cos(sweep)) # advance ratio
 
     # An initial estimate for phi can be obtained from Eq. (8) by setting zeta = 0
     phi = np.arctan((1 + 0) * lamda / xi)
@@ -193,7 +193,7 @@ def betz_off_design(av):
 
     iters = 0
 
-    while (iters < 1000):
+    while (iters < 100):
         if (np.max(dphi / phi) < 1e-3):
             break
 
@@ -206,8 +206,8 @@ def betz_off_design(av):
         #Cl = Cl0 + alpha * 2 * np.pi
         #Cd = Cd0
         if XFOIL_INSTALLED:
-            Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
-            Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
+            Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep) ** 2
+            Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep) ** 2
         else:
             Cl = 2 * np.pi * alpha
             Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
@@ -222,7 +222,7 @@ def betz_off_design(av):
         sigma = B * c / (2 * np.pi * xi * R)
         phi_t = np.arctan( xi * np.tan(phi))
         if loss_model == 'Prantl':
-            F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1 - xi) / np.sin(phi_t))) # Prandtl tip loss factor
+            F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1/xi - 1) / np.sin(phi_t))) # Prandtl tip loss factor
         elif loss_model == 'Viterna':
             pass
         else:
@@ -234,12 +234,12 @@ def betz_off_design(av):
         a = np.clip(a, -0.7, 0.7)
         a_prime = np.clip(a_prime, -0.7, 0.7)
 
+        Ucorr = Omega * xi * R * np.cos(sweep)
         # the Reynolds number is determined from the known chord and W
-        W = V * (1 + a) / np.sin(phi)
+        W = np.sqrt((V * (1 + a)) ** 2 + (Ucorr * (1 - a_prime)) ** 2)
         Re_c = W * c / nu
         #print(Re_c)
-
-        new_phi = np.arctan(V * (1 + a) / (Omega * R * (1 - a_prime)))
+        new_phi = np.arctan(V * (1 + a) / (Ucorr * (1 - a_prime)))
         dphi = new_phi - phi
         phi = new_phi
         iters += 1
@@ -250,12 +250,25 @@ def betz_off_design(av):
         return av
     
     av.res['converged'] = True
+    av.res['alpha'] = alpha
+    av.res['Cl'] = Cl
+    av.res['Cd'] = Cd
     # set interesting values
     
-    CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F / ((F + sigma * K_prime) * np.cos(phi))**2
-    CP_prime = CT_prime * np.pi * xi * Cx / Cz
+    # not sure if this is right because of a typo in the paper, specifically exponent of 3/2
+    #CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F**(3/2) / ((F + sigma * K_prime) * np.cos(phi))**2
+    #CP_prime = CT_prime * np.pi * xi * Cx / Cz * np.cos(sweep)
+    Wsq = (V * (1 + a)) ** 2 + (Ucorr * (1 - a_prime)) ** 2
+    CT_prime = 1 / 2 * Wsq * c * (Cl * np.cos(phi) - Cd * np.sin(phi))
+    CP_prime = 1 / 2 * Wsq * c * (Cl * np.sin(phi) + Cd * np.cos(phi)) * R * xi * np.cos(sweep)
 
-    print(phi)
+    A = np.pi * R**2
+    CT_prime /= A * (R * Omega) ** 2
+    CP_prime /= A * R ** 3 * Omega ** 2
+
+
+
+    print(Re_c)
 
     CT = np.trapz(CT_prime, xi)
     CP = np.trapz(CP_prime, xi)
@@ -300,7 +313,7 @@ def bem(av):
     CT = np.trapz(dCT, r0_rt)
 
     alpha = beta - lamda / r0_rt # small angle approximation
-    print(alpha)
+
     if XFOIL_INSTALLED and av.airfoil_data.shape[1] > 2:
         alphas = av.airfoil_data[:, 2]
         Cl0 = av.airfoil_data[:, 3]

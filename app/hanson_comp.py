@@ -249,7 +249,7 @@ def hanson_sweep(oper: dict, prop: dict):
 
 if __name__ == "__main__":
     oper = {
-        'V':  0.0,
+        'V':  50.0,
         'c0': 343,
         'Omega': 10000 * 2 * np.pi / 60,
         'rho': 1.225,
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     prop['r0_rt'] = np.linspace(prop['rh'], prop['rt'], prop['nr']) / prop['rt']
     prop['c'] = 0.1 * prop['rt'] * np.ones(prop['nr'])
     prop['xc'] = np.linspace(-0.5, 0.5, prop['nx'])
-    prop['twist'] = 0.4 + 0.01 / prop['r0_rt']
+    prop['twist'] = 0.1 + 0.01 / prop['r0_rt']
     #prop['sweep'] = np.zeros(prop['nr'])
     prop['sweep'] = np.linspace(0, 1.2, prop['nr'])
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 
     prop['tb'] = np.max(tf) * prop['c']
     
-    prop['sweep'] = np.linspace(0, np.pi/2, prop['nr'])
+    prop['sweep'] = np.linspace(0, 1.5, prop['nr']) ** 2
 
     av = AppVars()
     av.oper = oper
@@ -294,7 +294,6 @@ if __name__ == "__main__":
     bem(av)
     res = av.res
     alpha = res['alpha']
-    print(alpha)
     alpha = prop['twist'] - np.arctan( oper['V'] / (oper['Omega'] * prop['r0_rt'] * prop['rt']) )
 
     prop['Cl_r'] = (2 * np.pi * alpha) #* np.cos(prop['sweep'])**2
@@ -308,6 +307,6 @@ if __name__ == "__main__":
 
     radial_locus(oper, prop)
     #chord_locus(oper, prop)
-    hanson_sweep(oper, prop)
+    #hanson_sweep(oper, prop)
 
     plt.show()

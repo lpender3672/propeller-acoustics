@@ -9,7 +9,7 @@ from hanson import hanson_av
 from betz import betz_off_design, bem
 
 class PlotCanvas(FigureCanvas, QWidget):
-    def __init__(self, parent=None, xlabel = "", ylabel = "", title = ""):
+    def __init__(self, parent=None, xlabel = "", ylabel = "", title = "", hideaxes = False):
 
         self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
@@ -25,6 +25,9 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.clear_lines()
         self.clear_points()
         self.clear_plot()
+
+        if hideaxes:
+            self.ax.axis('off')
 
     def add_lines(self, line_data, linestyle = None, label = None):
         if isinstance(line_data, list):
@@ -172,7 +175,9 @@ class PlotCanvas(FigureCanvas, QWidget):
         if top_override is not None:
             maxy = top_override
 
-        drangey = 0.05 * (maxy - miny) + 1e-6
+        drangey = 0.05 * (maxy - miny)
+        if drangey == 0:
+            drangey = 1e-3
         bottom = min(miny - drangey, miny + drangey)
         top = max(maxy - drangey, maxy + drangey)
 
@@ -208,22 +213,64 @@ class NoiseResultsWidget(QWidget):
     def __init__(self, parent, *args):
         super().__init__(parent,  *args)
 
-        self.layout = QVBoxLayout(self)
+        self.layout = QGridLayout(self)
         self.setLayout(self.layout)
 
-        self.canvas = PolarPlotCanvas(self)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-        self.layout.addWidget(self.canvas)
-        self.layout.addWidget(self.toolbar)
+        self.directivity = PolarPlotCanvas(self)
+        self.directivity_toolbar = NavigationToolbar(self.directivity, self)
+
+        self.thickness_interference = PlotCanvas(self, hideaxes=True)
+        self.lift_interference = PlotCanvas(self, hideaxes=True)
+        self.drag_interference = PlotCanvas(self, hideaxes=True)
+        self.total_interference = PlotCanvas(self, hideaxes=True)
+
+        self.layout.addWidget(self.directivity, 0, 0, 2, 2)
+        self.layout.addWidget(self.directivity_toolbar)
+
+        self.layout.addWidget(self.thickness_interference, 2, 0, 1, 1)
+        self.layout.addWidget(self.lift_interference, 2, 1, 1, 1)
+        self.layout.addWidget(self.drag_interference, 3, 0, 1, 1)
+        self.layout.addWidget(self.total_interference, 3, 1, 1, 1)
+
+        self.thickness_interference.line_colors = ['blue']
+        self.lift_interference.line_colors = ['red']
+        self.drag_interference.line_colors = ['green']
+        self.total_interference.line_colors = ['black']
+
+        self.directivity.setMinimumHeight(400)
 
     def update_results(self, avs):
         
-        data = hanson_av(avs)
-        self.canvas.line_colors = ['blue', 'red']
+        theta, V, L, D, theta_max, vector_contributions = hanson_av(avs)
+        self.directivity.line_colors = ['blue', 'red']
 
-        self.canvas.add_lines(np.array(data),
+        self.directivity.add_lines(np.array([theta, V, L, D]),
             linestyle=['-', ':', '-.'],
             label=['Thickness', 'Lift', 'Drag'])
+        
+        
+        
+        self.thickness_interference.add_lines(
+            np.array([vector_contributions[0].real, vector_contributions[0].imag]),
+            linestyle=['-'],
+            label=['Thickness']
+        )
+        self.drag_interference.add_lines(
+            np.array([vector_contributions[1].real, vector_contributions[1].imag]),
+            linestyle=['-'],
+            label=['Drag']
+        )
+        self.lift_interference.add_lines(
+            np.array([vector_contributions[2].real, vector_contributions[2].imag]),
+            linestyle=['-'],
+            label=['Lift']
+        )
+        total = np.sum(vector_contributions, axis=0)
+        self.total_interference.add_lines(
+            np.array([total.real, total.imag]),
+            linestyle=['-'],
+            label=['Total']
+        )
 
 
 class AerodynamicResultsWidget(QWidget):
@@ -242,13 +289,13 @@ class AerodynamicResultsWidget(QWidget):
 
         self.layout.addWidget(self.profile, 0, 0, 2, 1)
         self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
-        self.layout.addWidget(self.performance, 0, 1, 2, 1)
-        self.layout.addWidget(self.performance_toolbar, 2, 1, 1, 1)
+        #self.layout.addWidget(self.performance, 0, 1, 2, 1)
+        #self.layout.addWidget(self.performance_toolbar, 2, 1, 1, 1)
 
     def update_results(self, avs):
         
-        #avs = betz_off_design(avs)
-        avs = bem(avs)
+        avs = betz_off_design(avs)
+        #avs = bem(avs)
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
@@ -264,6 +311,9 @@ class AerodynamicResultsWidget(QWidget):
             self.performance.add_points(
                 [avs.res['CP'],
                  avs.res['FM']])
+        else:
+            # indicate failed convergence
+            self.profile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.profile.ax.transAxes)
             
 
 

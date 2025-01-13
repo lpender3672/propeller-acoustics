@@ -100,7 +100,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
 class DistributionPlotWidget(QWidget):
     new_dist = pyqtSignal(bool)
 
-    def __init__(self, parent = None, title = None, xlabel = None, ylabel = None):
+    def __init__(self, parent = None, default_ctrl_pts = None, title = None, xlabel = None, ylabel = None):
         super().__init__()
         
         layout = QVBoxLayout()
@@ -137,9 +137,14 @@ class DistributionPlotWidget(QWidget):
         layout.addWidget(self.dist_type)
         
         # initially linear
-        control_points = np.array([[0, 0], [1, 0]]).astype(float)  # Two points for linear by default
+        if default_ctrl_pts is None:
+            default_ctrl_pts = np.array([[0.0, 0.1], [1.0, 0.1], [0.5, 0.2]])
+        elif default_ctrl_pts.shape[0] < 3:
+            raise ValueError("Control points must have at least 3 points")
+        
+        self.default_ctrl_pts = default_ctrl_pts
         self.scatter = DraggableScatterPlotItem(
-            control_points, size=10, brush=pg.mkBrush(255, 0, 0), pen=pg.mkPen(None)
+            default_ctrl_pts, size=10, brush=pg.mkBrush(255, 0, 0), pen=pg.mkPen(None)
         )
         self.scatter.sigPlotChanged.connect(self.update_curve)
 
@@ -157,23 +162,23 @@ class DistributionPlotWidget(QWidget):
 
         if index == 0:  # linear
             self.set_distribution( "linear",
-                    np.array([[0.0, 0.1], [1.0, 0.1]])
+                    self.default_ctrl_pts[:2]
                 )
         elif index == 1:  # quadratic
             self.set_distribution( "quadratic",
-                np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
+                self.default_ctrl_pts[:3]
             )
         elif index == 2: # spline
             self.set_distribution( "spline",
-                np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
+                self.default_ctrl_pts[:3]
                 )
         elif index == 3: # custom
             self.set_distribution( "custom",
-                np.array([[0.0, 0.1], [0.5, 0.2], [1.0, 0.1]])
+                np.zeros((0, 2))
                 )
         elif index == 4: # inverse
             self.set_distribution( "inverse",
-                np.array([[0.0, 0.1], [0.5, 0.2]])
+                self.default_ctrl_pts[:2]
                 )
             
 
@@ -322,8 +327,8 @@ class DistributionsWidget(QWidget):
 
         # high resolution distributions
         avs.prop['c'] = self.chord_plot.get_distribution(avs.prop['r0_rt']) * avs.prop['c75']
-        avs.prop['twist'] = self.twist_plot.get_distribution(avs.prop['r0_rt'])
-        avs.prop['sweep'] = self.sweep_plot.get_distribution(avs.prop['r0_rt'])
+        avs.prop['twist'] = self.twist_plot.get_distribution(avs.prop['r0_rt']) * np.pi / 180
+        avs.prop['sweep'] = self.sweep_plot.get_distribution(avs.prop['r0_rt']) * np.pi / 180
 
         distypes = [
             "linear",
@@ -367,7 +372,7 @@ class DistributionsWidget(QWidget):
         chord_type = avs.dist['CTL_c_type']
         if chord_type == "custom":
             self.chord_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['c']
+                "custom", avs.prop['r0_rt'], avs.prop['c'] / avs.prop['c75']
             )
         else:
             self.chord_plot.set_distribution(
@@ -377,7 +382,7 @@ class DistributionsWidget(QWidget):
         twist_type = avs.dist['CTL_twist_type']
         if twist_type == "custom":
             self.twist_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['twist']
+                "custom", avs.prop['r0_rt'], avs.prop['twist'] * 180 / np.pi
             )
         else:
             self.twist_plot.set_distribution(
@@ -387,7 +392,7 @@ class DistributionsWidget(QWidget):
         sweep_type = avs.dist['CTL_sweep_type']
         if sweep_type == "custom":
             self.sweep_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['sweep']
+                "custom", avs.prop['r0_rt'], avs.prop['sweep'] * 180 / np.pi
             )
         else:
             self.sweep_plot.set_distribution(
