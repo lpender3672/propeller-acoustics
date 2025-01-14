@@ -219,16 +219,9 @@ def hanson_av(avs):
     res = avs.res.copy()
     #print(res)
 
-    if XFOIL_INSTALLED:
-        alphas = avs.airfoil_data[:, 2]
-        Cl0 = avs.airfoil_data[:, 3]
-        Cd0 = avs.airfoil_data[:, 4]
-        Cl_valid = ~np.isnan(Cl0)
-        Cd_valid = ~np.isnan(Cd0)
-
     obs = {}
     Nobs = 100
-    obs['r'] = 10 * prop['rt'] * np.ones((Nobs))
+    obs['r'] = oper['r_obs'] * prop['rt'] * np.ones((Nobs))
     obs['theta'] = np.linspace(0, np.pi, Nobs)
 
     prop['Bd'] = prop['c'] / (2 * prop['rt'])
@@ -278,8 +271,8 @@ def hanson_av(avs):
 
     peak_index = np.nanargmax(total)
     peak_observer = {
-        'r': obs['r'][peak_index],
-        'theta': 3 * np.pi / 4
+        'r': oper['r_obs'] * prop['rt'],
+        'theta': oper['theta_obs']
     }
     #print("peak observer", peak_observer)
     vector_contributions = radial_noise_contributions(oper, prop, peak_observer, ms, False)

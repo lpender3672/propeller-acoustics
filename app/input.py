@@ -116,8 +116,10 @@ class OperInputTable(InputTable):
             TableVar(r"$p_{ref}$", "[Pa]", "Reference pressure for SPL", float),
             TableVar(r"$V$", "[m/s]", "Free stream velocity", float),
             TableVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
+            TableVar(r"$r_{obs}/R$", "[-]", "Observer distance", float),
+            TableVar(r"$\theta_{obs}/R$", "[def]", "Observer angle", float)
         ]
-        self.keys = ["rho", "nu", "c0", "pref", "V", "Omega"]
+        self.keys = ["rho", "nu", "c0", "pref", "V", "Omega", "r_obs", "theta_obs"]
         super().__init__(vars, parent)
     
     def on_cell_changed(self, row, col, index=None):
@@ -127,7 +129,7 @@ class OperInputTable(InputTable):
     
     def parse_values(self):
         oper = {}
-        vals = [self.vars[i].value for i in range(6)]
+        vals = [v.value for v in self.vars]
         if None in vals:
             return None
         
@@ -135,6 +137,7 @@ class OperInputTable(InputTable):
             oper[key] = vals[i]
 
         oper['Omega'] = oper['Omega'] * 2*np.pi / 60
+        oper['theta_obs'] = oper['theta_obs'] * np.pi / 180
 
         return oper
 
@@ -144,6 +147,7 @@ class OperInputTable(InputTable):
             self.vars[i].value = oper[key]
         
         self.vars[5].value = oper['Omega'] * 60/(2*np.pi)
+        self.vars[7].value = oper['theta_obs'] * 180/np.pi
 
         super().set_values()
 
