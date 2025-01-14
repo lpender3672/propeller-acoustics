@@ -28,6 +28,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         self.is_spline = False
         self.finished_dragging = False
         self.grid_snap = False
+        self.distribution_index = 0
 
     def mouseDragEvent(self, ev):
         
@@ -39,22 +40,36 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             ev.ignore()
             return
         
-        mouspos = [ev.pos().x(), ev.pos().y()]
+        mouspos = np.array([ev.pos().x(), ev.pos().y()])
+        viewrange = np.array([
+                self.viewRect().width(),
+                self.viewRect().height()
+            ])
+        
         if self.grid_snap:
-            mouspos = np.round(mouspos, 1)            
+            # get snap size as order of magnitude of the range
+            
+            snap_size = 10**(np.round(np.log10(viewrange)) - 1)
+            snappos = np.round(mouspos / snap_size) * snap_size
+        else:
+            snappos = mouspos
 
         if ev.isStart():
-            pos = ev.pos()
-            distances = [pg.Point(pos - pg.Point(p)).length() for p in self.control_points]
-            threshold = 0.05 * max(self.viewRect().width(), 
-                                   self.viewRect().height())
-            if min(distances) > threshold:
-                if self.is_spline:
-                    self.control_points = np.vstack([self.control_points, mouspos])
-                    self.dragged_point_index = self.control_points.shape[0] - 1
-                else:
+            distances = [np.linalg.norm((mouspos - p) / viewrange) for p in self.control_points]
+            point_threshold = 0.05
+            if np.min(distances) > point_threshold: # far from existing points try to add a new one
+                if not self.is_spline: # only spline can add points
                     ev.ignore()
                     return
+                # compute distribution at mouse position
+                ydist = self.get_distribution(np.array([mouspos[0]]))
+                line_threshold = 0.05
+                if np.abs(ydist - mouspos[1]) / viewrange[1] > line_threshold: # clicked far from distribution ignore
+                    ev.ignore()
+                    return
+
+                self.control_points = np.vstack([self.control_points, snappos])
+                self.dragged_point_index = self.control_points.shape[0] - 1
             else:
                 self.dragged_point_index = np.argmin(distances)
             ev.accept()
@@ -65,7 +80,7 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
         else:
             if self.dragged_point_index is not None:
                 # Update the position of the dragged point
-                self.control_points[self.dragged_point_index] = mouspos
+                self.control_points[self.dragged_point_index] = snappos
                 self.setData(pos=self.control_points)
                 self.sigPlotChanged.emit(self)
     
@@ -87,21 +102,59 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             ev.ignore()
             return
         
-        pos = ev.pos()
-        distances = [pg.Point(pos - pg.Point(p)).length() for p in self.control_points]
-        threshold = 0.05 * max(self.viewRect().width(), 
-                                self.viewRect().height())
-        if min(distances) < threshold:
+        mouspos = np.array([ev.pos().x(), ev.pos().y()])
+        viewrange = np.array([
+                self.viewRect().width(),
+                self.viewRect().height()
+            ])
+        distances = [np.linalg.norm((mouspos - p) / viewrange) for p in self.control_points]
+        point_threshold = 0.05
+        if np.min(distances) < point_threshold: # far from existing points try to add a new one
             self.control_points = np.delete(self.control_points, np.argmin(distances), axis=0)
             self.setData(pos=self.control_points)
             self.finished_dragging = True # not strictly true but we want to update the curve
             self.sigPlotChanged.emit(self)
 
+    def get_distribution(self, x_dist):
+        x = self.control_points[:, 0]
+        y = self.control_points[:, 1]
+
+        index = self.distribution_index
+
+        if index == 0:
+            b = (y[1] - y[0]) / (x[1] - x[0])
+            a = y[0] - b * x[0]
+            y_dist = a + b * x_dist
+        elif index == 1:
+            coefficients = fit_quadratic(x, y)
+            y_dist = coefficients[0] * x_dist**2 + coefficients[1] * x_dist + coefficients[2]
+        elif index == 2:
+            idx = np.argsort(x)
+            spline = CubicSpline(x[idx], y[idx])
+            y_dist = spline(x_dist)
+        elif index == 3:
+            # custom
+            #if x_dist.shape != self.xb.shape:
+            #    self.yb = np.interp(x_dist, self.xb, self.yb)
+            #    self.xb = x_dist
+            return
+            
+        elif index == 4:
+            # y = a/x + b
+            a = (y[0] - y[1]) / (1/x[0] - 1/x[1])
+            b = y[0] - a / x[0]
+            y_dist = a / x_dist + b
+        else:
+            y_dist = np.zeros_like(x_dist)
+
+        return y_dist
+
+
 class DistributionPlotWidget(QWidget):
     new_dist = pyqtSignal(bool)
 
     def __init__(self, parent = None, default_ctrl_pts = None, title = None, xlabel = None, ylabel = None):
-        super().__init__()
+        super().__init__(parent)
         
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -117,7 +170,7 @@ class DistributionPlotWidget(QWidget):
         self.dist_model.appendRow(custom_item)
         self.dist_model.appendRow(QStandardItem("Inverse"))
         self.dist_type.setModel(self.dist_model)
-        self.dist_type.currentIndexChanged.connect(self.update_distribution)
+        self.dist_type.currentIndexChanged.connect(self.reset_distribution)
         
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setXRange(0, 1)
@@ -150,71 +203,43 @@ class DistributionPlotWidget(QWidget):
 
         self.plot_widget.addItem(self.scatter)
         
-        self.update_distribution(0)
+        self.reset_distribution(0)
 
         self.xb = np.linspace(0, 1, 100)
         self.yb = np.zeros_like(self.xb)
     
-    def update_distribution(self, index):
+    def reset_distribution(self, index):
         self.scatter.is_spline = False
         self.scatter.finished_dragging = True
+        self.scatter.distribution_index = index
         self.scatter.show()
 
         if index == 0:  # linear
-            self.set_distribution( "linear",
+            self.set_distribution( index,
                     self.default_ctrl_pts[:2]
                 )
         elif index == 1:  # quadratic
-            self.set_distribution( "quadratic",
+            self.set_distribution( index,
                 self.default_ctrl_pts[:3]
             )
         elif index == 2: # spline
-            self.set_distribution( "spline",
+            self.set_distribution( index,
                 self.default_ctrl_pts[:3]
                 )
         elif index == 3: # custom
-            self.set_distribution( "custom",
+            self.set_distribution( index,
                 np.zeros((0, 2))
                 )
         elif index == 4: # inverse
-            self.set_distribution( "inverse",
+            self.set_distribution( index,
                 self.default_ctrl_pts[:2]
                 )
-            
-
+        
     def get_distribution(self, x_dist):
-        x = self.scatter.control_points[:, 0]
-        y = self.scatter.control_points[:, 1]
-
-        index = self.dist_type.currentIndex()
-
-        if index == 0:
-            b = (y[1] - y[0]) / (x[1] - x[0])
-            a = y[0] - b * x[0]
-            y_dist = a + b * x_dist
-        elif index == 1:
-            coefficients = fit_quadratic(x, y)
-            y_dist = coefficients[0] * x_dist**2 + coefficients[1] * x_dist + coefficients[2]
-        elif index == 2:
-            idx = np.argsort(x)
-            spline = CubicSpline(x[idx], y[idx])
-            y_dist = spline(x_dist)
-        elif index == 3:
-            # custom
-            if x_dist.shape != self.xb.shape:
-                self.yb = np.interp(x_dist, self.xb, self.yb)
-                self.xb = x_dist
-            
+        if self.dist_type.currentIndex() == 3:
             return self.yb
-        elif index == 4:
-            # y = a/x + b
-            a = (y[0] - y[1]) / (1/x[0] - 1/x[1])
-            b = y[0] - a / x[0]
-            y_dist = a / x_dist + b
         else:
-            y_dist = np.zeros_like(x_dist)
-
-        return y_dist
+            return self.scatter.get_distribution(x_dist)
     
     def update_curve(self):
 
@@ -248,36 +273,35 @@ class DistributionPlotWidget(QWidget):
         self.new_dist.emit(self.scatter.finished_dragging)
         self.scatter.finished_dragging = False
     
-    def set_distribution(self, distype, *args):
-        distype = distype.strip().lower()
+    def set_distribution(self, index, *args):
         self.scatter.is_spline = False
         self.scatter.show()
 
-        self.dist_type.currentIndexChanged.disconnect(self.update_distribution)
+        self.dist_type.currentIndexChanged.disconnect(self.reset_distribution)
         
-        if distype == "linear":
+        if index == 0:
             self.dist_type.setCurrentIndex(0)
             self.scatter.control_points = args[0]
-        elif distype == "quadratic":
+        elif index == 1:
             self.dist_type.setCurrentIndex(1)
             self.scatter.control_points = args[0]
-        elif distype == "spline":
+        elif index == 2:
             self.dist_type.setCurrentIndex(2)
             self.scatter.control_points = args[0]
             self.scatter.is_spline = True
-        elif distype == "custom":
+        elif index == 3:
             self.dist_type.setCurrentIndex(3)
             self.scatter.control_points = np.zeros((0, 2))
             self.xb = args[0]
             self.yb = args[1]
             self.scatter.hide()
-        elif distype == "inverse":
+        elif index == 4:
             self.dist_type.setCurrentIndex(4)
             self.scatter.control_points = args[0]
         
         self.scatter.setData(pos=self.scatter.control_points)
+        self.dist_type.currentIndexChanged.connect(self.reset_distribution)
 
-        self.dist_type.currentIndexChanged.connect(self.update_distribution)
 
 class DistributionsWidget(QWidget):
     new_dist = pyqtSignal(bool)
@@ -293,10 +317,29 @@ class DistributionsWidget(QWidget):
         layout.addWidget(self.betz_button)
 
         self.avs = None
+        self.distypes = [
+            "linear",
+            "quadratic",
+            "spline",
+            "custom",
+            "inverse"
+        ]
         
         self.chord_plot = DistributionPlotWidget(self, title="Chord", ylabel="Chord [m]")
-        self.twist_plot = DistributionPlotWidget(self, title="Twist", ylabel="Twist [rad]")
-        self.sweep_plot = DistributionPlotWidget(self, title="Sweep", ylabel="Sweep [rad]")
+        self.twist_plot = DistributionPlotWidget(
+            self, 
+            title="Twist", 
+            ylabel="Twist [rad]", 
+            default_ctrl_pts=np.array(
+                [[0, 20], [0.5, 15], [1, 15]])
+        )
+        self.sweep_plot = DistributionPlotWidget(
+            self, 
+            title="Sweep", 
+            ylabel="Sweep [rad]",
+            default_ctrl_pts=np.array(
+                [[0, 0], [0.5, 5], [1, 20]])
+        )
 
         layout.addWidget(self.chord_plot)
         layout.addWidget(self.twist_plot)
@@ -330,22 +373,15 @@ class DistributionsWidget(QWidget):
         avs.prop['twist'] = self.twist_plot.get_distribution(avs.prop['r0_rt']) * np.pi / 180
         avs.prop['sweep'] = self.sweep_plot.get_distribution(avs.prop['r0_rt']) * np.pi / 180
 
-        distypes = [
-            "linear",
-            "quadratic",
-            "spline",
-            "custom",
-            "inverse"
-        ]
 
         avs.dist['CTL_c'] = self.chord_plot.scatter.control_points
-        avs.dist['CTL_c_type'] = distypes[
+        avs.dist['CTL_c_type'] = self.distypes[
             self.chord_plot.dist_type.currentIndex()]
         avs.dist['CTL_twist'] = self.twist_plot.scatter.control_points
-        avs.dist['CTL_twist_type'] = distypes[
+        avs.dist['CTL_twist_type'] = self.distypes[
             self.twist_plot.dist_type.currentIndex()]
         avs.dist['CTL_sweep'] = self.sweep_plot.scatter.control_points
-        avs.dist['CTL_sweep_type'] = distypes[
+        avs.dist['CTL_sweep_type'] = self.distypes[
             self.sweep_plot.dist_type.currentIndex()]
 
         self.avs = avs
@@ -369,34 +405,34 @@ class DistributionsWidget(QWidget):
         self.detach_dist_signals()
 
         
-        chord_type = avs.dist['CTL_c_type']
-        if chord_type == "custom":
+        chord_dist = self.distypes.index(avs.dist['CTL_c_type'])
+        if chord_dist == 3:
             self.chord_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['c'] / avs.prop['c75']
+                3, avs.prop['r0_rt'], avs.prop['c'] / avs.prop['c75']
             )
         else:
             self.chord_plot.set_distribution(
-                avs.dist['CTL_c_type'], avs.dist['CTL_c']
+                chord_dist, avs.dist['CTL_c']
             )
         
-        twist_type = avs.dist['CTL_twist_type']
-        if twist_type == "custom":
+        twist_dist = self.distypes.index(avs.dist['CTL_twist_type'])
+        if twist_dist == 3:
             self.twist_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['twist'] * 180 / np.pi
+                3, avs.prop['r0_rt'], avs.prop['twist'] * 180 / np.pi
             )
         else:
             self.twist_plot.set_distribution(
-                avs.dist['CTL_twist_type'], avs.dist['CTL_twist']
+                twist_dist, avs.dist['CTL_twist']
             )
         
-        sweep_type = avs.dist['CTL_sweep_type']
-        if sweep_type == "custom":
+        sweep_dist = self.distypes.index(avs.dist['CTL_sweep_type'])
+        if sweep_dist == 3:
             self.sweep_plot.set_distribution(
-                "custom", avs.prop['r0_rt'], avs.prop['sweep'] * 180 / np.pi
+                3, avs.prop['r0_rt'], avs.prop['sweep'] * 180 / np.pi
             )
         else:
             self.sweep_plot.set_distribution(
-                avs.dist['CTL_sweep_type'], avs.dist['CTL_sweep']
+                sweep_dist, avs.dist['CTL_sweep']
             )
 
         self.attach_dist_signals()

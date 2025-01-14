@@ -206,6 +206,8 @@ def betz_off_design(av):
         #Cl = Cl0 + alpha * 2 * np.pi
         #Cd = Cd0
         if XFOIL_INSTALLED:
+            # mark indicies where Cl and Cd are outside airfoil data
+            invalids = np.where((alpha * 180/np.pi < alphas.min()) | (alpha * 180/np.pi > alphas.max()))[0]
             Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep) ** 2
             Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep) ** 2
         else:
@@ -253,6 +255,7 @@ def betz_off_design(av):
     av.res['alpha'] = alpha
     av.res['Cl'] = Cl
     av.res['Cd'] = Cd
+    av.res['invalids'] = invalids
     # set interesting values
     
     # not sure if this is right because of a typo in the paper, specifically exponent of 3/2

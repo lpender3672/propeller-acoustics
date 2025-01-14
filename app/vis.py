@@ -1,14 +1,45 @@
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QCheckBox, QFileDialog, QPushButton, QMessageBox
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QCheckBox, QFileDialog, QPushButton, QMessageBox, QDialog
+from PyQt6.QtCore import Qt, pyqtSignal
 import pyqtgraph.opengl as gl
 import numpy as np
 from stl import mesh
 from matplotlib import cm
 
-class STLViewerWidget(QWidget):
+class STLViewerDialog(QDialog):
+    # when widget is double clicked, open dialog
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
-        self.view = gl.GLViewWidget()
+        self.widget = STLViewerWidget(self, popup=True)
+        layout.addWidget(self.widget)
+
+        self.setMinimumSize(800, 600)
+        self.setWindowFlags(Qt.WindowType.Window)
+
+        self.widget.view.escapePressed.connect(self.close)
+        
+
+class EventGLViewWidget(gl.GLViewWidget):
+    doubleClicked = pyqtSignal()
+    escapePressed = pyqtSignal()
+
+    def mouseDoubleClickEvent(self, event):
+        self.doubleClicked.emit()
+        super().mouseDoubleClickEvent(event)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.escapePressed.emit()
+        super().keyPressEvent(event)
+        
+
+class STLViewerWidget(QWidget):
+    def __init__(self, parent=None, popup=False):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.view = EventGLViewWidget()
+        self.popup = popup
+        self.dialog = None
 
         viewSettingWidget = QWidget()
         viewSettingLayout = QGridLayout(viewSettingWidget)
@@ -24,10 +55,13 @@ class STLViewerWidget(QWidget):
         self.save_button = QPushButton("Save to .stl")
         self.save_button.clicked.connect(self.save_stl_file)
 
+        self.view.doubleClicked.connect(self.display_fullscreen_dialog)
 
         #viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
         viewSettingLayout.addWidget(self.edgeToggle, 0, 1)
-        viewSettingLayout.addWidget(self.save_button, 0, 2)
+
+        if not popup:
+            viewSettingLayout.addWidget(self.save_button, 0, 2)
 
         viewSettingWidget.setMaximumHeight(50)
         layout.addWidget(viewSettingWidget)
@@ -36,7 +70,19 @@ class STLViewerWidget(QWidget):
         self.view.setCameraPosition(distance=1)
 
         self.num_blades = 1
-
+    
+    def display_fullscreen_dialog(self):
+        if self.popup:
+            return
+        if self.dialog:
+            self.dialog.close()
+            self.dialog = None
+            return
+        
+        self.dialog = STLViewerDialog(self)
+        self.dialog.widget.set_mesh(self.stl_mesh, self.num_blades)
+        self.dialog.show()
+    
     def load_stl_file(self, stl_file):
         self.stl_file = stl_file
         self.stl_mesh = mesh.Mesh.from_file(stl_file)
@@ -57,6 +103,10 @@ class STLViewerWidget(QWidget):
         self.stl_file = None
         self.stl_mesh = blade_mesh
         self.num_blades = num_blades
+
+        if not self.popup and self.dialog:
+            self.dialog.widget.set_mesh(blade_mesh, num_blades)
+
         self.update_mesh_plot()
 
     def update_mesh_plot(self):

@@ -4,51 +4,47 @@ import numpy as np
 import matplotlib.pyplot as mpl
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PyQt6 import QtGui, QtCore
-from PyQt6.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
+from PyQt6.QtWidgets import QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView, QComboBox
 from PyQt6 import QtWidgets
-from PyQt6 import QtGui, QtCore
 
-def mathTex_to_QPixmap(mathTex, fs, font_colour = None):
+def mathTex_to_QPixmap(mathTex, fs, font_colour=None):
 
     #---- set up a mpl figure instance ----
-
     mpl.rcParams['text.usetex'] = False
 
+    # Set the DPI for higher resolution rendering
     fig = mpl.figure()
     fig.patch.set_facecolor('none')
     fig.set_canvas(FigureCanvasAgg(fig))
     renderer = fig.canvas.get_renderer()
 
     #---- plot the mathTex expression ----
-
     ax = fig.add_axes([0, 0, 1, 1])
     ax.axis('off')
     ax.patch.set_facecolor('none')
-    t = ax.text(0, 0, mathTex, ha='left', va='bottom', fontsize=fs, color = font_colour)
+    t = ax.text(0, 0, mathTex, ha='left', va='bottom', fontsize=fs, color=font_colour)
 
     #---- fit figure size to text artist ----
-
     fwidth, fheight = fig.get_size_inches()
     fig_bbox = fig.get_window_extent(renderer)
-
     text_bbox = t.get_window_extent(renderer)
 
     tight_fwidth = text_bbox.width * fwidth / fig_bbox.width
     tight_fheight = text_bbox.height * fheight / fig_bbox.height
 
     fig.set_size_inches(tight_fwidth, tight_fheight)
-    # set fig size
-    
 
     #---- convert mpl figure to QPixmap ----
-
     buf, size = fig.canvas.print_to_buffer()
     qimage = QtGui.QImage.rgbSwapped(
         QtGui.QImage(buf, 
                      size[0], 
                      size[1],
                      QtGui.QImage.Format.Format_ARGB32))
+    
     qpixmap = QtGui.QPixmap(qimage)
+    #scaled_size = qpixmap.size() * 100 / dpi
+    #qpixmap = qpixmap.scaled(scaled_size, QtCore.Qt.AspectRatioMode.KeepAspectRatio, QtCore.Qt.TransformationMode.SmoothTransformation)
 
     return qpixmap
 
@@ -125,8 +121,9 @@ class TexHorizHeader(QHeaderView):
             opt.state |= QtWidgets.QStyle.StateFlag.State_MouseOver
 
         #---- paint ----
-
-        painter.save()        
+        painter.save()
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.TextAntialiasing)
         self.style().drawControl(QtWidgets.QStyle.ControlElement.CE_Header, opt, painter, self)
         painter.restore()
 
@@ -149,11 +146,11 @@ class TexHorizHeader(QHeaderView):
 
         baseSize = super(TexHorizHeader, self).sizeHint()
 
-        baseHeight = baseSize.height()
+        baseWidth = baseSize.width()
         if len(self.qpixmaps):
             for pixmap in self.qpixmaps:
-               baseHeight = max(pixmap.height() + 8, baseHeight)
-        baseSize.setHeight(baseHeight)
+               baseWidth = max(pixmap.width() + 8, baseWidth)
+        baseSize.setWidth(baseWidth)
 
         return baseSize
     
@@ -195,7 +192,9 @@ class TexVertHeader(QHeaderView):
         except IndexError:
             return
 
-        painter.save()        
+        painter.save()
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.TextAntialiasing)
         self.style().drawControl(QtWidgets.QStyle.ControlElement.CE_Header, opt, painter, self)
         painter.restore()
 
@@ -222,4 +221,128 @@ class TexVertHeader(QHeaderView):
 
 
 
+class TableVar():
+    def __init__(self, symbol, unit, description, dtype = float, dp = 12):
+        self.symbol = symbol
+        self.unit = unit
+        self.description = description
+        self.dtype = dtype
+        self.value = None
+        self.dp = dp
 
+class TableBox(QComboBox):
+    def __init__(self, items, symbol, description):
+        super().__init__()
+        self.addItems(items)
+
+        self.symbol = symbol
+        self.description = description
+        self.unit = ""
+        self.dtype = str
+        self.value = None
+
+class OutputTable(TexQTableWidget):
+    def __init__(self, vars, parent):
+        super().__init__(parent)
+
+        self.vars = vars
+
+        self.setColumnCount(3)
+        self.setRowCount(len(self.vars))
+        
+        self.setHorizontalHeaderLabels(["Value", "Units", "Description"], 12)
+
+        self.assemble_table()
+
+    def assemble_table(self):
+        row_names = []
+        for i,v in enumerate(self.vars):
+            row_names.append(v.symbol)
+            if isinstance(v, TableVar):
+                self.setItem(
+                    i, 0, QTableWidgetItem()
+                )
+            elif isinstance(v, TableBox):
+                self.setCellWidget(
+                    i, 0, v
+                )
+            self.setItem(
+                i, 1, QTableWidgetItem(v.unit)
+            )
+            self.setItem(
+                i, 2, QTableWidgetItem(v.description)
+            )
+        if len(row_names) > 0:
+            self.setVerticalHeaderLabels(row_names, 16)
+        
+        self.resizeColumnsToContents()
+    
+    def set_values(self):
+        
+        for i,v in enumerate(self.vars):
+            if isinstance(v, TableVar):
+                val = v.value
+                if v.dtype == float:
+                    val = round(val, v.dp)
+                self.item(i, 0).setText(str(val))
+            elif isinstance(v, TableBox):
+                # set index of combobox
+                self.cellWidget(i, 0).setCurrentText(v.value)
+
+        self.resizeColumnsToContents()
+
+class InputTable(OutputTable):
+
+    def __init__(self, vars, parent):
+        super().__init__(vars, parent)
+
+        for i in range(self.rowCount()):
+            v = self.cellWidget(i, 0)
+            if isinstance(v, TableBox):
+                v.currentIndexChanged.connect(
+                            lambda index, r=i, c=0: self.on_cell_changed(r, c, index)
+                    )
+
+        self.cellChanged.connect(self.on_cell_changed)
+
+    def on_cell_changed(self, row, col, index = None): # index is for comboboxes
+        if col != 0:
+            return
+        
+        try:
+            v = self.vars[row]
+        except IndexError:
+            return
+        
+        # disable signal
+        try:
+            self.cellChanged.disconnect(self.on_cell_changed)
+        except TypeError:
+            pass
+
+        if isinstance(v, TableBox):
+            v.value = v.currentText()
+        
+        elif isinstance(v, TableVar):
+            try:
+                v.dtype(self.item(row, col).text())
+            except ValueError:
+                self.item(row, col).setBackground(QtGui.QColor(255, 0, 0))
+                self.clearSelection()
+            except AttributeError:
+                print(self.item(row, col))
+            else:
+                v.value = v.dtype(self.item(row, col).text())
+                # get color of theme
+                colour = self.palette().color(QtGui.QPalette.ColorRole.Base)
+                self.item(row, col).setBackground(colour)
+                self.item(row, col).setText(str(v.value))
+
+        self.cellChanged.connect(self.on_cell_changed)
+
+    def set_values(self):
+
+        self.cellChanged.disconnect(self.on_cell_changed)
+        super().set_values()
+        self.cellChanged.connect(self.on_cell_changed)
+    

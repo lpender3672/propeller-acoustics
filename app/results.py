@@ -5,6 +5,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.figure import Figure
 import numpy as np
 
+from table import OutputTable, TableVar
+
 from hanson import hanson_av
 from betz import betz_off_design, bem
 
@@ -124,8 +126,6 @@ class PlotCanvas(FigureCanvas, QWidget):
 
     def plot_data(self):
         # clear
-        self.clear_plot()
-
 
         for i, line_data in enumerate(self.line_data):
 
@@ -209,6 +209,37 @@ class PolarPlotCanvas(PlotCanvas):
         super().set_ylim(bottom_override=0)
 
 
+class ResultsTable(OutputTable):
+    def __init__(self, parent):
+        
+        vars = [
+            TableVar(r"$C_T$", "[-]", "Thrust coefficient", float, 3),
+            TableVar(r"$C_P$", "[-]", "Power coefficient", float, 3),
+            TableVar(r"$FM$", "[-]", "Figure of Merit", float, 3),
+            TableVar(r"$OASPL$", "[dB]", "Sound pressure level at observer", float, 3),
+
+        ]
+        self.keys = ["CT", "CP", "FM", "OASPL"]
+        super().__init__(vars, parent)
+    
+
+    def set_values(self, res):
+        for i, key in enumerate(self.keys):
+            self.vars[i].value = res[key]
+        super().set_values()
+    
+    def clear_values(self):
+        for var in self.vars:
+            var.value = None
+        super().set_values()
+
+    def update_results(self, avs):
+        if avs.res['converged']:
+            self.set_values(avs.res)
+        else:
+            self.clear_values()
+
+
 class NoiseResultsWidget(QWidget):
     def __init__(self, parent, *args):
         super().__init__(parent,  *args)
@@ -240,15 +271,23 @@ class NoiseResultsWidget(QWidget):
         self.directivity.setMinimumHeight(400)
 
     def update_results(self, avs):
+
+        if not avs.res['converged']:
+            return # no loading data if BEM not converged
         
         theta, V, L, D, theta_max, vector_contributions = hanson_av(avs)
         self.directivity.line_colors = ['blue', 'red']
+
+        self.directivity.clear_plot()
 
         self.directivity.add_lines(np.array([theta, V, L, D]),
             linestyle=['-', ':', '-.'],
             label=['Thickness', 'Lift', 'Drag'])
         
-        
+        self.thickness_interference.clear_plot()
+        self.lift_interference.clear_plot()
+        self.drag_interference.clear_plot()
+        self.total_interference.clear_plot()
         
         self.thickness_interference.add_lines(
             np.array([vector_contributions[0].real, vector_contributions[0].imag]),
@@ -271,6 +310,8 @@ class NoiseResultsWidget(QWidget):
             linestyle=['-'],
             label=['Total']
         )
+
+        avs.res['OASPL'] = 10 * np.log10(total[-1] * np.conj(total[-1])).real
 
 
 class AerodynamicResultsWidget(QWidget):
@@ -299,6 +340,20 @@ class AerodynamicResultsWidget(QWidget):
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
+            self.profile.clear_plot()
+
+            idxs = avs.res['invalids']
+
+            # fill between xs
+            if len(idxs) > 0:
+                self.profile.ax.fill_betweenx(
+                    [-1e3, 1e3],
+                    avs.prop['r0_rt'][idxs[0]],
+                    avs.prop['r0_rt'][idxs[-1]],
+                    color='pink',
+                    alpha=0.8,
+                    label='Invalid'
+                )
 
             self.profile.add_lines(
                 [avs.prop['r0_rt'],
@@ -314,6 +369,7 @@ class AerodynamicResultsWidget(QWidget):
         else:
             # indicate failed convergence
             self.profile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.profile.ax.transAxes)
+            self.profile.draw()
             
 
 

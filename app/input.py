@@ -20,26 +20,8 @@ except ModuleNotFoundError:
     print("Warning Xfoil not installed - betz.py")
 
 
-from table import TexQTableWidget
+from table import InputTable, TableVar, TableBox
 
-class InputVar():
-    def __init__(self, symbol, unit, description, dtype = float):
-        self.symbol = symbol
-        self.unit = unit
-        self.description = description
-        self.dtype = dtype
-        self.value = None
-
-class InputBox(QComboBox):
-    def __init__(self, items, symbol, description):
-        super().__init__()
-        self.addItems(items)
-
-        self.symbol = symbol
-        self.description = description
-        self.unit = ""
-        self.dtype = str
-        self.value = None
 
 
 def foil_data(airfoil_data, alpha, Re):
@@ -71,103 +53,22 @@ def foil_data(airfoil_data, alpha, Re):
 
     return cls, cds
 
-class InputTable(TexQTableWidget):
-    def __init__(self, vars, parent):
-        super().__init__(parent)
-
-        self.vars = vars
-
-        self.setColumnCount(3)
-        self.setRowCount(len(self.vars))
-        
-        self.setHorizontalHeaderLabels(["Value", "Units", "Description"])
-
-        self.assemble_table()
-
-        self.cellChanged.connect(self.on_cell_changed)
-
-    def assemble_table(self):
-        row_names = []
-        for i,v in enumerate(self.vars):
-            row_names.append(v.symbol)
-            if isinstance(v, InputVar):
-                self.setItem(
-                    i, 0, QTableWidgetItem()
-                )
-            elif isinstance(v, InputBox):
-                self.setCellWidget(
-                    i, 0, v
-                )
-                v.currentIndexChanged.connect(
-                        lambda index, r=i, c=0: self.on_cell_changed(r, c, index)
-                )
-            self.setItem(
-                i, 1, QTableWidgetItem(v.unit)
-            )
-            self.setItem(
-                i, 2, QTableWidgetItem(v.description)
-            )
-        if len(row_names) > 0:
-            self.setVerticalHeaderLabels(row_names)
-    
-    def on_cell_changed(self, row, col, index = None):
-        if col != 0:
-            return
-        
-        try:
-            v = self.vars[row]
-        except IndexError:
-            return
-        
-        self.cellChanged.disconnect(self.on_cell_changed)
-
-        if isinstance(v, InputBox):
-            v.value = v.currentText()
-        
-        elif isinstance(v, InputVar):
-            try:
-                v.dtype(self.item(row, col).text())
-            except ValueError:
-                self.item(row, col).setBackground(QtGui.QColor(255, 0, 0))
-                self.clearSelection()
-            except AttributeError:
-                print(self.item(row, col))
-            else:
-                v.value = v.dtype(self.item(row, col).text())
-                # get color of theme
-                colour = self.palette().color(QtGui.QPalette.ColorRole.Base)
-                self.item(row, col).setBackground(colour)
-                self.item(row, col).setText(str(v.value))
-
-        self.cellChanged.connect(self.on_cell_changed)
-    
-    def set_values(self):
-        self.cellChanged.disconnect(self.on_cell_changed)
-
-        for i,v in enumerate(self.vars):
-            if isinstance(v, InputVar):
-                self.item(i, 0).setText(str(v.value))
-            elif isinstance(v, InputBox):
-                # set index of combobox
-                self.cellWidget(i, 0).setCurrentText(v.value)
-
-        self.cellChanged.connect(self.on_cell_changed)
-
 
 class PropInputTable(InputTable):
     new_prop = pyqtSignal()
 
     def __init__(self, parent):
         vars = [
-            InputVar(r"$B$", "[-]", "Blade number", int),
-            InputVar(r"$r_t$", "[m]", "Blade tip radius", float),
-            InputVar(r"$r_h$", "[m]", "Blade hub radius", float),
-            InputVar(r"$n_r$", "[-]", "Radial sections", int),
-            InputVar(r"$n_x$", "[-]", "Chordwise elements per section", int),
-            InputBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
-            InputVar(r"$c_{75}$", "[m]", "75% Chord", float),
+            TableVar(r"$B$", "[-]", "Blade number", int),
+            TableVar(r"$r_t$", "[m]", "Blade tip radius", float),
+            TableVar(r"$r_h$", "[m]", "Blade hub radius", float),
+            TableVar(r"$n_r$", "[-]", "Radial sections", int),
+            TableVar(r"$n_x$", "[-]", "Chordwise elements per section", int),
+            TableBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
+            TableVar(r"$c_{75}$", "[m]", "75% Chord", float),
+            TableBox(['Single', 'Symmetric', 'Asymmetric'], "twinB", "Twin blade type"),
         ]
-        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75"]
+        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75", "twinB"]
         super().__init__(vars, parent)
     
     def on_cell_changed(self, row, col, index=None):
@@ -177,7 +78,7 @@ class PropInputTable(InputTable):
     
     def parse_values(self):
         prop = {}
-        vals = [self.vars[i].value for i in range(7)]
+        vals = [v.value for v in self.vars]
         if None in vals:
             return None
 
@@ -209,12 +110,12 @@ class OperInputTable(InputTable):
 
     def __init__(self, parent):
         vars = [
-            InputVar(r"$\rho_0$", "[kg/m3]", "Air density", float),
-            InputVar(r"$\nu$", "[m2/s]", "Kinematic viscosity", float),
-            InputVar(r"$c_0$", "[m/s]", "Speed of sound", float),
-            InputVar(r"$p_{ref}$", "[Pa]", "Reference pressure for SPL", float),
-            InputVar(r"$V$", "[m/s]", "Free stream velocity", float),
-            InputVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
+            TableVar(r"$\rho_0$", "[kg/m3]", "Air density", float),
+            TableVar(r"$\nu$", "[m2/s]", "Kinematic viscosity", float),
+            TableVar(r"$c_0$", "[m/s]", "Speed of sound", float),
+            TableVar(r"$p_{ref}$", "[Pa]", "Reference pressure for SPL", float),
+            TableVar(r"$V$", "[m/s]", "Free stream velocity", float),
+            TableVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
         ]
         self.keys = ["rho", "nu", "c0", "pref", "V", "Omega"]
         super().__init__(vars, parent)

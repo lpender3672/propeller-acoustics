@@ -4,7 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionsWidget
-from results import NoiseResultsWidget, AerodynamicResultsWidget
+from results import NoiseResultsWidget, AerodynamicResultsWidget, ResultsTable
 from geometry import generate_blade_mesh
 
 import numpy as np
@@ -68,16 +68,20 @@ class MainWindow(QWidget):
         self.stl_viewer = STLViewerWidget(self)
         self.noise_results_widget = NoiseResultsWidget(self)
         self.aerodynamic_results_widget = AerodynamicResultsWidget(self)
+        self.results_table = ResultsTable(self)
 
         self.dists_widget.setMaximumWidth(500)
         self.dists_widget.setMinimumWidth(400)
         self.input_widget.setMinimumWidth(400)
-        self.stl_viewer.setMinimumHeight(400)
+        self.input_widget.setMinimumHeight(700)
+        self.stl_viewer.setMinimumHeight(200)
         self.stl_viewer.setMinimumWidth(400)
         self.noise_results_widget.setMinimumWidth(400)
+        self.aerodynamic_results_widget.setMinimumHeight(400)
 
         
-        layout.addWidget(self.input_widget, 0, 0, 3, 1)
+        layout.addWidget(self.input_widget, 0, 0, 2, 1)
+        layout.addWidget(self.results_table, 2, 0, 1, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
         layout.addWidget(self.stl_viewer, 0, 2, 2, 1)
         layout.addWidget(self.noise_results_widget, 0, 4, 3, 1)
@@ -101,17 +105,23 @@ class MainWindow(QWidget):
 
         self.dists_widget.update_avs(self.av)
 
+        if not self.input_widget.prop_defined:
+            return
         # update mesh
 
         self.stl_viewer.set_mesh(
             generate_blade_mesh(self.av), self.av.prop["B"]
         )
 
+        if not self.input_widget.oper_defined:
+            return
+
         if update_results:
             self.input_widget.save_to_fortran(self.ft_input_file, self.av)
             #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
+            self.results_table.update_results(self.av)
     
     def on_new_prop_from_file(self):
         self.av.prop.update(self.input_widget.prop)
@@ -137,6 +147,7 @@ class MainWindow(QWidget):
             #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
+            self.results_table.update_results(self.av)
 
     def save_prop(self):
         self.input_widget.save_prop_to_file(self.av)
