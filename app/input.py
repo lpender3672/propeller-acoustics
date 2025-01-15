@@ -325,7 +325,7 @@ class InputWidget(QWidget):
             if isinstance(item, list):
                 self.dist[key] = np.array(item)
         
-
+        self.prop_defined = True
         self.prop_table.set_values(self.prop)
         self.new_prop_from_file.emit()
 

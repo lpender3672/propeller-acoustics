@@ -128,7 +128,7 @@ class MainWindow(QWidget):
         self.av.dist.update(self.input_widget.dist)
         self.av.airfoil_data = self.input_widget.airfoil_data
 
-        self.dists_widget.set_dists(self.av)
+        self.dists_widget.set_dists(self.av) # this will then update the prop
 
     def update_oper(self, update_results = True):
         print("Updating oper")

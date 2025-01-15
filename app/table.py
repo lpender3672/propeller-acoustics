@@ -292,6 +292,7 @@ class OutputTable(TexQTableWidget):
         self.resizeColumnsToContents()
 
 class InputTable(OutputTable):
+    cellChanged = QtCore.pyqtSignal(int, int, int)
 
     def __init__(self, vars, parent):
         super().__init__(vars, parent)
@@ -300,7 +301,7 @@ class InputTable(OutputTable):
             v = self.cellWidget(i, 0)
             if isinstance(v, TableBox):
                 v.currentIndexChanged.connect(
-                            lambda index, r=i, c=0: self.on_cell_changed(r, c, index)
+                            lambda index, r=i, c=0: self.cellChanged.emit(r, c, index)
                     )
 
         self.cellChanged.connect(self.on_cell_changed)
@@ -315,10 +316,8 @@ class InputTable(OutputTable):
             return
         
         # disable signal
-        try:
-            self.cellChanged.disconnect(self.on_cell_changed)
-        except TypeError:
-            pass
+        
+        self.blockSignals(True) # not best way but reliable for inherited class
 
         if isinstance(v, TableBox):
             v.value = v.currentText()
@@ -338,11 +337,11 @@ class InputTable(OutputTable):
                 self.item(row, col).setBackground(colour)
                 self.item(row, col).setText(str(v.value))
 
-        self.cellChanged.connect(self.on_cell_changed)
+        self.blockSignals(False)
 
     def set_values(self):
 
-        self.cellChanged.disconnect(self.on_cell_changed)
+        self.blockSignals(True)
         super().set_values()
-        self.cellChanged.connect(self.on_cell_changed)
+        self.blockSignals(False)
     
