@@ -262,8 +262,8 @@ def betz_off_design(av):
     #CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F**(3/2) / ((F + sigma * K_prime) * np.cos(phi))**2
     #CP_prime = CT_prime * np.pi * xi * Cx / Cz * np.cos(sweep)
     Wsq = (V * (1 + a)) ** 2 + (Ucorr * (1 - a_prime)) ** 2
-    T_prime = 1 / 2 * B * Wsq * c * (Cl * np.cos(phi) - Cd * np.sin(phi))
-    Q_prime = 1 / 2 * B * Wsq * c * (Cl * np.sin(phi) + Cd * np.cos(phi)) * xi * R * np.cos(sweep)
+    T_prime = 1 / 2 * B * Wsq * c * (F * Cl * np.cos(phi) - Cd * np.sin(phi))
+    Q_prime = 1 / 2 * B * Wsq * c * (F * Cl * np.sin(phi) + Cd * np.cos(phi)) * xi * R * np.cos(sweep)
     P_prime = Omega * Q_prime
 
     A = np.pi * R**2

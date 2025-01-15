@@ -323,17 +323,22 @@ class AerodynamicResultsWidget(QWidget):
         self.tabWidget = QTabWidget(self)
 
         self.profile = PlotCanvas(self, "$r/r_t$", "Sectional Coefficients ")
-        self.profile_toolbar = NavigationToolbar(self.profile, self)
+        #self.profile_toolbar = NavigationToolbar(self.profile, self)
 
         self.profile.line_colors = ['blue', 'red']
 
         self.performance = PlotCanvas(self, "$C_P$", "FM")
-        self.performance_toolbar = NavigationToolbar(self.performance, self)
+        #self.performance_toolbar = NavigationToolbar(self.performance, self)
 
-        self.layout.addWidget(self.profile, 0, 0, 2, 1)
-        self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
+        self.tabWidget.addTab(self.profile, "Profile")
+        self.tabWidget.addTab(self.performance, "Performance")
+        
+        #self.layout.addWidget(self.profile, 0, 0, 2, 1)
+        #self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
         #self.layout.addWidget(self.performance, 0, 1, 2, 1)
         #self.layout.addWidget(self.performance_toolbar, 2, 1, 1, 1)
+
+        self.layout.addWidget(self.tabWidget)
 
     def update_results(self, avs):
         

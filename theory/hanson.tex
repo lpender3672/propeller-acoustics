@@ -164,7 +164,8 @@ Then equation \ref{eq:R} is expanded, keeping first order terms $\gamma_0/r$, $\
     R \rightarrow  r \left( 1 - \frac{\Omega r_0 }{U} \frac{\xi_0}{r}\cos\theta - \frac{r_0}{r} \sin \theta \cos\left(\frac{\Omega \gamma_0}{U}\right) \right)
 \end{equation}
 
-Then a spatial fourier transform of the generalised source function is taken in the $\gamma_0$ coordinate
+Then a spatial fourier transform of the generalised source function is taken in the $\gamma_0$ coordinate.
+As harmonics are being considered, its easier to work in the frequency domain.
 
 \begin{equation}
     \psi \left(\frac{\omega}{U}, r_0, \xi_0\right) = \int_{-\infty}^\infty g(\gamma_0, r_0, \xi_0) \exp \left(j \frac{\omega}{U} \gamma_0 \right) d\gamma_0
@@ -326,6 +327,26 @@ With
     \phi_0 &= k_y \frac{FA}{b}, \quad
     \phi_s = k_x \frac{MCA}{b} \\
 \end{align}
+
+\section{Optimising sweep angle}
+
+Recall that
+\begin{equation}
+    p(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t)
+\end{equation}
+The final radial integral is performed over a number of discrete airfoil sections.
+This means that for a given harmonic the contribution to the noise from each section is summed.
+This can easily be visualised as head-to-tail vector addition seen below.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{hasonsweep.png}
+    \caption{Example of phase interference for three swept planforms Mx=0.8, MT = 0.822, mB = 8 (vector segments between two dots corresponds to 5\% of blade radius, peak radiation angle = 30 deg).}
+    \label{fig:vector_addition}
+\end{figure}
+
+The problem for minimising noise of a given harmonic is then to sweep the blade in such a way that minimises the sum of these noise vectors.
+The magnitudes of the vectors will be assumed fixed ie constant thickness and loading.
 
 \section{Superposition of Propellers with Even Blade Spacing}
 

@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.special import jv as besselj
 from scipy.integrate import trapz, simps, cumtrapz
+from scipy.optimize import minimize
 
 from matplotlib import pyplot as plt
 from matplotlib import cm
@@ -90,8 +91,7 @@ def radial_bessel(oper: dict, prop: dict):
     ax.legend()
     plt.show()
 
-def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None):
-
+def get_radial_magnitudes(oper: dict, prop: dict, m: int):
     # calc dopfac for observer
     oper['Min'] = 0;                  #% inflow Mach number [-]
     oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
@@ -113,48 +113,71 @@ def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None):
     y = r * np.sin(theta)
     omegaDop_o = oper['Omega'] / dopfac_o
 
-    Nrs = prop['nr']
-    Nms = 5
-    PVm = np.zeros((Nrs), dtype=complex)
-    PDm = np.zeros((Nrs), dtype=complex)
-    PLm = np.zeros((Nrs), dtype=complex)
-
     _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
-    for i, m in enumerate(np.arange(1, Nms + 1)):
-        fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
-        yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
+    fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
+    yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
 
-        kx = fac * prop['Bd'] * oper['Mt']
-        ky = fac * yofac * prop['Bd'] / prop['r0_rt']
-        phi0 = fac * yofac * prop['FA'] / (prop['r0_rt'] * 2 * prop['rt'])
-        phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
+    kx = fac * prop['Bd'] * oper['Mt']
+    ky = fac * yofac * prop['Bd'] / prop['r0_rt']
+    phi0 = fac * yofac * prop['FA'] / (prop['r0_rt'] * 2 * prop['rt'])
+    phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
 
-        # large term top of p5
-        term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o))
+    # large term top of p5
+    term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o))
 
-        bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
+    bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
+    
+    term2 = oper['Mr']**2 * np.exp(1j * (phi0 + phis)) * bess
+    terms1and2 = term1 * term2
+
+    psiVKx = Psi(kx, xc, prop['HX'])
+    psiLKx = Psi(kx, xc, prop['dCl_dxc'])
+    psiDKx = Psi(kx, xc, prop['dCd_dxc'])
+
+    I1 = terms1and2 * kx**2 * prop['tb'] * psiVKx
+    I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
+    I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
+
+    PVm = cumtrapz(I1, prop['r0_rt'], initial=0)
+    PDm = cumtrapz(I2, prop['r0_rt'], initial=0)
+    PLm = cumtrapz(I3, prop['r0_rt'], initial=0)
+
+    return PVm, PLm, PDm
+    
+
+def optimise_lift_magnitude(oper: dict, prop: dict, m):
+
+
+    def objective_function(x):
+        prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+        range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
         
+        _, PLm, _ = get_radial_magnitudes(oper, prop, m)
+        nois = np.log10(np.abs(PLm[-1]))
+        if range_penalty > np.pi/2:
+            return nois + range_penalty
+        return nois
+    
+    # get initial magnitude and sweep
+    x0 = [0.01, 0.01, 0.01]
+    res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
+    print(res)
 
-        term2 = oper['Mr']**2 * np.exp(1j * (phi0 + phis)) * bess
+    radial_locus(oper, prop)
 
-        terms1and2 = term1 * term2
+    fig, ax = plt.subplots()
+    x = res.x
+    prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+    ax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
 
-        psiVKx = Psi(kx, xc, prop['HX'])
-        psiLKx = Psi(kx, xc, prop['dCl_dxc'])
-        psiDKx = Psi(kx, xc, prop['dCd_dxc'])
+    plt.show()
 
-        I1 = terms1and2 * kx**2 * prop['tb'] * psiVKx
-        I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
-        I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-        I1plt = cumtrapz(I1, prop['r0_rt'], initial=0)
-        I2plt = cumtrapz(I2, prop['r0_rt'], initial=0)
-        I3plt = cumtrapz(I3, prop['r0_rt'], initial=0)
 
-        PVm += I1plt
-        PDm += I2plt
-        PLm += I3plt
+def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None):
+
+    PVm, PLm, PDm = get_radial_magnitudes(oper, prop, 1)
 
     if ax is None:
         fig,ax = plt.subplots(2, 2)
@@ -366,14 +389,15 @@ def main():
         'nu': 1.48e-5
     }
     prop = {
-        'rt': 0.5,
-        'rh': 0.05,
+        'rt': 0.05,
+        'rh': 0.01,
         'B': 2,
-        'nr' : 20,
-        'nx' : 50
+        'nr' : 30,
+        'nx' : 50,
+        'c75' : 0.01
     }
     prop['r0_rt'] = np.linspace(prop['rh'], prop['rt'], prop['nr']) / prop['rt']
-    prop['c'] = 0.1 * prop['rt'] * np.ones(prop['nr'])
+    prop['c'] = prop['c75'] * np.ones(prop['nr'])
     prop['xc'] = np.linspace(-0.5, 0.5, prop['nx'])
     prop['twist'] = 5 + 5 * np.arctan(1 / prop['r0_rt'])
     prop['twist'] *= np.pi / 180
@@ -431,8 +455,9 @@ def main():
     prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
 
     #radial_locus(oper, prop)
-    radial_locus_sweep(oper, prop)
-    operating_range(av)
+    #radial_locus_sweep(oper, prop)
+    #operating_range(av)
+    optimise_lift_magnitude(oper, prop, 1)
     #chord_locus(oper, prop)
     #hanson_sweep(oper, prop)
 
