@@ -31,7 +31,44 @@ class EventGLViewWidget(gl.GLViewWidget):
         if event.key() == Qt.Key.Key_Escape:
             self.escapePressed.emit()
         super().keyPressEvent(event)
-        
+
+
+def create_arrow(start, end, color=(1, 0, 0, 1), rfac=0.01):
+    # Create a line (shaft)
+    line_points = np.array([start, end])
+    line = gl.GLLinePlotItem(pos=line_points, color=color, width=2, antialias=True)
+
+    # Create an arrowhead (cone)
+    arrow_direction = np.array(end, dtype=float) - np.array(start, dtype=float)
+    arrow_length = np.linalg.norm(arrow_direction)
+
+    cylradius = rfac * arrow_length
+    coneradius = 2 * cylradius
+
+    z_axis = np.array([0, 0, 1])  # Default cone orientation along z-axis
+    rotation_vector = np.cross(z_axis, arrow_direction)
+    rotation_angle = np.arccos(np.dot(z_axis, arrow_direction)) * 180 / np.pi
+    
+    if np.linalg.norm(rotation_vector) > 0:
+        rotation_vector /= np.linalg.norm(rotation_vector)
+    else:
+        rotation_vector = z_axis
+
+    cylinder_meshdata = gl.MeshData.cylinder(rows=10, cols=20, radius=[cylradius, cylradius], length=arrow_length)
+    cylinder_mesh = gl.GLMeshItem(meshdata=cylinder_meshdata, smooth=True, color=color, shader='shaded')
+
+    # Create a cone mesh for the arrowhead
+    cone_meshdata = gl.MeshData.cylinder(rows=10, cols=20, radius=[coneradius, 0], length=coneradius*2)
+    cone_mesh = gl.GLMeshItem(meshdata=cone_meshdata, smooth=True, color=color, shader='shaded')
+
+    # Apply the rotation matrix to the cylinder and cone
+    cylinder_mesh.rotate(rotation_angle, *rotation_vector[0:3])
+    cone_mesh.rotate(rotation_angle, *rotation_vector[0:3])
+
+    cylinder_mesh.translate(*start)
+    cone_mesh.translate(*end)
+
+    return cylinder_mesh, cone_mesh
 
 class STLViewerWidget(QWidget):
     def __init__(self, parent=None, popup=False):
@@ -52,13 +89,19 @@ class STLViewerWidget(QWidget):
         self.edgeToggle.setChecked(False)
         self.edgeToggle.stateChanged.connect(self.update_mesh_plot)
 
+        self.arrowToggle = QCheckBox("Show Arrow")
+        self.arrowToggle.setChecked(False)
+        self.arrowToggle.stateChanged.connect(self.update_mesh_plot)
+
         self.save_button = QPushButton("Save to .stl")
         self.save_button.clicked.connect(self.save_stl_file)
 
         self.view.doubleClicked.connect(self.display_fullscreen_dialog)
 
         #viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
+        viewSettingLayout.addWidget(self.arrowToggle, 0, 0)
         viewSettingLayout.addWidget(self.edgeToggle, 0, 1)
+        
 
         if not popup:
             viewSettingLayout.addWidget(self.save_button, 0, 2)
@@ -134,19 +177,22 @@ class STLViewerWidget(QWidget):
 
         intensities = np.zeros((self.num_blades, len(vertices) // 3))
 
-        
+        if self.arrowToggle.isChecked():
+            line, arrow = create_arrow([0, 0, 0], [0, 0, np.max(stl_mesh.v1)])
+            self.view.addItem(line)
+            self.view.addItem(arrow)
 
         # first compute intensities to get colour range
         for i in range(self.num_blades):
 
             theta = 2 * np.pi * i / self.num_blades
-            y_rot = np.array([
-                [np.cos(theta), 0, np.sin(theta)],
-                [0, 1, 0],
-                [-np.sin(theta), 0, np.cos(theta)]
+            z_rot = np.array([
+                [np.cos(theta), -np.sin(theta), 0],
+                [np.sin(theta), np.cos(theta), 0],
+                [0, 0, 1]
             ])
             
-            rotated_normals = np.dot(normals, y_rot)
+            rotated_normals = np.dot(normals, z_rot)
             intensity = np.dot(rotated_normals, light_dir)
             intensity_per_face = intensity[::3]
 
@@ -159,12 +205,12 @@ class STLViewerWidget(QWidget):
         for i in range(self.num_blades):
 
             theta = 2 * np.pi * i / self.num_blades
-            y_rot = np.array([
-                [np.cos(theta), 0, np.sin(theta)],
-                [0, 1, 0],
-                [-np.sin(theta), 0, np.cos(theta)]
+            z_rot = np.array([
+                [np.cos(theta), -np.sin(theta), 0],
+                [np.sin(theta), np.cos(theta), 0],
+                [0, 0, 1]
             ])
-            rotated_vertices = np.dot(vertices, y_rot)
+            rotated_vertices = np.dot(vertices, z_rot)
         
             intensity_normalized = (intensities[i] - min_intensity) / (
             max_intensity - min_intensity + 1e-8

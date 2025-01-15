@@ -194,7 +194,7 @@ def betz_off_design(av):
     iters = 0
 
     while (iters < 100):
-        if (np.max(dphi / phi) < 1e-3):
+        if (np.max(np.abs(dphi / phi)) < 1e-3):
             break
 
         # Analysis of Arbitrary Designs
@@ -262,21 +262,20 @@ def betz_off_design(av):
     #CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F**(3/2) / ((F + sigma * K_prime) * np.cos(phi))**2
     #CP_prime = CT_prime * np.pi * xi * Cx / Cz * np.cos(sweep)
     Wsq = (V * (1 + a)) ** 2 + (Ucorr * (1 - a_prime)) ** 2
-    CT_prime = 1 / 2 * Wsq * c * (Cl * np.cos(phi) - Cd * np.sin(phi))
-    CP_prime = 1 / 2 * Wsq * c * (Cl * np.sin(phi) + Cd * np.cos(phi)) * R * xi * np.cos(sweep)
+    T_prime = 1 / 2 * B * Wsq * c * (Cl * np.cos(phi) - Cd * np.sin(phi))
+    Q_prime = 1 / 2 * B * Wsq * c * (Cl * np.sin(phi) + Cd * np.cos(phi)) * xi * R * np.cos(sweep)
+    P_prime = Omega * Q_prime
 
     A = np.pi * R**2
-    CT_prime /= A * (R * Omega) ** 2
-    CP_prime /= A * R ** 3 * Omega ** 2
-
-
-
+    CT_prime = T_prime / (1/2 * A * (R * Omega) ** 2)
+    CP_prime = P_prime / (1/2 * A * (R * Omega) ** 3)
+    
     print(Re_c)
 
-    CT = np.trapz(CT_prime, xi)
-    CP = np.trapz(CP_prime, xi)
+    CT = np.trapz(CT_prime, xi * R)
+    CP = np.trapz(CP_prime, xi * R)
 
-    FM = np.abs(CT) ** (2/3) / np.abs(CP)
+    FM = CT ** (2/3) / (np.sqrt(2) * np.abs(CP))
 
     av.res['CT'] = CT
     av.res['CP'] = CP

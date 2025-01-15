@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QTabWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -319,6 +319,8 @@ class AerodynamicResultsWidget(QWidget):
         super().__init__(parent)
 
         self.layout = QGridLayout(self)
+
+        self.tabWidget = QTabWidget(self)
 
         self.profile = PlotCanvas(self, "$r/r_t$", "Sectional Coefficients ")
         self.profile_toolbar = NavigationToolbar(self.profile, self)

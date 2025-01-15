@@ -117,7 +117,7 @@ class OperInputTable(InputTable):
             TableVar(r"$V$", "[m/s]", "Free stream velocity", float),
             TableVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
             TableVar(r"$r_{obs}/R$", "[-]", "Observer distance", float),
-            TableVar(r"$\theta_{obs}/R$", "[def]", "Observer angle", float)
+            TableVar(r"$\theta_{obs}$", "[deg]", "Observer angle", float)
         ]
         self.keys = ["rho", "nu", "c0", "pref", "V", "Omega", "r_obs", "theta_obs"]
         super().__init__(vars, parent)

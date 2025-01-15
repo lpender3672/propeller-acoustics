@@ -12,7 +12,7 @@ type(propeller) :: prop
 character(100) :: propfname, operfname, outfname
 real :: cpu1, cpu2
 integer :: i
-real(wp) :: J, CT, CP, CL
+real(wp) :: J, CT, CP, CL, FM
 !***************************************************************************
 call cpu_time(cpu1)
 call get_command_argument(1,propfname)
@@ -47,10 +47,12 @@ write(*,*) 'Ran helix function ',2*(prop%nblades*prop%ncontrolpoint)**2, ' times
 CT = prop%Force_Total%mag / prop%rho / prop%w%mag **2._wp / (prop%r_prop * 2._wp) ** 4._wp * 4._wp * pi ** 2._wp
 CL = prop%Moment_Total%mag / prop%rho / prop%w%mag **2._wp / (prop%r_prop * 2._wp) ** 5._wp * 4._wp * pi ** 2._wp
 CP = CL * 2._wp * pi
+FM = (CT ** (3._wp/2._wp)) / (sqrt(2._wp) * CL)
 write(*,*)
 write(*,*) 'CT = ',CT
 write(*,*) 'CL = ',CL
 write(*,*) 'CP = ',CP
+write(*,*) 'FM = ',FM
 
 write(outfname, *), 'ft_output.dat'
 call write_output(prop, outfname)

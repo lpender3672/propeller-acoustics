@@ -4,8 +4,46 @@ from scipy.integrate import trapz, simps, cumtrapz
 
 from matplotlib import pyplot as plt
 from matplotlib import cm
-from betz import bem
+from betz import bem, betz_off_design
 from hanson import hanson, calc_noise_components
+
+from xfoil import XFoil
+from xfoil.model import Airfoil
+
+def foil_data(airfoil_data, alpha, Re):
+    
+    xf = XFoil()
+    xf.airfoil = Airfoil(
+        airfoil_data[:,0],
+        airfoil_data[:,1]
+        )
+    xf.Re = Re
+    xf.M = 0.0
+    xf.max_iter = 100
+    xf.verbose = False
+
+    if isinstance(alpha, float):
+        cls = np.zeros(1)
+        cds = np.zeros(1)
+        alpha = [alpha]
+    else:
+        cls = np.zeros(len(alpha))
+        cds = np.zeros(len(alpha))
+
+    for i, a in enumerate(alpha):
+        out = xf.a(a)
+        print(out)
+        cl, cd, _, _ = out
+        cls[i] = cl
+        cds[i] = cd
+
+    return cls, cds
+
+def run_xfoil(airfoil_data):
+
+    alphas = np.linspace(-20, 20, airfoil_data.shape[0])
+    cls, cds = foil_data(airfoil_data, alphas, 1e6)
+    return np.column_stack((airfoil_data, alphas, cls, cds))
 
 class AppVars():
     def __init__(self):
@@ -52,7 +90,7 @@ def radial_bessel(oper: dict, prop: dict):
     ax.legend()
     plt.show()
 
-def radial_locus(oper: dict, prop: dict):
+def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None):
 
     # calc dopfac for observer
     oper['Min'] = 0;                  #% inflow Mach number [-]
@@ -70,8 +108,6 @@ def radial_locus(oper: dict, prop: dict):
 
     theta = 3 * np.pi / 4 # np.arange(0, np.pi, 0.01)
 
-    fig, ax = plt.subplots()
-
     dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
     r = 10 * prop['rt']
     y = r * np.sin(theta)
@@ -83,6 +119,8 @@ def radial_locus(oper: dict, prop: dict):
     PDm = np.zeros((Nrs), dtype=complex)
     PLm = np.zeros((Nrs), dtype=complex)
 
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
     for i, m in enumerate(np.arange(1, Nms + 1)):
         fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
         yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
@@ -93,7 +131,7 @@ def radial_locus(oper: dict, prop: dict):
         phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
 
         # large term top of p5
-        term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o) + 1e-10)
+        term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o))
 
         bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
         
@@ -118,16 +156,17 @@ def radial_locus(oper: dict, prop: dict):
         PDm += I2plt
         PLm += I3plt
 
+    if ax is None:
+        fig,ax = plt.subplots(2, 2)
+    
+    ax[0,0].quiver(PVm.real[:-1], PVm.imag[:-1], np.diff(PVm.real), np.diff(PVm.imag), angles='xy', scale_units='xy', scale=1, label=label, color=colour)
+    ax[0,1].quiver(PLm.real[:-1], PLm.imag[:-1], np.diff(PLm.real), np.diff(PLm.imag), angles='xy', scale_units='xy', scale=1, color=colour)
+    ax[1,0].quiver(PDm.real[:-1], PDm.imag[:-1], np.diff(PDm.real), np.diff(PDm.imag), angles='xy', scale_units='xy', scale=1, color=colour)
+    total = PVm + PLm + PDm
+    ax[1,1].quiver(total.real[:-1], total.imag[:-1], np.diff(total.real), np.diff(total.imag), angles='xy', scale_units='xy', scale=1, color=colour)
 
-    viridis = cm.get_cmap('viridis')
-    clrs = viridis(prop['r0_rt'])
-
-    ax.plot(PVm.real, PVm.imag, label=f'Thickness, m={m}')
-    ax.plot(PLm.real, PLm.imag, label=f'Lift m={m}')
-    ax.plot(PDm.real, PDm.imag, label=f'Drag m={m}')
-
-    ax.grid()
-    ax.legend()
+    for axi in ax.flatten():
+        axi.grid(True)
 
 
 def chord_locus(oper: dict, prop: dict):
@@ -146,6 +185,8 @@ def chord_locus(oper: dict, prop: dict):
     dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
     r = 10 * prop['rt']
     y = r * np.sin(theta)
+
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
     for i, m in enumerate(np.arange(1, 2)):
         fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
@@ -246,18 +287,87 @@ def hanson_sweep(oper: dict, prop: dict):
     ax.set_xlabel('Tip Sweep [rad]')
     ax.set_ylabel('SPL [dB]')
 
+def radial_locus_sweep(oper: dict, prop: dict):
 
-if __name__ == "__main__":
+    fig, ax = plt.subplots(2, 2, figsize=(6, 6))
+    ax[0,0].set_title('Thickness')
+    ax[0,1].set_title('Lift')
+    ax[1,0].set_title('Drag')
+    ax[1,1].set_title('Total')
+
+    # set equal aspect ratio
+    for axi in ax.flatten():
+        axi.set_aspect('equal', 'box')
+
+    max_sweep = np.pi/4
+    nsweeps = 8
+    sweep = np.linspace(0, max_sweep, nsweeps)
+    SPL = np.zeros((nsweeps, 3))
+    for i in range(nsweeps):
+        prop['sweep'] = np.linspace(0, sweep[i], prop['nr'])
+
+        colour = cm.jet(i/nsweeps)
+        radial_locus(oper, prop, ax=ax, colour=colour, label=f'$\psi= {sweep[i]*180/np.pi:.2f}$')
+
+    fig.legend(loc='lower center', bbox_to_anchor=(0.5, 0.0), ncol=4, frameon=False)
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.15)  # Extra space for the legend
+
+def operating_range(av, ):
+
+    Js = np.linspace(-0.1, 0.2, 100)
+    CPs = np.zeros(Js.shape)
+    CTs = np.zeros(Js.shape)
+    FMs = np.zeros(Js.shape)
+
+    for i,J in enumerate(Js):
+        av.oper['V'] = J * av.oper['Omega'] * av.prop['rt']
+        av = betz_off_design(av)
+
+        if not av.res['converged']:
+            CPs[i] = np.nan
+            CTs[i] = np.nan
+            FMs[i] = np.nan
+            continue
+
+        ivlds = av.res['invalids']
+        if (len(ivlds) > 0 and ivlds[-1] > av.prop['nr'] // 2):
+            CPs[i] = np.nan
+            CTs[i] = np.nan
+            FMs[i] = np.nan
+            continue
+
+        CPs[i] = av.res['CP']
+        CTs[i] = av.res['CT']
+        FMs[i] = av.res['FM']
+
+    fig, ax = plt.subplots()
+    ax.plot(Js[CTs > 0], CPs[CTs > 0], 'o-', label='CP')
+    ax.plot(Js[CTs > 0], CTs[CTs > 0], 'o-', label='CT')
+
+    ax.legend()
+    ax.grid()
+
+    fig, ax = plt.subplots()
+    ax.plot(Js[CTs > 0],  (FMs)[CTs > 0], label='FM')
+
+    ax.legend()
+    ax.grid()
+
+    plt.show()
+
+def main():
     oper = {
-        'V':  50.0,
+        'V':  0.01,
         'c0': 343,
-        'Omega': 10000 * 2 * np.pi / 60,
+        'Omega': 20000 * 2 * np.pi / 60,
         'rho': 1.225,
-        'pref': 2e-5
+        'pref': 2e-5,
+        'nu': 1.48e-5
     }
     prop = {
-        'rt': 0.01,
-        'rh': 0.001,
+        'rt': 0.5,
+        'rh': 0.05,
         'B': 2,
         'nr' : 20,
         'nx' : 50
@@ -265,11 +375,12 @@ if __name__ == "__main__":
     prop['r0_rt'] = np.linspace(prop['rh'], prop['rt'], prop['nr']) / prop['rt']
     prop['c'] = 0.1 * prop['rt'] * np.ones(prop['nr'])
     prop['xc'] = np.linspace(-0.5, 0.5, prop['nx'])
-    prop['twist'] = 0.1 + 0.01 / prop['r0_rt']
+    prop['twist'] = 5 + 5 * np.arctan(1 / prop['r0_rt'])
+    prop['twist'] *= np.pi / 180
     #prop['sweep'] = np.zeros(prop['nr'])
-    prop['sweep'] = np.linspace(0, 1.2, prop['nr'])
+    prop['sweep'] = np.linspace(0, 0.01, prop['nr'])
 
-    airfoil_data = np.loadtxt('app/foils/naca0012.surf')
+    airfoil_data = np.loadtxt('app/foils/naca2412.surf')
     prop['Bd'] = prop['c'] / (2 * prop['rt'])
     n = airfoil_data.shape[0]
     xf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), airfoil_data[:, 0])
@@ -284,20 +395,34 @@ if __name__ == "__main__":
 
     prop['tb'] = np.max(tf) * prop['c']
     
-    prop['sweep'] = np.linspace(0, 1.5, prop['nr']) ** 2
-
     av = AppVars()
     av.oper = oper
     av.prop = prop
+
+    airfoil_data = run_xfoil(airfoil_data)
     av.airfoil_data = airfoil_data
 
-    bem(av)
-    res = av.res
-    alpha = res['alpha']
-    alpha = prop['twist'] - np.arctan( oper['V'] / (oper['Omega'] * prop['r0_rt'] * prop['rt']) )
+    av = betz_off_design(av)
 
-    prop['Cl_r'] = (2 * np.pi * alpha) #* np.cos(prop['sweep'])**2
-    prop['Cd_r'] = (0.0087 - 0.021 * alpha + 0.400 * alpha ** 2) #* np.cos(prop['sweep'])**2
+    if not av.res['converged']:
+        print("BEM failed")
+        return
+
+    res = av.res
+
+    alpha = av.res['alpha']
+    sweep = prop['sweep']
+    alphas = av.airfoil_data[:, 2]
+    Cl0 = av.airfoil_data[:, 3]
+    Cd0 = av.airfoil_data[:, 4]
+    Cl_valid = ~np.isnan(Cl0)
+    Cd_valid = ~np.isnan(Cd0)
+
+    Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep) ** 2
+    Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep) ** 2
+
+    prop['Cl_r'] = Cl
+    prop['Cd_r'] = Cd
 
     prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
     prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
@@ -305,8 +430,14 @@ if __name__ == "__main__":
     prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0) # normalize by area under curve
     prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
 
-    radial_locus(oper, prop)
+    #radial_locus(oper, prop)
+    radial_locus_sweep(oper, prop)
+    operating_range(av)
     #chord_locus(oper, prop)
     #hanson_sweep(oper, prop)
 
     plt.show()
+
+
+if __name__ == "__main__":
+    main()

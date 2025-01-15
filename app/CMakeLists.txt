@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.16)
-set (CMAKE_Fortran_COMPILER "ifx.exe")
+set (CMAKE_Fortran_COMPILER "gfortran.exe")
 
 project(pll_solver VERSION 1.2.0 LANGUAGES CXX Fortran)
 
