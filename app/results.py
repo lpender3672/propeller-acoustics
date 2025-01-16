@@ -8,7 +8,7 @@ import numpy as np
 from table import OutputTable, TableVar
 
 from hanson import hanson_av
-from betz import betz_off_design, operating_range
+from betz import betz_off_design, operating_range, guaranteed_convergence_BEM
 
 class PlotCanvas(FigureCanvas, QWidget):
     def __init__(self, parent=None, xlabel = "", ylabel = "", title = "", hideaxes = False):
@@ -343,8 +343,9 @@ class AerodynamicResultsWidget(QWidget):
 
     def update_results(self, avs):
         
-        avs = betz_off_design(avs)
+        #avs = betz_off_design(avs)
         #avs = bem(avs)
+        avs = guaranteed_convergence_BEM(avs)
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
@@ -355,7 +356,7 @@ class AerodynamicResultsWidget(QWidget):
             idxs = avs.res['invalids']
 
             # fill between xs
-            if len(idxs) > 0:
+            if len(idxs) > 0 and idxs.dtype == np.int:
                 self.CTprofile.ax.fill_betweenx(
                     [-1e3, 1e3],
                     avs.prop['r0_rt'][idxs[0]],
@@ -378,7 +379,7 @@ class AerodynamicResultsWidget(QWidget):
 
             self.CTprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCT'] / sigma],
+                avs.res['dCT']],
                 linestyle=['--'],
                 label = ['$C_T/\sigma$']
             )
@@ -397,13 +398,15 @@ class AerodynamicResultsWidget(QWidget):
             self.CTprofile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.CTprofile.ax.transAxes)
             self.CTprofile.draw()
 
-        Js, CPs, CTs, FMs = operating_range(avs)
+        Js = np.linspace(-0.1, 1, 100)
+        Js, CPs, CTs, FMs = operating_range(avs, Js)
         self.performance.clear_plot()
+        """
         self.performance.add_lines(
             [Js, FMs],
             linestyle=['-'],
             label=['FM']
-        )
+        )"""
 
             
 

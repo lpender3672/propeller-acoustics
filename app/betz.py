@@ -4,8 +4,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 from routines import (
     XFOIL_INSTALLED,
-    foil_data
+    foil_data,
+    run_xfoil,
+    AppVars,
+    load_oper_from_file,
+    load_prop_from_file
 )
+from scipy.optimize import root, brentq
 
 def betz_design(av):
 
@@ -253,9 +258,149 @@ def betz_off_design(av):
 
     return av
 
-def operating_range(av):
+def guaranteed_convergence_BEM(av):
 
-    Js = np.linspace(-0.1, 0.2, 100)
+    # A simple solution method for the blade element momentum equations with guaranteed convergence
+    # S. Andrew Ning
+
+    epsilon = 1e-6
+    max_iters = 100
+
+    if XFOIL_INSTALLED:
+        falphas = av.airfoil_data[:, 2]
+        Cl0 = av.airfoil_data[:, 3]
+        Cd0 = av.airfoil_data[:, 4]
+        Cl_valid = ~np.isnan(Cl0)
+        Cd_valid = ~np.isnan(Cd0)
+
+    av.res['converged'] = False
+
+    twist = av.prop['twist']
+    sweep = av.prop['sweep']
+    B = av.prop['B']
+    R = av.prop['rt']
+    Omega = av.oper['Omega']
+    V = -av.oper['V']
+    lamda_r = V / (Omega * av.prop['r0_rt'] * R)
+    sigmap = B * av.prop['c'] / (2 * np.pi * av.prop['r0_rt'] * R)
+
+    def prantl_tiploss(phi, i):
+        return 2 / np.pi * np.arccos(np.exp(-av.prop['B'] / 2 * (1 - av.prop['r0_rt'][i]) / np.sin(phi)))
+    
+    def cxcz(phi, i):
+        alpha = twist[i] - phi
+        Cl = np.interp(alpha * 180/np.pi, falphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep[i]) ** 2
+        Cd = np.interp(alpha * 180/np.pi, falphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep[i]) ** 2
+        Cx = Cl * np.cos(phi) - Cd * np.sin(phi)
+        Cz = Cl * np.sin(phi) + Cd * np.cos(phi)
+        return Cx, Cz
+    
+    def kappa(phi, i):
+        F = prantl_tiploss(phi, i)
+        _, cz = cxcz(phi, i)
+        return sigmap[i] * cz / ( 4 * F * np.sin(phi) ** 2)
+    def kappa_prime(phi, i):
+        F = prantl_tiploss(phi, i)
+        cx, _ = cxcz(phi, i)
+        return sigmap[i] * cx / (4 * F * np.sin(phi) * np.cos(phi))
+
+
+    def a(phi, i):
+        k = kappa(phi, i)
+        if (k < 2/3):
+            return k / (1 + k)
+        
+        F = prantl_tiploss(phi, i)
+        gamma1 = 2 * F * k -(10/9 - F)
+        gamma2 = 2 * F * k - F * (4/3 - F)
+        gamma3 = 2 * F * k - (25/9 - 2 * F)
+        return (( gamma1 - np.sqrt(gamma2)) / gamma3)
+    
+    def a_prime(phi, i):
+        kp = kappa_prime(phi, i)
+        ap = kp / (1 - kp)
+        #ap = np.clip(ap, -0.7, 0.7)
+        return ap
+
+    A = np.pi * av.prop['rt']**2
+
+    CT_prime = np.zeros(av.prop['nr'])
+    CP_prime = np.zeros(av.prop['nr'])
+    FM_prime = np.zeros(av.prop['nr'])
+    Cls = np.zeros(av.prop['nr'])
+    Cds = np.zeros(av.prop['nr'])
+    alphas = np.zeros(av.prop['nr'])
+
+    for i in range(av.prop['nr']):
+        def f(phi):
+            return np.sin(phi) / (1 - a(phi, i)) - np.cos(phi) * (1 - kappa_prime(phi, i)) / lamda_r[i]
+    
+        def fpb(phi):
+            return np.sin(phi) * (1 - kappa(phi, i)) - np.cos(phi) * (1 - kappa_prime(phi, i)) / lamda_r[i]
+    
+        try:
+            if f(np.pi/2) > 0:
+                phistar = brentq(f, epsilon, np.pi / 2, maxiter=max_iters)
+            elif fpb(-np.pi/4) < 0 and fpb(epsilon) > 0:
+                phistar = brentq(fpb, -np.pi/4, epsilon, maxiter=max_iters)
+            else:
+                phistar = brentq(f, np.pi / 2, np.pi, maxiter=max_iters)
+        except ValueError:
+            av.res['converged'] = False
+            return av
+
+        a_val = a(phistar, i)
+        ap_val = a_prime(phistar, i)
+        c = av.prop['c'][i]
+
+        #print(a_val, ap_val)
+
+        alpha = twist[i] - phistar
+
+        Cl = np.interp(alpha * 180/np.pi, falphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep[i]) ** 2
+        Cd = np.interp(alpha * 180/np.pi, falphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep[i]) ** 2
+        Wsq = (V * (1 + a_val)) ** 2 + (Omega * av.prop['r0_rt'][i] * R * (1 - ap_val)) ** 2
+        T_prime = 1 / 2 * B * Wsq * c * (Cl * np.cos(phistar) - Cd * np.sin(phistar))
+        Q_prime = 1 / 2 * B * Wsq * c * (Cl * np.sin(phistar) + Cd * np.cos(phistar)) * av.prop['r0_rt'][i] * av.prop['rt'] * np.cos(sweep[i])
+        P_prime = Omega * Q_prime
+
+        CT_prime[i] = T_prime / (1/2 * A * (R * Omega) ** 2)
+        CP_prime[i] = P_prime / (1/2 * A * (R * Omega) ** 3)
+        Cls[i] = Cl
+        Cds[i] = Cd
+        alphas[i] = alpha
+
+        FM_prime[i] = 0.5 * np.sign(CT_prime[i]) * np.abs(CT_prime[i]) ** (2/3) / (np.sqrt(2) * np.abs(CP_prime[i]))
+
+    
+    CT = np.trapz(CT_prime, av.prop['r0_rt'] * av.prop['rt'])
+    CP = np.trapz(CP_prime, av.prop['r0_rt'] * av.prop['rt'])
+
+    FM = np.sign(CT) * np.abs(CT) ** (2/3) / (np.sqrt(2) * np.abs(CP))
+
+    av.res['converged'] = True
+
+    av.res['CT'] = CT
+    av.res['CP'] = CP
+    av.res['FM'] = FM
+
+    av.res['dCP'] = CP_prime
+    av.res['dCT'] = CT_prime
+    av.res['dFM'] = FM_prime
+    av.res['Cl'] = Cls
+    av.res['Cd'] = Cds
+    av.res['alpha'] = alphas
+
+    av.res['invalids'] = np.zeros(av.prop['nr'])
+
+    #print(f"CT: {CT}, CP: {CP}")
+
+    return av
+
+
+
+def operating_range(av, Js):
+
     CPs = np.zeros(Js.shape)
     CTs = np.zeros(Js.shape)
     FMs = np.zeros(Js.shape)
@@ -264,7 +409,7 @@ def operating_range(av):
 
     for i,J in enumerate(Js):
         avcopy.oper['V'] = J * avcopy.oper['Omega'] * avcopy.prop['rt']
-        avcopy = betz_off_design(avcopy)
+        avcopy = guaranteed_convergence_BEM(avcopy)
 
         if not avcopy.res['converged']:
             CPs[i] = np.nan
@@ -287,15 +432,27 @@ def operating_range(av):
 
 def main():
 
-    xzf = np.loadtxt('app/foils/naca0012.surf')
-    alpha = np.arange(-10,10,2)
-    Cl,Cd = foil_data(
-        xzf, alpha , 1e6
-    )
+    av = AppVars()
+
+    av.oper = load_oper_from_file('app/app_vars.json')
+    av.prop = load_prop_from_file('app/props/constant_chord.prop')
+
+    av.airfoil_data = np.loadtxt(av.prop['foil_path'])
+    av.airfoil_data = run_xfoil(av.airfoil_data)
+
+    av.oper['V'] = 0.01
+    av = guaranteed_convergence_BEM(av)
+
     fig, ax = plt.subplots()
-    ax.plot(alpha,Cl)
-    ax.set_xlabel('Cl')
-    ax.set_ylabel('Cd')
+    ax.plot(av.prop['r0_rt'], av.res['dFM'])
+
+    Js = np.linspace(0.1, 1, 100)
+    #Js, CPs, CTs, FMs = operating_range(av, Js)
+
+    fig, ax = plt.subplots()
+
+    #ax.plot(Js, FMs, label='FM')
+    ax.legend()
 
     plt.show()
 
