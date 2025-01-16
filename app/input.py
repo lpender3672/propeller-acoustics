@@ -71,8 +71,8 @@ class PropInputTable(InputTable):
         self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75", "twinB"]
         super().__init__(vars, parent)
     
-    def on_cell_changed(self, row, col, index=None):
-        super().on_cell_changed(row, col, index)
+    def on_cell_changed(self, row, col):
+        super().on_cell_changed(row, col)
         self.new_prop.emit()
 
     
@@ -116,14 +116,14 @@ class OperInputTable(InputTable):
             TableVar(r"$p_{ref}$", "[Pa]", "Reference pressure for SPL", float),
             TableVar(r"$V$", "[m/s]", "Free stream velocity", float),
             TableVar(r"$\Omega$", "[RPM]", "Rotational speed", float),
-            TableVar(r"$r_{obs}/R$", "[-]", "Observer distance", float),
+            TableVar(r"$r_{obs}/r_t$", "[-]", "Observer distance", float),
             TableVar(r"$\theta_{obs}$", "[deg]", "Observer angle", float)
         ]
         self.keys = ["rho", "nu", "c0", "pref", "V", "Omega", "r_obs", "theta_obs"]
         super().__init__(vars, parent)
     
-    def on_cell_changed(self, row, col, index=None):
-        super().on_cell_changed(row, col, index)
+    def on_cell_changed(self, row, col):
+        super().on_cell_changed(row, col)
         self.new_oper.emit()
 
     

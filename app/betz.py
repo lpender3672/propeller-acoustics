@@ -2,44 +2,10 @@
 import numpy as np
 
 from matplotlib import pyplot as plt
-
-XFOIL_INSTALLED = True
-try: 
-    from xfoil import XFoil
-    from xfoil.model import Airfoil
-except ModuleNotFoundError:
-    XFOIL_INSTALLED = False
-    print("Warning Xfoil not installed - betz.py")
-    
-
-def foil_data(airfoil_data, alpha, Re):
-    
-    xf = XFoil()
-    xf.airfoil = Airfoil(
-        airfoil_data[:,0],
-        airfoil_data[:,1]
-        )
-    xf.Re = Re
-    xf.M = 0.0
-    xf.max_iter = 100
-    xf.verbose = False
-
-    if isinstance(alpha, float):
-        cls = np.zeros(1)
-        cds = np.zeros(1)
-        alpha = [alpha]
-    else:
-        cls = np.zeros(len(alpha))
-        cds = np.zeros(len(alpha))
-
-    for i, a in enumerate(alpha):
-        out = xf.a(a)
-        cl, cd, _, _ = out
-        cls[i] = cl
-        cds[i] = cd
-
-    return cls, cds
-
+from routines import (
+    XFOIL_INSTALLED,
+    foil_data
+)
 
 def betz_design(av):
 
@@ -162,7 +128,6 @@ def betz_design(av):
     
 def betz_off_design(av):
 
-
     R = av.prop['rt']
     B = av.prop['B']
     Omega = av.oper['Omega']
@@ -181,6 +146,8 @@ def betz_off_design(av):
     # An initial estimate for phi can be obtained from Eq. (8) by setting zeta = 0
     phi = np.arctan((1 + 0) * lamda / xi)
     dphi = np.inf
+
+    sigma = B * c / (2 * np.pi * xi * R)
 
     loss_model = 'Prantl'
 
@@ -221,7 +188,6 @@ def betz_off_design(av):
         Cz = Cl * np.sin(phi) + Cd * np.cos(phi)
         K = Cz / (4 * np.sin(phi)**2)
         K_prime = Cx / (4 * np.sin(phi) * np.cos(phi))
-        sigma = B * c / (2 * np.pi * xi * R)
         phi_t = np.arctan( xi * np.tan(phi))
         if loss_model == 'Prantl':
             F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1/xi - 1) / np.sin(phi_t))) # Prandtl tip loss factor
@@ -270,12 +236,12 @@ def betz_off_design(av):
     CT_prime = T_prime / (1/2 * A * (R * Omega) ** 2)
     CP_prime = P_prime / (1/2 * A * (R * Omega) ** 3)
     
-    print(Re_c)
+    #print(Cl)
 
     CT = np.trapz(CT_prime, xi * R)
     CP = np.trapz(CP_prime, xi * R)
 
-    FM = CT ** (2/3) / (np.sqrt(2) * np.abs(CP))
+    FM = np.sign(CT) * np.abs(CT) ** (2/3) / (np.sqrt(2) * np.abs(CP))
 
     av.res['CT'] = CT
     av.res['CP'] = CP
@@ -283,67 +249,41 @@ def betz_off_design(av):
     av.res['dCP'] = CP_prime
     av.res['dCT'] = CT_prime
 
-    print(f"CP: {CP}, CT: {CT}, FM: {FM}")
+    #print(f"CP: {CP}, CT: {CT}, FM: {FM}")
 
     return av
 
-def bem(av):
+def operating_range(av):
 
-    # nonuniform inflow distribution obtained by considering the
-    # differential form of momentum theory
-    #  induced velocity at radial station r is assumed to be due only to the thrust dT at that station
-    Omega = av.oper['Omega']
-    ro = av.oper['rho']
-    B = av.prop['B']
-    c = av.prop['c']
-    r0_rt = av.prop['r0_rt']
-    rt = av.prop['rt']
-    Nsect = av.prop['nr']
-    V = av.oper['V']
-    beta = av.prop['twist']
-    sweep = av.prop['sweep']
+    Js = np.linspace(-0.1, 0.2, 100)
+    CPs = np.zeros(Js.shape)
+    CTs = np.zeros(Js.shape)
+    FMs = np.zeros(Js.shape)
 
-    # the slope of the blade two-dimensional lift curve; typically a = 5.7, including real flow effects
-    a = 5.7 * np.cos(sweep) ** 2 # correction for sweep
+    avcopy = av.copy()
 
-    # 3.96
-    sigma = B * c / (np.pi * r0_rt * rt)
-    lamda_c = V / (Omega * rt * np.cos(sweep))
-    lamda = np.sqrt((sigma * a / 16 - lamda_c/2)**2 + sigma * a / 8 * beta * r0_rt ) - (sigma * a / 16 - lamda_c/2)
-    lamda_i = lamda - lamda_c
-    dCT = 4 * lamda * lamda_i * r0_rt
-    CT = np.trapz(dCT, r0_rt)
+    for i,J in enumerate(Js):
+        avcopy.oper['V'] = J * avcopy.oper['Omega'] * avcopy.prop['rt']
+        avcopy = betz_off_design(avcopy)
 
-    alpha = beta - lamda / r0_rt # small angle approximation
+        if not avcopy.res['converged']:
+            CPs[i] = np.nan
+            CTs[i] = np.nan
+            FMs[i] = np.nan
+            continue
 
-    if XFOIL_INSTALLED and av.airfoil_data.shape[1] > 2:
-        alphas = av.airfoil_data[:, 2]
-        Cl0 = av.airfoil_data[:, 3]
-        Cd0 = av.airfoil_data[:, 4]
-        Cl_valid = ~np.isnan(Cl0)
-        Cd_valid = ~np.isnan(Cd0)
-        Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid])
-        Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid])
-    else:
-        # Baileys numerical example
-        Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
+        ivlds = avcopy.res['invalids']
+        if (len(ivlds) > 0 and ivlds[-1] > avcopy.prop['nr'] // 2):
+            CPs[i] = np.nan
+            CTs[i] = np.nan
+            FMs[i] = np.nan
+            continue
 
-    Cd = Cd * np.cos(sweep) ** 2
-    # profile power
-    dCP = dCT * lamda + sigma / 2 * r0_rt ** 3 * Cd * np.cos(sweep)
-    CP = np.trapz( dCP, r0_rt)
+        CPs[i] = avcopy.res['CP']
+        CTs[i] = avcopy.res['CT']
+        FMs[i] = avcopy.res['FM']
 
-    FM = CT ** (2/3) / CP
-    av.res['alpha'] = alpha
-    av.res['converged'] = True
-    av.res['CT'] = CT
-    av.res['CP'] = CP
-    av.res['FM'] = FM
-    av.res['dCP'] = dCP
-    av.res['dCT'] = dCT
-
-    return av
-
+    return Js[CTs > 0], CPs[CTs > 0], CTs[CTs > 0], FMs[CTs > 0]
 
 def main():
 
@@ -358,8 +298,6 @@ def main():
     ax.set_ylabel('Cd')
 
     plt.show()
-
-
 
 if __name__ == '__main__':
 

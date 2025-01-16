@@ -8,7 +8,7 @@ import numpy as np
 from table import OutputTable, TableVar
 
 from hanson import hanson_av
-from betz import betz_off_design, bem
+from betz import betz_off_design, operating_range
 
 class PlotCanvas(FigureCanvas, QWidget):
     def __init__(self, parent=None, xlabel = "", ylabel = "", title = "", hideaxes = False):
@@ -322,15 +322,16 @@ class AerodynamicResultsWidget(QWidget):
 
         self.tabWidget = QTabWidget(self)
 
-        self.profile = PlotCanvas(self, "$r/r_t$", "Sectional Coefficients ")
-        #self.profile_toolbar = NavigationToolbar(self.profile, self)
+        self.CTprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_P/\sigma$ [-]")
+        self.CPprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_P$ [-]")
 
-        self.profile.line_colors = ['blue', 'red']
+        self.CTprofile.line_colors = ['blue', 'red']
+        self.CPprofile.line_colors = ['blue', 'red']
 
         self.performance = PlotCanvas(self, "$C_P$", "FM")
-        #self.performance_toolbar = NavigationToolbar(self.performance, self)
 
-        self.tabWidget.addTab(self.profile, "Profile")
+        self.tabWidget.addTab(self.CTprofile, "Loading")
+        self.tabWidget.addTab(self.CPprofile, "Power")
         self.tabWidget.addTab(self.performance, "Performance")
         
         #self.layout.addWidget(self.profile, 0, 0, 2, 1)
@@ -347,13 +348,23 @@ class AerodynamicResultsWidget(QWidget):
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
-            self.profile.clear_plot()
+            self.CTprofile.clear_plot()
+            self.CPprofile.clear_plot()
+            self.performance.clear_plot()
 
             idxs = avs.res['invalids']
 
             # fill between xs
             if len(idxs) > 0:
-                self.profile.ax.fill_betweenx(
+                self.CTprofile.ax.fill_betweenx(
+                    [-1e3, 1e3],
+                    avs.prop['r0_rt'][idxs[0]],
+                    avs.prop['r0_rt'][idxs[-1]],
+                    color='pink',
+                    alpha=0.8,
+                    label='Invalid'
+                )
+                self.CPprofile.ax.fill_betweenx(
                     [-1e3, 1e3],
                     avs.prop['r0_rt'][idxs[0]],
                     avs.prop['r0_rt'][idxs[-1]],
@@ -362,21 +373,38 @@ class AerodynamicResultsWidget(QWidget):
                     label='Invalid'
                 )
 
-            self.profile.add_lines(
+
+            sigma = avs.prop['B'] * avs.prop['c'] / (2 * np.pi * avs.prop['r0_rt'] * avs.prop['rt'])
+
+            self.CTprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCT'],
+                avs.res['dCT'] / sigma],
+                linestyle=['--'],
+                label = ['$C_T/\sigma$']
+            )
+            
+            self.CPprofile.add_lines(
+                [avs.prop['r0_rt'],
                 avs.res['dCP']],
-                linestyle=['--', ':'],
-                label = ['$C_T$', '$C_P$']
+                linestyle=['--'],
+                label = ['$C_T/\sigma$']
             )
 
-            self.performance.add_points(
-                [avs.res['CP'],
-                 avs.res['FM']])
         else:
             # indicate failed convergence
-            self.profile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.profile.ax.transAxes)
-            self.profile.draw()
+            # get active widget
+            self.tabWidget.setCurrentIndex(0)
+            self.CTprofile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.CTprofile.ax.transAxes)
+            self.CTprofile.draw()
+
+        Js, CPs, CTs, FMs = operating_range(avs)
+        self.performance.clear_plot()
+        self.performance.add_lines(
+            [Js, FMs],
+            linestyle=['-'],
+            label=['FM']
+        )
+
             
 
 

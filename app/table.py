@@ -222,13 +222,13 @@ class TexVertHeader(QHeaderView):
 
 
 class TableVar():
-    def __init__(self, symbol, unit, description, dtype = float, dp = 12):
+    def __init__(self, symbol, unit, description, dtype = float, sf = 12):
         self.symbol = symbol
         self.unit = unit
         self.description = description
         self.dtype = dtype
         self.value = None
-        self.dp = dp
+        self.sf = sf
 
 class TableBox(QComboBox):
     def __init__(self, items, symbol, description):
@@ -239,7 +239,7 @@ class TableBox(QComboBox):
         self.description = description
         self.unit = ""
         self.dtype = str
-        self.value = None
+        self.value = items[0].lower()
 
 class OutputTable(TexQTableWidget):
     def __init__(self, vars, parent):
@@ -276,14 +276,20 @@ class OutputTable(TexQTableWidget):
             self.setVerticalHeaderLabels(row_names, 16)
         
         self.resizeColumnsToContents()
+
+    def _round_sigfigs(self, x, sf):
+        # scottgigante on stackoverflow
+        x_positive = np.where(np.isfinite(x) & (x != 0), np.abs(x), 10**(sf-1))
+        mags = 10 ** (sf - 1 - np.floor(np.log10(x_positive)))
+        return np.round(x * mags) / mags
     
     def set_values(self):
         
         for i,v in enumerate(self.vars):
             if isinstance(v, TableVar):
                 val = v.value
-                if v.dtype == float:
-                    val = round(val, v.dp)
+                if v.dtype == float and val is not None:
+                    val = self._round_sigfigs(val, v.sf)
                 self.item(i, 0).setText(str(val))
             elif isinstance(v, TableBox):
                 # set index of combobox
@@ -292,7 +298,6 @@ class OutputTable(TexQTableWidget):
         self.resizeColumnsToContents()
 
 class InputTable(OutputTable):
-    cellChanged = QtCore.pyqtSignal(int, int, int)
 
     def __init__(self, vars, parent):
         super().__init__(vars, parent)
@@ -301,12 +306,11 @@ class InputTable(OutputTable):
             v = self.cellWidget(i, 0)
             if isinstance(v, TableBox):
                 v.currentIndexChanged.connect(
-                            lambda index, r=i, c=0: self.cellChanged.emit(r, c, index)
+                            lambda index, r=i, c=0: self.cellChanged.emit(r, c)
                     )
-
         self.cellChanged.connect(self.on_cell_changed)
 
-    def on_cell_changed(self, row, col, index = None): # index is for comboboxes
+    def on_cell_changed(self, row, col): # index is for comboboxes
         if col != 0:
             return
         

@@ -259,7 +259,7 @@ def hanson_av(avs):
     prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
 
     dx = prop['r0'] * np.sin( prop['sweep'] )
-    phi = np.arcsin(oper['Mx'] / oper['Mr'])
+    phi = prop['twist'] - res['alpha']
     prop['FA'] = dx * np.sin(phi)
     prop['MCA'] = dx * np.cos(phi)
 

@@ -8,17 +8,11 @@ import numpy as np
 
 from scipy.interpolate import CubicSpline
 
+from routines import (
+    calc_distribution
+)
 import betz
 
-def fit_quadratic(x, y):
-    A = np.array([
-        [x[0]**2, x[0], 1],
-        [x[1]**2, x[1], 1],
-        [x[2]**2, x[2], 1]
-    ])
-    b = np.array(y)
-    coeffs = np.linalg.solve(A, b)
-    return coeffs
 
 class DraggableScatterPlotItem(pg.ScatterPlotItem):
     def __init__(self, control_points, *args, **kwargs):
@@ -62,7 +56,9 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
                     ev.ignore()
                     return
                 # compute distribution at mouse position
-                ydist = self.get_distribution(np.array([mouspos[0]]))
+                ydist = calc_distribution(self.distribution_index,
+                                          self.control_points,
+                                          np.array([mouspos[0]]))
                 line_threshold = 0.05
                 if np.abs(ydist - mouspos[1]) / viewrange[1] > line_threshold: # clicked far from distribution ignore
                     ev.ignore()
@@ -115,40 +111,6 @@ class DraggableScatterPlotItem(pg.ScatterPlotItem):
             self.finished_dragging = True # not strictly true but we want to update the curve
             self.sigPlotChanged.emit(self)
 
-    def get_distribution(self, x_dist):
-        x = self.control_points[:, 0]
-        y = self.control_points[:, 1]
-
-        index = self.distribution_index
-
-        if index == 0:
-            b = (y[1] - y[0]) / (x[1] - x[0])
-            a = y[0] - b * x[0]
-            y_dist = a + b * x_dist
-        elif index == 1:
-            coefficients = fit_quadratic(x, y)
-            y_dist = coefficients[0] * x_dist**2 + coefficients[1] * x_dist + coefficients[2]
-        elif index == 2:
-            idx = np.argsort(x)
-            spline = CubicSpline(x[idx], y[idx])
-            y_dist = spline(x_dist)
-        elif index == 3:
-            # custom
-            #if x_dist.shape != self.xb.shape:
-            #    self.yb = np.interp(x_dist, self.xb, self.yb)
-            #    self.xb = x_dist
-            return
-            
-        elif index == 4:
-            # y = a/x + b
-            a = (y[0] - y[1]) / (1/x[0] - 1/x[1])
-            b = y[0] - a / x[0]
-            y_dist = a / x_dist + b
-        else:
-            y_dist = np.zeros_like(x_dist)
-
-        return y_dist
-
 
 class DistributionPlotWidget(QWidget):
     new_dist = pyqtSignal(bool)
@@ -169,6 +131,7 @@ class DistributionPlotWidget(QWidget):
         custom_item.setFlags( custom_item.flags() & ~Qt.ItemFlag.ItemIsSelectable )
         self.dist_model.appendRow(custom_item)
         self.dist_model.appendRow(QStandardItem("Inverse"))
+        self.dist_model.appendRow(QStandardItem("arctan(1/r)"))
         self.dist_type.setModel(self.dist_model)
         self.dist_type.currentIndexChanged.connect(self.reset_distribution)
         
@@ -213,33 +176,17 @@ class DistributionPlotWidget(QWidget):
         self.scatter.finished_dragging = True
         self.scatter.distribution_index = index
         self.scatter.show()
-
-        if index == 0:  # linear
-            self.set_distribution( index,
-                    self.default_ctrl_pts[:2]
-                )
-        elif index == 1:  # quadratic
-            self.set_distribution( index,
-                self.default_ctrl_pts[:3]
-            )
-        elif index == 2: # spline
-            self.set_distribution( index,
-                self.default_ctrl_pts[:3]
-                )
-        elif index == 3: # custom
-            self.set_distribution( index,
-                np.zeros((0, 2))
-                )
-        elif index == 4: # inverse
-            self.set_distribution( index,
-                self.default_ctrl_pts[:2]
-                )
+        self.set_distribution( index, *self.default_ctrl_pts )
         
     def get_distribution(self, x_dist):
-        if self.dist_type.currentIndex() == 3:
+        dist_index = self.dist_type.currentIndex()
+        if dist_index == 3:
+            if x_dist.shape != self.xb.shape:
+                self.yb = np.interp(x_dist, self.xb, self.yb)
+                self.xb = x_dist
             return self.yb
         else:
-            return self.scatter.get_distribution(x_dist)
+            return calc_distribution(dist_index, self.scatter.control_points, x_dist)
     
     def update_curve(self):
 
@@ -276,28 +223,32 @@ class DistributionPlotWidget(QWidget):
     def set_distribution(self, index, *args):
         self.scatter.is_spline = False
         self.scatter.show()
+        npargs = np.array(args).reshape(-1, 2)
 
         self.dist_type.currentIndexChanged.disconnect(self.reset_distribution)
         
         if index == 0:
             self.dist_type.setCurrentIndex(0)
-            self.scatter.control_points = args[0]
+            self.scatter.control_points = npargs[0:2]
         elif index == 1:
             self.dist_type.setCurrentIndex(1)
-            self.scatter.control_points = args[0]
+            self.scatter.control_points = npargs[0:3]
         elif index == 2:
             self.dist_type.setCurrentIndex(2)
-            self.scatter.control_points = args[0]
+            self.scatter.control_points = npargs[0:3]
             self.scatter.is_spline = True
         elif index == 3:
             self.dist_type.setCurrentIndex(3)
             self.scatter.control_points = np.zeros((0, 2))
-            self.xb = args[0]
-            self.yb = args[1]
+            self.xb = npargs[0]
+            self.yb = npargs[1]
             self.scatter.hide()
         elif index == 4:
             self.dist_type.setCurrentIndex(4)
-            self.scatter.control_points = args[0]
+            self.scatter.control_points = npargs[0:2]
+        elif index == 5:
+            self.dist_type.setCurrentIndex(5)
+            self.scatter.control_points = npargs[0:1]
         
         self.scatter.setData(pos=self.scatter.control_points)
         self.dist_type.currentIndexChanged.connect(self.reset_distribution)
@@ -322,7 +273,8 @@ class DistributionsWidget(QWidget):
             "quadratic",
             "spline",
             "custom",
-            "inverse"
+            "inverse",
+            "arctan"
         ]
         
         self.chord_plot = DistributionPlotWidget(self, title="Chord", ylabel="Chord [m]")

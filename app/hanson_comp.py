@@ -8,61 +8,13 @@ from matplotlib import cm
 from betz import bem, betz_off_design
 from hanson import hanson, calc_noise_components
 
-from xfoil import XFoil
-from xfoil.model import Airfoil
-
-def foil_data(airfoil_data, alpha, Re):
-    
-    xf = XFoil()
-    xf.airfoil = Airfoil(
-        airfoil_data[:,0],
-        airfoil_data[:,1]
-        )
-    xf.Re = Re
-    xf.M = 0.0
-    xf.max_iter = 100
-    xf.verbose = False
-
-    if isinstance(alpha, float):
-        cls = np.zeros(1)
-        cds = np.zeros(1)
-        alpha = [alpha]
-    else:
-        cls = np.zeros(len(alpha))
-        cds = np.zeros(len(alpha))
-
-    for i, a in enumerate(alpha):
-        out = xf.a(a)
-        print(out)
-        cl, cd, _, _ = out
-        cls[i] = cl
-        cds[i] = cd
-
-    return cls, cds
-
-def run_xfoil(airfoil_data):
-
-    alphas = np.linspace(-20, 20, airfoil_data.shape[0])
-    cls, cds = foil_data(airfoil_data, alphas, 1e6)
-    return np.column_stack((airfoil_data, alphas, cls, cds))
-
-class AppVars():
-    def __init__(self):
-        self.oper = {
-
-        }
-
-        self.prop = {
-
-        }
-
-        self.dist = {
-
-        }
-
-        self.res = {
-            
-        }
+from routines import (
+    load_oper_from_file,
+    load_prop_from_file,
+    AppVars,
+    XFOIL_INSTALLED,
+    run_xfoil
+)
 
 def Psi(kx, X, fX):
     f = fX * np.exp(1j * kx * X)
@@ -103,6 +55,7 @@ def get_radial_magnitudes(oper: dict, prop: dict, m: int):
 
     dx = prop['r0_rt'] * prop['rt'] * np.sin( prop['sweep'] )
     phi = np.arcsin(oper['Mx'] / oper['Mr'])
+    #phi = prop['twist'] - res['alpha']
     prop['FA'] = dx * np.sin(phi)
     prop['MCA'] = dx * np.cos(phi)
 
@@ -296,6 +249,7 @@ def hanson_sweep(oper: dict, prop: dict):
         prop['sweep'] = np.linspace(0, sweep[i], prop['nr'])
         dx = prop['r0_rt'] * prop['rt'] * np.sin( prop['sweep'] )
         phi = np.arcsin(oper['Mx'] / oper['Mr'])
+        #phi = prop['twist'] - res['alpha']
         alpha = prop['twist'] - phi
         prop['FA'] = dx * np.sin(phi)
         prop['MCA'] = dx * np.cos(phi)
@@ -459,7 +413,7 @@ def main():
     #operating_range(av)
     optimise_lift_magnitude(oper, prop, 1)
     #chord_locus(oper, prop)
-    #hanson_sweep(oper, prop)
+    #hanson_sweep(oper, prop, res)
 
     plt.show()
 

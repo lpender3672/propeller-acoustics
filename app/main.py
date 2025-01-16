@@ -6,39 +6,13 @@ from input import InputWidget
 from dists import DistributionsWidget
 from results import NoiseResultsWidget, AerodynamicResultsWidget, ResultsTable
 from geometry import generate_blade_mesh
+from routines import AppVars
 
 import numpy as np
-from scipy.interpolate import interp2d
-import json
 import os
 import subprocess
 from pathlib import Path
 
-class AppVars(QObject):
-    #new_oper = pyqtSignal()
-    #new_prop = pyqtSignal()
-
-    def __init__(self):
-        super().__init__()
-        self.oper = {
-
-        }
-
-        self.prop = {
-
-        }
-
-        self.dist = {
-
-        }
-
-        self.res = {
-            
-        }
-
-        self.airfoil_data = np.array(
-            []
-        )
 
 class MainWindow(QWidget):
     def __init__(self):
