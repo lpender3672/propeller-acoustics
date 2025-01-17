@@ -322,13 +322,13 @@ class AerodynamicResultsWidget(QWidget):
 
         self.tabWidget = QTabWidget(self)
 
-        self.CTprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_P/\sigma$ [-]")
+        self.CTprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_T/\sigma$ [-]")
         self.CPprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_P$ [-]")
 
         self.CTprofile.line_colors = ['blue', 'red']
         self.CPprofile.line_colors = ['blue', 'red']
 
-        self.performance = PlotCanvas(self, "$C_P$", "FM")
+        self.performance = PlotCanvas(self, "$J$", "Coefficicent")
 
         self.tabWidget.addTab(self.CTprofile, "Loading")
         self.tabWidget.addTab(self.CPprofile, "Power")
@@ -356,39 +356,40 @@ class AerodynamicResultsWidget(QWidget):
             idxs = avs.res['invalids']
 
             # fill between xs
-            if len(idxs) > 0 and idxs.dtype == np.int:
-                self.CTprofile.ax.fill_betweenx(
-                    [-1e3, 1e3],
-                    avs.prop['r0_rt'][idxs[0]],
-                    avs.prop['r0_rt'][idxs[-1]],
-                    color='pink',
-                    alpha=0.8,
-                    label='Invalid'
-                )
-                self.CPprofile.ax.fill_betweenx(
-                    [-1e3, 1e3],
-                    avs.prop['r0_rt'][idxs[0]],
-                    avs.prop['r0_rt'][idxs[-1]],
-                    color='pink',
-                    alpha=0.8,
-                    label='Invalid'
-                )
+            if len(idxs) > 0:
+                try:
+                    self.CTprofile.ax.fill_betweenx(
+                        [-1e3, 1e3],
+                        avs.prop['r0_rt'][idxs[0]],
+                        avs.prop['r0_rt'][idxs[-1]],
+                        color='pink',
+                        alpha=0.8,
+                        label='Invalid'
+                    )
+                    self.CPprofile.ax.fill_betweenx(
+                        [-1e3, 1e3],
+                        avs.prop['r0_rt'][idxs[0]],
+                        avs.prop['r0_rt'][idxs[-1]],
+                        color='pink',
+                        alpha=0.8,
+                        label='Invalid'
+                    )
+                except:
+                    pass
 
 
             sigma = avs.prop['B'] * avs.prop['c'] / (2 * np.pi * avs.prop['r0_rt'] * avs.prop['rt'])
 
             self.CTprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCT']],
-                linestyle=['--'],
-                label = ['$C_T/\sigma$']
+                avs.res['dCT'] / sigma],
+                linestyle=['--']
             )
             
             self.CPprofile.add_lines(
                 [avs.prop['r0_rt'],
                 avs.res['dCP']],
-                linestyle=['--'],
-                label = ['$C_T/\sigma$']
+                linestyle=['--']
             )
 
         else:
@@ -401,12 +402,12 @@ class AerodynamicResultsWidget(QWidget):
         Js = np.linspace(-0.1, 1, 100)
         Js, CPs, CTs, FMs = operating_range(avs, Js)
         self.performance.clear_plot()
-        """
+        
         self.performance.add_lines(
-            [Js, FMs],
+            [Js, CTs],
             linestyle=['-'],
-            label=['FM']
-        )"""
+            label=['CP']
+        )
 
             
 
