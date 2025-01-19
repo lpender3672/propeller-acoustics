@@ -5,7 +5,8 @@ from scipy.optimize import minimize
 
 from matplotlib import pyplot as plt
 from matplotlib import cm
-from betz import bem, betz_off_design
+import matplotlib as mpl
+from betz import betz_off_design, guaranteed_convergence_BEM
 from hanson import hanson, calc_noise_components
 
 from routines import (
@@ -97,19 +98,56 @@ def get_radial_magnitudes(oper: dict, prop: dict, m: int):
     PLm = cumtrapz(I3, prop['r0_rt'], initial=0)
 
     return PVm, PLm, PDm
-    
 
-def optimise_lift_magnitude(oper: dict, prop: dict, m):
+def plot_harmonic_components(oper: dict, prop: dict, ms = np.arange(1,5), ax=None, hatching=None, label=None, w = 0.5, dx = 0):
+
+    totals = np.zeros(ms.shape)
+
+    PVms = np.zeros(ms.shape)
+    PLms = np.zeros(ms.shape)
+    PDms = np.zeros(ms.shape)
+    for i,m in enumerate(ms):
+        PVm, PLm, PDm = get_radial_magnitudes(oper, prop, m)
+        PVms[i] = np.log10(np.abs(PVm[-1]))
+        PLms[i] = np.log10(np.abs(PLm[-1]))
+        PDms[i] = np.log10(np.abs(PDm[-1]))
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    #colors = ["#666666", "#999999", "#CCCCCC"]
+    colors = ['r', 'g', 'b']
+    mpl.rcParams['hatch.linewidth'] = 3.0  # previous svg hatch linewidth
+
+    cumulative_heights = np.zeros(ms.shape)
+    for i,P in enumerate([PVms, PLms, PDms]):
+        bar = ax.bar(ms + dx, P, w, bottom=cumulative_heights, color=colors[i], label=label, hatch=hatching)
+        cumulative_heights += P
+        for rect in bar:
+            rect.set_edgecolor(colors[i])
+            clr = rect.get_facecolor()
+            rect.set_facecolor((clr[0], clr[1], clr[2], 0.5))
+
+    for x, total in zip(ms + dx, cumulative_heights):
+        valignment = 'top' if total < 0 else 'bottom'
+        y_position = total + 0.05 if total >= 0 else total - 0.05
+        ax.text(
+            x, y_position, f"{total:.2f}",  # Add a slight offset above the bar
+            ha="center", va=valignment, fontsize=10
+        )
+
+    return ax
+
+
+def optimise_lift_magnitude(oper: dict, prop: dict, m, plot=True):
 
 
     def objective_function(x):
-        prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+        prop['sweep'] = x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
         range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
         
         _, PLm, _ = get_radial_magnitudes(oper, prop, m)
         nois = np.log10(np.abs(PLm[-1]))
-        if range_penalty > np.pi/2:
-            return nois + range_penalty
         return nois
     
     # get initial magnitude and sweep
@@ -117,20 +155,63 @@ def optimise_lift_magnitude(oper: dict, prop: dict, m):
     res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
     print(res)
 
-    radial_locus(oper, prop)
+    if not plot:
+        return
+    
+    ax = radial_locus(oper, prop)
+    ax[0,0].set_title('Thickness')
+    ax[0,1].set_title('Lift')
+    ax[1,0].set_title('Drag')
+    ax[1,1].set_title('Total')
 
     fig, ax = plt.subplots()
     x = res.x
     prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
     ax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
 
-    plt.show()
+def optimise_lift_harmonic_ratio(oper: dict, prop: dict, m1, m2):
+    """maximise the ratio of two harmonics of lift at specific observer location
+    """
+
+    def objective_function(x):
+        prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+        range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
+        
+        _, PLm1, _ = get_radial_magnitudes(oper, prop, m1)
+        _, PLm2, _ = get_radial_magnitudes(oper, prop, m2)
+        dnois = np.log10(np.abs(PLm1[-1])) - np.log10(np.abs(PLm2[-1]))
+        return dnois
+
+    # get initial magnitude and sweep
+    x0 = [0.01, 0.01, 0.01]
+    res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
+    print(res)
+
+    fig, ax = plt.subplots(2, 2, figsize=(6, 6))
+    B = prop['B']
+    ax = radial_locus(oper, prop, ax=ax, m=m1, label=f'mB={m1 * B} (Minimised)', colour='b')
+    ax = radial_locus(oper, prop, ax=ax, m=m2, label=f'mB={m2 * B} (Maximised)', colour='r')
+    
+    ax[0,0].set_title('Thickness')
+    ax[0,1].set_title('Lift')
+    ax[1,0].set_title('Drag')
+    ax[1,1].set_title('Total')
+
+    fig.legend(loc='lower center', bbox_to_anchor=(0.5, 0.0), ncol=2, frameon=False)
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.1)  # Extra space for the legend
+
+    fig.savefig('deliverables/tms/figures/optimised_ratio.png', dpi=300)
+
+    fig, ax = plt.subplots()
+    x = res.x
+    prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+    ax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
 
 
+def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None, m=1):
 
-def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None):
-
-    PVm, PLm, PDm = get_radial_magnitudes(oper, prop, 1)
+    PVm, PLm, PDm = get_radial_magnitudes(oper, prop, m)
 
     if ax is None:
         fig,ax = plt.subplots(2, 2)
@@ -143,6 +224,8 @@ def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None):
 
     for axi in ax.flatten():
         axi.grid(True)
+
+    return ax
 
 
 def chord_locus(oper: dict, prop: dict):
@@ -284,7 +367,7 @@ def radial_locus_sweep(oper: dict, prop: dict):
         prop['sweep'] = np.linspace(0, sweep[i], prop['nr'])
 
         colour = cm.jet(i/nsweeps)
-        radial_locus(oper, prop, ax=ax, colour=colour, label=f'$\psi= {sweep[i]*180/np.pi:.2f}$')
+        ax = radial_locus(oper, prop, ax=ax, colour=colour, label=f'$\psi= {sweep[i]*180/np.pi:.2f}$')
 
     fig.legend(loc='lower center', bbox_to_anchor=(0.5, 0.0), ncol=4, frameon=False)
     fig.tight_layout()
@@ -332,6 +415,56 @@ def operating_range(av, ):
     ax.grid()
 
     plt.show()
+
+
+def plot_optimised_harmonics(prop, oper):
+    total_width = 0.8
+    n = 5
+    width = total_width / n
+    hatchings = [r'/', r'.. ', r'*', r"xx", r"//"]
+    ms = np.arange(1, n)
+    fig, bar_ax = plt.subplots(figsize=(12, 6))
+
+    sfig, sweep_ax = plt.subplots()
+    opt_labels = ['Unswept', 'min $P_{1B}$', 'min $P_{2B}$', 'min $P_{3B}$', 'min $P_{4B}$']
+    profile_colours = cm.viridis(np.linspace(0, 1, n))
+
+    for i in range(n):
+        dx = i * width - total_width / 2 + width / 2
+        sweep_deg_zero = (prop['sweep'] - prop['sweep'][0]) * 180 / np.pi
+        sweep_ax.plot(prop['r0_rt'], sweep_deg_zero, label=opt_labels[i], color=profile_colours[i])
+        bar_ax = plot_harmonic_components(oper, prop, ms=ms, ax=bar_ax, hatching=hatchings[i], w=width, dx=dx)
+        #optimise_lift_harmonic_ratio(oper, prop, 2, 1)
+        optimise_lift_magnitude(oper, prop, i+1, plot=False)
+
+
+    bar_ax.grid()
+    # create custom legend
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    hatchpatches = [Patch(facecolor='white', edgecolor='black', hatch=h) for h in hatchings]
+    component_colours = ['r', 'g', 'b']
+    component_patches = [Line2D([0], [0], color=c, linewidth=5) for c in component_colours]
+
+    bar_ax.legend(hatchpatches + component_patches,  opt_labels + ['Thickness', 'Lift', 'Drag'], loc='lower left')
+    bar_ax.set_xlabel('m')
+    bar_ax.set_xticks(ms)
+    bar_ax.set_ylabel('dB')
+    bar_ax.set_title('Harmonic Noise Components')
+
+    fig.tight_layout()
+    fig.savefig('deliverables/tms/figures/optimised_harmonics.png', dpi=300)
+
+    sweep_ax.legend()
+    sweep_ax.set_xlabel('$r_0/r_t$')
+    sweep_ax.set_ylabel('Sweep [deg]')
+    sweep_ax.set_title('Optimised Sweep')
+    sweep_ax.grid()
+
+    sfig.tight_layout()
+    sfig.savefig('deliverables/tms/figures/optimised_harmonic_profiles.png', dpi=300)
+
+
 
 def main():
     oper = {
@@ -410,8 +543,13 @@ def main():
 
     #radial_locus(oper, prop)
     #radial_locus_sweep(oper, prop)
+
+
+    #plot_optimised_harmonics(prop, oper)
+
     #operating_range(av)
-    optimise_lift_magnitude(oper, prop, 1)
+    optimise_lift_harmonic_ratio(oper, prop, 2, 1)
+    #
     #chord_locus(oper, prop)
     #hanson_sweep(oper, prop, res)
 

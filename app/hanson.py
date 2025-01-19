@@ -252,6 +252,8 @@ def hanson_av(avs):
 
     prop['Cl_r'] = avs.res['Cl']
     prop['Cd_r'] = avs.res['Cd']
+    # get cp distribution and calculate resolve panel forces
+
     prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
     prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
 

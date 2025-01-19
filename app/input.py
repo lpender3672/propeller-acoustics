@@ -10,6 +10,9 @@ import json
 from pathlib import Path
 import os
 
+from routines import (
+    interpolate_clcd,
+)
 
 XFOIL_INSTALLED = True
 try: 
@@ -200,9 +203,12 @@ class AirfoilPlotDialog(QDialog):
         Cl = self.airfoil_data[:, 3]
         Cd = self.airfoil_data[:, 4]
 
+        x = np.linspace(np.min(alpha) * np.pi / 180, np.pi/2, 100)
+        y1, y2 = interpolate_clcd(self.airfoil_data, x, 1e6)
+
         self.plot_widget.clear()
-        self.plot_widget.plot(alpha, Cl, pen=pg.mkPen(color='b', width=2), name="Cl")
-        self.plot_widget.plot(alpha, Cd, pen=pg.mkPen(color='r', width=2), name="Cd")
+        self.plot_widget.plot(x * 180/np.pi, y1, pen=pg.mkPen(color='b', width=2), name="Cl")
+        self.plot_widget.plot(x * 180/np.pi, y2, pen=pg.mkPen(color='r', width=2), name="Cd")
         self.plot_widget.setLabel("left", "Coefficient")
         self.plot_widget.setLabel("bottom", "Angle of Attack")
         self.plot_widget.setTitle("Polar")

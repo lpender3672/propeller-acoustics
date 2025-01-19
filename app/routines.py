@@ -76,6 +76,64 @@ def run_xfoil(airfoil_data):
     cls, cds = foil_data(airfoil_data, alphas, 1e6)
     return np.column_stack((airfoil_data, alphas, cls, cds))
 
+def correct_clcd_sweep(cl, cd, sweep):
+    return cl * np.cos(sweep) ** 2, cd * np.cos(sweep) ** 2
+
+def Viterna_extrapolation(airfoil_data, alpha, Re):
+    alpha_data = airfoil_data[:, 2]
+    Cl_data = airfoil_data[:, 3]
+    Cd_data = airfoil_data[:, 4]
+
+    idx = np.nanargmax(Cl_data)
+    alpha_stall = alpha_data[idx] * np.pi / 180
+    CLstall = Cl_data[idx]
+    CDstall = Cd_data[idx]
+
+    AR = 10 # not important
+    CDmax = 1.11 + 0.018 * AR
+    a1 = CDmax / 2
+    b1 = CDmax
+    a2 = (CLstall - CDmax * np.sin(alpha_stall) * np.cos(alpha_stall)) * np.sin(alpha_stall) / (np.cos(alpha_stall) ** 2)
+    b2 = (CDstall - CDmax * np.sin(alpha_stall) ** 2) / np.cos(alpha_stall)
+
+    cl = a1 * np.sin(2 * alpha) + a2 * np.cos(alpha) ** 2 / np.sin(alpha)
+    cd = b1 * np.sin(alpha) ** 2 + b2 * np.cos(alpha)
+
+    return cl, cd
+
+def interpolate_clcd(airfoil_data, alpha, Re):
+    if XFOIL_INSTALLED and airfoil_data.shape[1] >= 5:
+            
+        alpha_data = airfoil_data[:, 2]
+        Cl_data = airfoil_data[:, 3]
+        Cd_data = airfoil_data[:, 4]
+        Cl_valid = ~np.isnan(Cl_data)
+        Cd_valid = ~np.isnan(Cd_data)
+
+        if isinstance(alpha, float):
+
+
+            if alpha > np.max(alpha_data[Cl_valid]):
+                Cl, Cd = Viterna_extrapolation(airfoil_data, alpha, Re)
+            else:
+                Cl = np.interp(alpha * 180/np.pi, alpha_data[Cl_valid], Cl_data[Cl_valid])
+                Cd = np.interp(alpha * 180/np.pi, alpha_data[Cd_valid], Cd_data[Cd_valid])
+        
+        else:
+            #mask = alpha*180/np.pi > np.max(alpha_data[Cl_valid])
+            mask = alpha*180/np.pi > alpha_data[np.nanargmax(Cl_data)]
+            print(np.max(alpha_data[Cl_valid]))
+            Cl = np.interp(alpha * 180/np.pi, alpha_data[Cl_valid], Cl_data[Cl_valid])
+            Cd = np.interp(alpha * 180/np.pi, alpha_data[Cd_valid], Cd_data[Cd_valid])
+            Cl[mask], Cd[mask] = Viterna_extrapolation(airfoil_data, alpha[mask], Re)
+
+    else:
+        Cl = 2 * np.pi * alpha
+        Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
+    
+    return Cl, Cd
+
+
 def fit_quadratic(x, y):
     A = np.array([
         [x[0]**2, x[0], 1],

@@ -4,11 +4,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 from routines import (
     XFOIL_INSTALLED,
-    foil_data,
     run_xfoil,
     AppVars,
     load_oper_from_file,
-    load_prop_from_file
+    load_prop_from_file,
+    interpolate_clcd,
+    correct_clcd_sweep
 )
 from scipy.optimize import root, brentq
 
@@ -156,13 +157,6 @@ def betz_off_design(av):
 
     loss_model = 'Prantl'
 
-    if XFOIL_INSTALLED:
-        alphas = av.airfoil_data[:, 2]
-        Cl0 = av.airfoil_data[:, 3]
-        Cd0 = av.airfoil_data[:, 4]
-        Cl_valid = ~np.isnan(Cl0)
-        Cd_valid = ~np.isnan(Cd0)
-
     iters = 0
 
     while (iters < 100):
@@ -177,13 +171,7 @@ def betz_off_design(av):
 
         #Cl = Cl0 + alpha * 2 * np.pi
         #Cd = Cd0
-        if XFOIL_INSTALLED:
-            # mark indicies where Cl and Cd are outside airfoil data
-            Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep) ** 2
-            Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep) ** 2
-        else:
-            Cl = 2 * np.pi * alpha
-            Cd = 0.0087 - 0.021 * alpha + 0.400 * alpha ** 2
+        Cl, Cd = interpolate_clcd(av.airfoil_data, alpha, 1e6)
 
         # better to wait and see if its out of bounds
         # phi = np.clip(phi, beta - alphas.min() * np.pi / 180, beta - alphas.max() * np.pi / 180)
@@ -225,7 +213,7 @@ def betz_off_design(av):
     av.res['alpha'] = alpha
     av.res['Cl'] = Cl
     av.res['Cd'] = Cd
-    invalids = np.where((alpha * 180/np.pi < alphas.min()) | (alpha * 180/np.pi > alphas.max()))[0]
+    invalids = np.where((alpha * 180/np.pi < - 30))[0]
     av.res['invalids'] = invalids
     # set interesting values
     
@@ -403,7 +391,8 @@ def guaranteed_convergence_BEM(av):
 
         # Airfoil cl/cd
 
-        cl, cd = afeval(alpha, Re, Mach, i)
+        cl, cd = interpolate_clcd(av.airfoil_data, alpha, Re)
+        cl, cd = correct_clcd_sweep(cl, cd, sweep[i])
 
         # Resolve into normal and tangential forces
         cn = cl * cphi - cd * sphi
@@ -468,14 +457,23 @@ def guaranteed_convergence_BEM(av):
         v *= G
 
         result['alpha'][i] = alpha
-        dT = B * Np
-        dQ = B * r * Tp
-        A = np.pi * Rtip**2
-        dCT = dT / (rho * A * (Omega * Rtip)**2)
-        dCP = dQ / (rho * A * (Omega * Rtip)**3)
+        #dT = B * Np
+        #dQ = B * r * Tp
+        #A = np.pi * Rtip**2
+        #dCT = dT / (rho * A * (Omega * Rtip)**2)
+        #dCP = dQ / (rho * A * (Omega * Rtip)**3)
+
+        if k >= -2.0 / 3:  # Momentum region
+            dCT = 4 * a * (1 - a) * F
+        else:  # Empirical region
+            dCT = (50/9 - 4*F)*a**2 - (40/9 - 4*F)*a + 8/9
+        
+        dCP = (1-a) * dCT + 0.5 * sigma_p * cd * (r/R)**3
 
         result['dCT'][i] = dCT
         result['dCP'][i] = dCP
+        result['Cl'][i] = cl
+        result['Cd'][i] = cd
 
         #print(i, R, alpha)
 
@@ -585,7 +583,7 @@ def main():
     fig, ax = plt.subplots()
     ax.plot(av.prop['r0_rt'], av.res['alpha'])
 
-    Js = np.linspace(-1, 2, 100)
+    Js = np.linspace(-0.1, 0.1, 20)
     Js, CPs, CTs, FMs = operating_range(av, Js)
 
     fig, ax = plt.subplots()

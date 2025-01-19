@@ -329,10 +329,15 @@ class AerodynamicResultsWidget(QWidget):
         self.CPprofile.line_colors = ['blue', 'red']
 
         self.performance = PlotCanvas(self, "$J$", "Coefficicent")
+        self.AoA = PlotCanvas(self, "$r/r_t$ [-]", "$\\alpha$ [deg]")
+
+        self.AoA.line_colors = ['blue', 'red']
 
         self.tabWidget.addTab(self.CTprofile, "Loading")
         self.tabWidget.addTab(self.CPprofile, "Power")
         self.tabWidget.addTab(self.performance, "Performance")
+        self.tabWidget.addTab(self.AoA, "Angle of Attack")
+
         
         #self.layout.addWidget(self.profile, 0, 0, 2, 1)
         #self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
@@ -343,15 +348,16 @@ class AerodynamicResultsWidget(QWidget):
 
     def update_results(self, avs):
         
-        #avs = betz_off_design(avs)
+        avs = betz_off_design(avs)
         #avs = bem(avs)
-        avs = guaranteed_convergence_BEM(avs)
+        #avs = guaranteed_convergence_BEM(avs)
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
             self.CTprofile.clear_plot()
             self.CPprofile.clear_plot()
             self.performance.clear_plot()
+            self.AoA.clear_plot()
 
             idxs = avs.res['invalids']
 
@@ -382,13 +388,19 @@ class AerodynamicResultsWidget(QWidget):
 
             self.CTprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCT'] / sigma],
+                avs.res['dCT']],
                 linestyle=['--']
             )
             
             self.CPprofile.add_lines(
                 [avs.prop['r0_rt'],
                 avs.res['dCP']],
+                linestyle=['--']
+            )
+
+            self.AoA.add_lines(
+                [avs.prop['r0_rt'],
+                avs.res['alpha']],
                 linestyle=['--']
             )
 
@@ -399,16 +411,15 @@ class AerodynamicResultsWidget(QWidget):
             self.CTprofile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.CTprofile.ax.transAxes)
             self.CTprofile.draw()
 
-        Js = np.linspace(-0.1, 1, 100)
+        Js = np.linspace(-0.1, 0.3, 10)
         Js, CPs, CTs, FMs = operating_range(avs, Js)
         self.performance.clear_plot()
+
+        if CTs.size == 0:
+            return
         
         self.performance.add_lines(
             [Js, CTs],
             linestyle=['-'],
             label=['CP']
         )
-
-            
-
-
