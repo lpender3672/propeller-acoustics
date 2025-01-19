@@ -18,3 +18,4 @@ if __name__ == '__main__':
     out_file = Path(fpath) / 'allrefs.bib'
 
     merge_bib(bib_dir, out_file)
+    print(f'Merged bib files into {out_file}')
