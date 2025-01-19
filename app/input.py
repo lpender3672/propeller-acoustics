@@ -70,8 +70,9 @@ class PropInputTable(InputTable):
             TableBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
             TableVar(r"$c_{75}$", "[m]", "75% Chord", float),
             TableBox(['Single', 'Symmetric', 'Asymmetric'], "twinB", "Twin blade type"),
+            TableVar(r"$D_th$", "[m]", "Thead diameter", float)
         ]
-        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75", "twinB"]
+        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75", "twinB", "dthread"]
         super().__init__(vars, parent)
     
     def on_cell_changed(self, row, col):
@@ -204,7 +205,7 @@ class AirfoilPlotDialog(QDialog):
         Cd = self.airfoil_data[:, 4]
 
         x = np.linspace(np.min(alpha) * np.pi / 180, np.pi/2, 100)
-        y1, y2 = interpolate_clcd(self.airfoil_data, x, 1e6)
+        y1, y2 = interpolate_clcd(self.airfoil_data, x, 5e5)
 
         self.plot_widget.clear()
         self.plot_widget.plot(x * 180/np.pi, y1, pen=pg.mkPen(color='b', width=2), name="Cl")
@@ -214,6 +215,7 @@ class AirfoilPlotDialog(QDialog):
         self.plot_widget.setTitle("Polar")
         self.plot_widget.setAspectLocked(False)
         self.plot_widget.showGrid(x=True, y=True)
+        self.plot_widget.addLegend()
 
 class InputWidget(QWidget):
     new_prop = pyqtSignal()
@@ -393,7 +395,7 @@ class InputWidget(QWidget):
     def run_xfoil(self, airfoil_data):
 
         alphas = np.linspace(-20, 20, airfoil_data.shape[0])
-        cls, cds = foil_data(airfoil_data, alphas, 1e6)
+        cls, cds = foil_data(airfoil_data, alphas, 5e5) # Re = 500,000
         return np.column_stack((airfoil_data, alphas, cls, cds))
 
     

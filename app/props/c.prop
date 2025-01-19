@@ -159,7 +159,11 @@
             0.1,
             0.1,
             0.1
-        ]
+        ],
+        "rdist": "Cosine",
+        "c75": 0.01,
+        "twinB": "Single",
+        "dthread": 0.005
     },
     "dist": {
         "CTL_c": [

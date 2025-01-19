@@ -73,7 +73,7 @@ def foil_data(airfoil_data, alpha, Re):
 def run_xfoil(airfoil_data):
 
     alphas = np.linspace(-20, 20, airfoil_data.shape[0])
-    cls, cds = foil_data(airfoil_data, alphas, 1e6)
+    cls, cds = foil_data(airfoil_data, alphas, 5e5)
     return np.column_stack((airfoil_data, alphas, cls, cds))
 
 def correct_clcd_sweep(cl, cd, sweep):
@@ -83,11 +83,11 @@ def Viterna_extrapolation(airfoil_data, alpha, Re):
     alpha_data = airfoil_data[:, 2]
     Cl_data = airfoil_data[:, 3]
     Cd_data = airfoil_data[:, 4]
+    Cl_valid = ~np.isnan(Cl_data)
 
-    idx = np.nanargmax(Cl_data)
-    alpha_stall = alpha_data[idx] * np.pi / 180
-    CLstall = Cl_data[idx]
-    CDstall = Cd_data[idx]
+    alpha_stall = alpha_data[Cl_valid][-1] * np.pi / 180
+    CLstall = Cl_data[Cl_valid][-1]
+    CDstall = Cd_data[Cl_valid][-1]
 
     AR = 10 # not important
     CDmax = 1.11 + 0.018 * AR
@@ -121,8 +121,7 @@ def interpolate_clcd(airfoil_data, alpha, Re):
         
         else:
             #mask = alpha*180/np.pi > np.max(alpha_data[Cl_valid])
-            mask = alpha*180/np.pi > alpha_data[np.nanargmax(Cl_data)]
-            print(np.max(alpha_data[Cl_valid]))
+            mask = alpha*180/np.pi > alpha_data[Cl_valid][-1]
             Cl = np.interp(alpha * 180/np.pi, alpha_data[Cl_valid], Cl_data[Cl_valid])
             Cd = np.interp(alpha * 180/np.pi, alpha_data[Cd_valid], Cd_data[Cd_valid])
             Cl[mask], Cd[mask] = Viterna_extrapolation(airfoil_data, alpha[mask], Re)

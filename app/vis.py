@@ -142,13 +142,12 @@ class STLViewerWidget(QWidget):
             QMessageBox.critical(self, "Error", "Failed to save stl file")
             return
 
-    def set_mesh(self, blade_mesh, num_blades = 1):
+    def set_mesh(self, blade_mesh):
         self.stl_file = None
         self.stl_mesh = blade_mesh
-        self.num_blades = num_blades
 
         if not self.popup and self.dialog:
-            self.dialog.widget.set_mesh(blade_mesh, num_blades)
+            self.dialog.widget.set_mesh(blade_mesh)
 
         self.update_mesh_plot()
 
@@ -175,57 +174,32 @@ class STLViewerWidget(QWidget):
         min_intensity = np.inf
         max_intensity = -np.inf
 
-        intensities = np.zeros((self.num_blades, len(vertices) // 3))
-
         if self.arrowToggle.isChecked():
             line, arrow = create_arrow([0, 0, 0], [0, 0, np.max(stl_mesh.v1)])
             self.view.addItem(line)
             self.view.addItem(arrow)
 
-        # first compute intensities to get colour range
-        for i in range(self.num_blades):
 
-            theta = 2 * np.pi * i / self.num_blades
-            z_rot = np.array([
-                [np.cos(theta), -np.sin(theta), 0],
-                [np.sin(theta), np.cos(theta), 0],
-                [0, 0, 1]
-            ])
-            
-            rotated_normals = np.dot(normals, z_rot)
-            intensity = np.dot(rotated_normals, light_dir)
-            intensity_per_face = intensity[::3]
+        intensity = np.dot(normals, light_dir)
+        intensity_per_face = intensity[::3]
 
-            min_intensity = min(min_intensity, np.nanmin(intensity_per_face))
-            max_intensity = max(max_intensity, np.nanmax(intensity_per_face))
+        min_intensity = min(min_intensity, np.nanmin(intensity_per_face))
+        max_intensity = max(max_intensity, np.nanmax(intensity_per_face))
+    
+        intensity_normalized = (intensity_per_face - min_intensity) / (
+        max_intensity - min_intensity + 1e-8
+        )
 
-            intensities[i] = intensity_per_face
+        # Map to colormap
+        colors = cm.coolwarm(intensity_normalized)[:, :4]
 
-        #print(vertices.shape, faces.shape, colors.shape)
-        for i in range(self.num_blades):
-
-            theta = 2 * np.pi * i / self.num_blades
-            z_rot = np.array([
-                [np.cos(theta), -np.sin(theta), 0],
-                [np.sin(theta), np.cos(theta), 0],
-                [0, 0, 1]
-            ])
-            rotated_vertices = np.dot(vertices, z_rot)
-        
-            intensity_normalized = (intensities[i] - min_intensity) / (
-            max_intensity - min_intensity + 1e-8
-            )
-
-            # Map to colormap
-            colors = cm.coolwarm(intensity_normalized)[:, :4]
-
-            mesh_item = gl.GLMeshItem(
-                vertexes=rotated_vertices,
-                faces=faces,
-                faceColors=colors,
-                smooth= self.smoothToggle.isChecked(),
-                drawEdges= self.edgeToggle.isChecked(),
-                edgeColor=(1, 1, 1, 1)
-            )
-            self.view.addItem(mesh_item)
-        
+        mesh_item = gl.GLMeshItem(
+            vertexes=vertices,
+            faces=faces,
+            faceColors=colors,
+            smooth= self.smoothToggle.isChecked(),
+            drawEdges= self.edgeToggle.isChecked(),
+            edgeColor=(1, 1, 1, 1)
+        )
+        self.view.addItem(mesh_item)
+    

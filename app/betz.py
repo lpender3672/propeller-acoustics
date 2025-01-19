@@ -171,7 +171,7 @@ def betz_off_design(av):
 
         #Cl = Cl0 + alpha * 2 * np.pi
         #Cd = Cd0
-        Cl, Cd = interpolate_clcd(av.airfoil_data, alpha, 1e6)
+        Cl, Cd = interpolate_clcd(av.airfoil_data, alpha, 5e5)
 
         # better to wait and see if its out of bounds
         # phi = np.clip(phi, beta - alphas.min() * np.pi / 180, beta - alphas.max() * np.pi / 180)

@@ -5,7 +5,7 @@ from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionsWidget
 from results import NoiseResultsWidget, AerodynamicResultsWidget, ResultsTable
-from geometry import generate_blade_mesh
+from geometry import generate_propeller_mesh
 from routines import AppVars
 
 import numpy as np
@@ -84,7 +84,7 @@ class MainWindow(QWidget):
         # update mesh
 
         self.stl_viewer.set_mesh(
-            generate_blade_mesh(self.av), self.av.prop["B"]
+            generate_propeller_mesh(self.av)
         )
 
         if not self.input_widget.oper_defined:
@@ -110,7 +110,7 @@ class MainWindow(QWidget):
 
         # dont need to update mesh, conditions were not changed
         #self.stl_viewer.set_mesh(
-        #    generate_blade_mesh(self.av), self.av.prop["B"]
+        #    generate_blade_mesh(self.av)
         #)
         # do need to update results if prop is defined
         if not self.input_widget.prop_defined:
