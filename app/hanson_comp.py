@@ -12,6 +12,8 @@ from hanson import hanson, calc_noise_components
 from routines import (
     load_oper_from_file,
     load_prop_from_file,
+    interpolate_clcd,
+    correct_clcd_sweep,
     AppVars,
     XFOIL_INSTALLED,
     run_xfoil
@@ -116,7 +118,8 @@ def plot_harmonic_components(oper: dict, prop: dict, ms = np.arange(1,5), ax=Non
         fig, ax = plt.subplots()
 
     #colors = ["#666666", "#999999", "#CCCCCC"]
-    colors = ['r', 'g', 'b']
+    colors = ['c', 'm', 'y']
+    alphas = [0.4, 0.3, 0.4]
     mpl.rcParams['hatch.linewidth'] = 3.0  # previous svg hatch linewidth
 
     cumulative_heights = np.zeros(ms.shape)
@@ -126,7 +129,8 @@ def plot_harmonic_components(oper: dict, prop: dict, ms = np.arange(1,5), ax=Non
         for rect in bar:
             rect.set_edgecolor(colors[i])
             clr = rect.get_facecolor()
-            rect.set_facecolor((clr[0], clr[1], clr[2], 0.5))
+            rect.set_edgecolor((clr[0], clr[1], clr[2], alphas[i] + 0.2))
+            rect.set_facecolor((clr[0], clr[1], clr[2], alphas[i]))
 
     for x, total in zip(ms + dx, cumulative_heights):
         valignment = 'top' if total < 0 else 'bottom'
@@ -135,15 +139,16 @@ def plot_harmonic_components(oper: dict, prop: dict, ms = np.arange(1,5), ax=Non
             x, y_position, f"{total:.2f}",  # Add a slight offset above the bar
             ha="center", va=valignment, fontsize=10
         )
+        ax.hlines(total, x - w/2, x + w/2, color='k', linestyle='-', linewidth=1)
 
     return ax
 
 
-def optimise_lift_magnitude(oper: dict, prop: dict, m, plot=True):
+def optimise_lift_magnitude(oper: dict, prop: dict, m, ax=None, plot=True, colour=None):
 
 
     def objective_function(x):
-        prop['sweep'] = x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+        prop['sweep'] = x[0] * prop['r0_rt'] + x[1] * prop['r0_rt']**2
         range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
         
         _, PLm, _ = get_radial_magnitudes(oper, prop, m)
@@ -151,30 +156,30 @@ def optimise_lift_magnitude(oper: dict, prop: dict, m, plot=True):
         return nois
     
     # get initial magnitude and sweep
-    x0 = [0.01, 0.01, 0.01]
+    x0 = [0.01, 0.01]
     res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
     print(res)
 
     if not plot:
         return
     
-    ax = radial_locus(oper, prop)
+    ax = radial_locus(oper, prop, ax, m=m, colour=colour)
     ax[0,0].set_title('Thickness')
     ax[0,1].set_title('Lift')
     ax[1,0].set_title('Drag')
     ax[1,1].set_title('Total')
 
-    fig, ax = plt.subplots()
+    sfig, sax = plt.subplots()
     x = res.x
-    prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
-    ax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
+    prop['sweep'] = x[0] * prop['r0_rt'] + x[1] * prop['r0_rt']**2
+    sax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
 
 def optimise_lift_harmonic_ratio(oper: dict, prop: dict, m1, m2):
     """maximise the ratio of two harmonics of lift at specific observer location
     """
 
     def objective_function(x):
-        prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
+        prop['sweep'] = x[0] * prop['r0_rt'] + x[1] * prop['r0_rt']**2
         range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
         
         _, PLm1, _ = get_radial_magnitudes(oper, prop, m1)
@@ -183,7 +188,7 @@ def optimise_lift_harmonic_ratio(oper: dict, prop: dict, m1, m2):
         return dnois
 
     # get initial magnitude and sweep
-    x0 = [0.01, 0.01, 0.01]
+    x0 = [0.01, 0.01]
     res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
     print(res)
 
@@ -416,6 +421,29 @@ def operating_range(av, ):
 
     plt.show()
 
+def plot_directivity(oper, prop, ms=1, obsr_rt=10, thetamin=0, thetamax=180, ax=None, label=None):
+
+    if ax is None:
+        fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+        ax.legend()
+
+    obs = {
+        'r': obsr_rt * prop['rt'] * np.ones((100)),
+        'theta': np.linspace(thetamin, thetamax, 100) * np.pi / 180
+    }
+    ms = np.array(ms)
+
+    out = hanson(oper, prop, obs, ms)
+    V, L, D, total = calc_noise_components(out, oper['pref'])
+
+    ax.plot(obs['theta'], L, label=label)
+
+    ax.set_xlabel('Observer Angle [deg]')
+    ax.set_ylabel('SPL [dB]')
+    
+
+    return ax
+
 
 def plot_optimised_harmonics(prop, oper):
     total_width = 0.8
@@ -424,8 +452,9 @@ def plot_optimised_harmonics(prop, oper):
     hatchings = [r'/', r'.. ', r'*', r"xx", r"//"]
     ms = np.arange(1, n)
     fig, bar_ax = plt.subplots(figsize=(12, 6))
-
+    dfig, dax = plt.subplots(subplot_kw={'projection': 'polar'})
     sfig, sweep_ax = plt.subplots()
+
     opt_labels = ['Unswept', 'min $P_{1B}$', 'min $P_{2B}$', 'min $P_{3B}$', 'min $P_{4B}$']
     profile_colours = cm.viridis(np.linspace(0, 1, n))
 
@@ -434,6 +463,7 @@ def plot_optimised_harmonics(prop, oper):
         sweep_deg_zero = (prop['sweep'] - prop['sweep'][0]) * 180 / np.pi
         sweep_ax.plot(prop['r0_rt'], sweep_deg_zero, label=opt_labels[i], color=profile_colours[i])
         bar_ax = plot_harmonic_components(oper, prop, ms=ms, ax=bar_ax, hatching=hatchings[i], w=width, dx=dx)
+        dax = plot_directivity(oper, prop, ms=ms, ax=dax, obsr_rt=10, thetamin=0, thetamax=180, label=opt_labels[i])
         #optimise_lift_harmonic_ratio(oper, prop, 2, 1)
         optimise_lift_magnitude(oper, prop, i+1, plot=False)
 
@@ -443,7 +473,7 @@ def plot_optimised_harmonics(prop, oper):
     from matplotlib.patches import Patch
     from matplotlib.lines import Line2D
     hatchpatches = [Patch(facecolor='white', edgecolor='black', hatch=h) for h in hatchings]
-    component_colours = ['r', 'g', 'b']
+    component_colours = ['c', 'm', 'y']
     component_patches = [Line2D([0], [0], color=c, linewidth=5) for c in component_colours]
 
     bar_ax.legend(hatchpatches + component_patches,  opt_labels + ['Thickness', 'Lift', 'Drag'], loc='lower left')
@@ -454,6 +484,15 @@ def plot_optimised_harmonics(prop, oper):
 
     fig.tight_layout()
     fig.savefig('deliverables/tms/figures/optimised_harmonics.png', dpi=300)
+
+    dax.set_ylim(50, 180)
+    dax.set_xlim(0, np.pi)
+    dax.set_theta_zero_location("N")
+    # ensure legend is on the right
+    dfig.legend(loc='center right', ncol=1, frameon=False)
+    dfig.tight_layout()
+    dfig.subplots_adjust(left=0, right=0.8)
+    dfig.savefig('deliverables/tms/figures/optimised_directivity.png', dpi=300)
 
     sweep_ax.legend()
     sweep_ax.set_xlabel('$r_0/r_t$')
@@ -467,31 +506,11 @@ def plot_optimised_harmonics(prop, oper):
 
 
 def main():
-    oper = {
-        'V':  0.01,
-        'c0': 343,
-        'Omega': 20000 * 2 * np.pi / 60,
-        'rho': 1.225,
-        'pref': 2e-5,
-        'nu': 1.48e-5
-    }
-    prop = {
-        'rt': 0.05,
-        'rh': 0.01,
-        'B': 2,
-        'nr' : 30,
-        'nx' : 50,
-        'c75' : 0.01
-    }
-    prop['r0_rt'] = np.linspace(prop['rh'], prop['rt'], prop['nr']) / prop['rt']
-    prop['c'] = prop['c75'] * np.ones(prop['nr'])
-    prop['xc'] = np.linspace(-0.5, 0.5, prop['nx'])
-    prop['twist'] = 5 + 5 * np.arctan(1 / prop['r0_rt'])
-    prop['twist'] *= np.pi / 180
-    #prop['sweep'] = np.zeros(prop['nr'])
-    prop['sweep'] = np.linspace(0, 0.01, prop['nr'])
+    
+    prop = load_prop_from_file('app/props/constant_chord.prop')
+    oper = load_oper_from_file('app/app_vars.json')
+    airfoil_data = np.loadtxt(prop['foil_path'])
 
-    airfoil_data = np.loadtxt('app/foils/naca2412.surf')
     prop['Bd'] = prop['c'] / (2 * prop['rt'])
     n = airfoil_data.shape[0]
     xf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), airfoil_data[:, 0])
@@ -519,19 +538,11 @@ def main():
         print("BEM failed")
         return
 
-    res = av.res
-
     alpha = av.res['alpha']
     sweep = prop['sweep']
-    alphas = av.airfoil_data[:, 2]
-    Cl0 = av.airfoil_data[:, 3]
-    Cd0 = av.airfoil_data[:, 4]
-    Cl_valid = ~np.isnan(Cl0)
-    Cd_valid = ~np.isnan(Cd0)
 
-    Cl = np.interp(alpha * 180/np.pi, alphas[Cl_valid], Cl0[Cl_valid]) * np.cos(sweep) ** 2
-    Cd = np.interp(alpha * 180/np.pi, alphas[Cd_valid], Cd0[Cd_valid]) * np.cos(sweep) ** 2
-
+    Cl,Cd = interpolate_clcd(av.airfoil_data, alpha, 5e5)
+    Cl,Cd = correct_clcd_sweep(Cl, Cd, sweep)
     prop['Cl_r'] = Cl
     prop['Cd_r'] = Cd
 
@@ -545,10 +556,15 @@ def main():
     #radial_locus_sweep(oper, prop)
 
 
-    #plot_optimised_harmonics(prop, oper)
+    plot_optimised_harmonics(prop, oper)
 
     #operating_range(av)
-    optimise_lift_harmonic_ratio(oper, prop, 2, 1)
+    #optimise_lift_harmonic_ratio(oper, prop, 2, 1)
+    fig, axes = plt.subplots(2, 2)
+    m = 2
+    axes = radial_locus(oper, prop, axes, m=m, colour='b')
+    optimise_lift_magnitude(oper, prop, m, axes, colour='r')
+    fig.tight_layout()
     #
     #chord_locus(oper, prop)
     #hanson_sweep(oper, prop, res)

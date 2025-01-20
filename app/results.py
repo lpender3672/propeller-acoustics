@@ -348,9 +348,9 @@ class AerodynamicResultsWidget(QWidget):
 
     def update_results(self, avs):
         
-        avs = betz_off_design(avs)
+        #avs = betz_off_design(avs)
         #avs = bem(avs)
-        #avs = guaranteed_convergence_BEM(avs)
+        avs = guaranteed_convergence_BEM(avs)
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
@@ -411,6 +411,7 @@ class AerodynamicResultsWidget(QWidget):
             self.CTprofile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.CTprofile.ax.transAxes)
             self.CTprofile.draw()
 
+        """
         Js = np.linspace(-0.1, 0.3, 10)
         Js, CPs, CTs, FMs = operating_range(avs, Js)
         self.performance.clear_plot()
@@ -423,3 +424,4 @@ class AerodynamicResultsWidget(QWidget):
             linestyle=['-'],
             label=['CP']
         )
+        """

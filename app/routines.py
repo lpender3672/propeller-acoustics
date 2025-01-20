@@ -42,7 +42,7 @@ class AppVars():
         av.airfoil_data = self.airfoil_data.copy()
         return av
 
-def foil_data(airfoil_data, alpha, Re):
+def foil_data(airfoil_data, alpha, Re, collect_cp=False):
     
     xf = XFoil()
     xf.airfoil = Airfoil(
@@ -50,11 +50,12 @@ def foil_data(airfoil_data, alpha, Re):
         airfoil_data[:,1]
         )
     xf.Re = Re
-    xf.M = 0.0
+    #xf.M = 0.0
     xf.max_iter = 100
     xf.verbose = False
 
-    if isinstance(alpha, float):
+
+    if isinstance(alpha, (int, float)):
         cls = np.zeros(1)
         cds = np.zeros(1)
         alpha = [alpha]
@@ -62,18 +63,32 @@ def foil_data(airfoil_data, alpha, Re):
         cls = np.zeros(len(alpha))
         cds = np.zeros(len(alpha))
 
-    for i, a in enumerate(alpha):
-        out = xf.a(a)
+    cps = np.zeros((alpha.shape[0], airfoil_data.shape[0]))
+
+    for i, alf in enumerate(alpha):
+        out = xf.a(alf)
         cl, cd, _, _ = out
         cls[i] = cl
         cds[i] = cd
+        # plot cps against airfoil x
+
+        if collect_cp:
+            _, _, cps[i] = xf.get_cp_distribution()
+
+    if collect_cp:
+        return cls, cds, cps
 
     return cls, cds
 
-def run_xfoil(airfoil_data):
+def run_xfoil(airfoil_data, collect_cp=True):
+    Re = 5e5
 
     alphas = np.linspace(-20, 20, airfoil_data.shape[0])
-    cls, cds = foil_data(airfoil_data, alphas, 5e5)
+    if collect_cp:
+        cls, cds, cps = foil_data(airfoil_data, alphas, Re, collect_cp)
+        return np.column_stack((airfoil_data, alphas, cls, cds, *cps))
+
+    cls, cds = foil_data(airfoil_data, alphas, Re)
     return np.column_stack((airfoil_data, alphas, cls, cds))
 
 def correct_clcd_sweep(cl, cd, sweep):
@@ -220,10 +235,106 @@ def load_prop_from_file(file_path):
 
     return prop
 
+def save_custom_prop_to_file(file_path, prop):
+    dists = {
+        'CTL_c_type': 'custom',
+        'CTL_c': np.zeros((1,2)),
+        'CTL_twist_type': 'custom',
+        'CTL_twist': np.zeros((1,2)),
+        'CTL_sweep_type': 'custom',
+        'CTL_sweep': np.zeros((1,2)),
+    }
+    save_prop_to_file(file_path, prop, dists)
+
+def save_prop_to_file(file_path, prop, dists):
+    propf = {
+        'prop': prop,
+        'dist': dists
+    }
+    with open(file_path, 'w') as propj:
+        json.dump(propf, propj, indent=4)
+
 def load_oper_from_file(file_path):
     
     with open(file_path, 'r') as operj:
         oper = json.load(operj)['oper']
 
     return oper
-    
+
+
+def _separate(arr):
+    npts = arr.shape[0] // 2
+    up_var = np.flip(arr[:npts], axis=0)
+    low_var = arr[npts+1:]
+    return up_var, low_var
+
+def upscale_airfoil_geometry(airfoil_data, n_panels):
+
+    newidx = np.linspace(0, 1, n_panels + 1)
+    oldidx = np.linspace(0, 1, airfoil_data.shape[0])
+
+    newx = np.interp(newidx, oldidx, airfoil_data[:,0])
+    newz = np.interp(newidx, oldidx, airfoil_data[:,1])
+
+    return np.column_stack((newx, newz))
+
+def calc_chordwise_loading(airfoil_data):
+
+    # airfoil_data[:,n]
+    # n = 0 -> x
+    # n = 1 -> z
+    # n = 2 -> alpha
+    # n = 3 -> cl
+    # n = 4 -> cd
+    # n = 5 -> cp at alpha[0]
+    # n = 6 -> cp at alpha[1]
+    # etc
+
+    xs_u, xs_l = _separate(airfoil_data[:,0])
+    ys_u, ys_l = _separate(airfoil_data[:,1])
+
+    cl_x_alpha = np.zeros((airfoil_data.shape[0] // 2 - 1, airfoil_data.shape[0]))
+    cd_x_alpha = np.zeros((airfoil_data.shape[0] // 2 - 1, airfoil_data.shape[0]))
+
+    for i,n in enumerate(range(5, airfoil_data.shape[1])):
+
+        cpup, cplo = _separate(airfoil_data[:,n])
+
+        alpha = airfoil_data[i,2] * np.pi / 180
+
+        dtheta_u = np.arctan2(np.diff(ys_u), np.diff(xs_u))
+        dtheta_l = np.arctan2(np.diff(ys_l), np.diff(xs_l))
+
+        ds_u = np.sqrt(np.diff(xs_u)**2 + np.diff(ys_u)**2)
+        ds_l = np.sqrt(np.diff(xs_l)**2 + np.diff(ys_l)**2)
+
+        # the panel lengths are not included because currently they are
+        # very discontinuous, which causes false discontinuities in the loading
+        cl_upper = -cpup[:-1] * np.cos(dtheta_u - alpha) #* ds_u
+        cl_lower = -cplo[:-1] * np.cos(dtheta_l - alpha) #* ds_l
+
+        cd_upper = -cpup[:-1] * np.sin(dtheta_u - alpha) #* ds_u
+        cd_lower = -cplo[:-1] * np.sin(dtheta_l - alpha) #* ds_l
+
+        cl_x_alpha[:, i] = cl_lower - cl_upper
+        cd_x_alpha[:, i] = cd_lower + cd_upper
+        
+    return cl_x_alpha, cd_x_alpha
+
+if __name__ == "__main__":
+    raw = np.loadtxt("app/foils/naca0012.surf")
+    airfoil_data = upscale_airfoil_geometry(raw, 100)
+    airfoil_data = run_xfoil(airfoil_data, collect_cp=True)
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(1, 2)
+
+    xs_u, xs_l = _separate(airfoil_data[:,0])
+
+    cl_x_alpha, cd_x_alpha = calc_chordwise_loading(airfoil_data)
+
+    ax[0].plot(xs_u[:-1], cl_x_alpha[:,::20])
+    ax[0].legend()
+
+    plt.show()

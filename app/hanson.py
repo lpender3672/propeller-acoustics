@@ -7,6 +7,11 @@ from matplotlib import pyplot as plt
 
 from scipy.io import loadmat
 
+from routines import (
+    calc_chordwise_loading,
+    _separate
+)
+
 XFOIL_INSTALLED = True
 try: 
     from xfoil import XFoil
@@ -109,10 +114,6 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
             I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
             I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-            I1plt = cumtrapz(I1, prop['r0_rt'], initial=0)[0]
-            I2plt = cumtrapz(I2, prop['r0_rt'], initial=0)[0]
-            I3plt = cumtrapz(I3, prop['r0_rt'], initial=0)[0]
-
             PVm[o, i] = trapz( I1, prop['r0_rt'])
             PDm[o, i] = trapz( I2, prop['r0_rt'])
             PLm[o, i] = trapz( I3, prop['r0_rt'])
@@ -212,32 +213,25 @@ def calc_noise_components(arr, pref):
 
     return V, L, D, total
 
-def hanson_av(avs):
 
-    oper = avs.oper.copy()
-    prop = avs.prop.copy()
-    res = avs.res.copy()
-    #print(res)
+def hanson_secondary_variables(av, compact_chord = False):
 
+    oper = av.oper.copy()
+    prop = av.prop.copy()
+    res = av.res.copy()
+
+    ## Observer
     obs = {}
     Nobs = 100
     obs['r'] = oper['r_obs'] * prop['rt'] * np.ones((Nobs))
     obs['theta'] = np.linspace(0, np.pi, Nobs)
 
+    ## Spanwise variables
     prop['Bd'] = prop['c'] / (2 * prop['rt'])
-    n = avs.airfoil_data.shape[0]
-    xf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), avs.airfoil_data[:, 0])
-    yf = np.interp(np.linspace(0,1, 2 * prop['nx']), np.linspace(0,1, n), avs.airfoil_data[:, 1])
+    n = av.airfoil_data.shape[0]
+    yf = np.interp(np.linspace(0,1, 2 * prop['nx']), np.linspace(0,1, n), av.airfoil_data[:, 1])
     tf = yf[:prop['nx']] - yf[prop['nx']:]
-    _, hf = np.meshgrid(prop['c'], tf)
-    prop['HX'] = hf
-
-    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
-
-    prop['HX'] /= simps(prop['HX'], xc, axis=0) # normalize by area under curve
-
     prop['tb'] = np.max(tf) * prop['c']
-
     prop['dz'] = np.diff(prop['r0'])
 
     oper['Min'] = 0;                  #% inflow Mach number [-]
@@ -249,34 +243,61 @@ def hanson_av(avs):
     oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
     oper['beta'] = np.sqrt(1-oper['Mfl']**2)
 
+    prop['Cl_r'] = res['Cl']
+    prop['Cd_r'] = res['Cd']
 
-    prop['Cl_r'] = avs.res['Cl']
-    prop['Cd_r'] = avs.res['Cd']
-    # get cp distribution and calculate resolve panel forces
-
-    prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
-    prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
-
-    prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0) # normalize by area under curve
-    prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
-
+    ## Sweep
+    # This requires a component of FA 'face alignment' to prevent axial skewing
     dx = prop['r0'] * np.sin( prop['sweep'] )
     phi = prop['twist'] - res['alpha']
     prop['FA'] = dx * np.sin(phi)
     prop['MCA'] = dx * np.cos(phi)
 
-    ms = np.arange(1, 5)
+    if compact_chord:
+        prop['HX'] = np.ones((prop['nx'], prop['nr']))
+        prop['dCl_dxc'] = np.ones((prop['nx'], prop['nr']))
+        prop['dCd_dxc'] = np.ones((prop['nx'], prop['nr']))
+    else:
 
+        _, prop['HX'] = np.meshgrid(prop['c'], tf)
+        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
+        cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data)
+        xcdata, _ = _separate(av.airfoil_data[:, 0])
+        xcdata = xcdata[:-1] - 0.5 # center the data
+        interp_clx = RectBivariateSpline(xcdata, av.airfoil_data[:, 2], cl_x_alpha)
+        interp_cdx = RectBivariateSpline(xcdata, av.airfoil_data[:, 2], cd_x_alpha)
+        # some reason RectBivariateSpline requires eval data to be in increasing order
+        argsort_resalp = np.argsort(res['alpha'])
+        prop['dCl_dxc'] = np.zeros((prop['nx'], prop['nr']))
+        prop['dCl_dxc'][:, argsort_resalp] = interp_clx(
+            prop['xc'], res['alpha'][argsort_resalp] * 180/np.pi
+            )
+        prop['dCd_dxc'] = np.zeros((prop['nx'], prop['nr']))
+        prop['dCd_dxc'][:, argsort_resalp] = interp_cdx(
+            prop['xc'], res['alpha'][argsort_resalp] * 180/np.pi
+            )
+
+    # ensure that the integrals of the chordwise loading are equal to 1
+    prop['HX'] /= simps(prop['HX'], xc, axis=0)
+    prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0)
+    prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0)
+
+    return oper, prop, obs
+
+
+def hanson_av(av):
+
+    oper, prop, obs = hanson_secondary_variables(av)
+
+    ms = np.arange(1, 5)
     out = hanson(oper, prop, obs, ms, False)
 
-    V, L, D, total = calc_noise_components(out, oper['pref'])
-
-    peak_index = np.nanargmax(total)
+    V, L, D, total = calc_noise_components(out, av.oper['pref'])
     peak_observer = {
-        'r': oper['r_obs'] * prop['rt'],
-        'theta': oper['theta_obs']
+        'r': av.oper['r_obs'] * av.prop['rt'],
+        'theta': av.oper['theta_obs']
     }
-    #print("peak observer", peak_observer)
     vector_contributions = radial_noise_contributions(oper, prop, peak_observer, ms, False)
 
     return obs['theta'], V, L, D, peak_observer['theta'], vector_contributions
@@ -336,7 +357,7 @@ def validate():
     obs = {}
     nobs = 180
     obs['r'] = 10 * np.ones(nobs) * prop['rt']
-    obs['theta'] = np.pi / 180 * np.arange(120, 179, (179 - 120) / nobs)
+    obs['theta'] = np.pi / 180 * np.arange(1, 179, (179 - 1) / nobs)
     #obs['theta'] = np.array([0.017453292519943])
 
     oper['pref'] = 2e-5
@@ -345,7 +366,7 @@ def validate():
 
     out = hanson(oper, prop, obs, ms)
 
-    V, D, L = calc_noise_components(out, oper['pref'])
+    V, D, L, _ = calc_noise_components(out, oper['pref'])
 
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 

@@ -12,6 +12,7 @@ import os
 
 from routines import (
     interpolate_clcd,
+    run_xfoil,
 )
 
 XFOIL_INSTALLED = True
@@ -25,36 +26,6 @@ except ModuleNotFoundError:
 
 from table import InputTable, TableVar, TableBox
 
-
-
-def foil_data(airfoil_data, alpha, Re):
-    
-    xf = XFoil()
-    xf.airfoil = Airfoil(
-        airfoil_data[:,0],
-        airfoil_data[:,1]
-        )
-    xf.Re = Re
-    xf.M = 0.0
-    xf.max_iter = 100
-    xf.verbose = False
-
-    if isinstance(alpha, float):
-        cls = np.zeros(1)
-        cds = np.zeros(1)
-        alpha = [alpha]
-    else:
-        cls = np.zeros(len(alpha))
-        cds = np.zeros(len(alpha))
-
-    for i, a in enumerate(alpha):
-        out = xf.a(a)
-        print(out)
-        cl, cd, _, _ = out
-        cls[i] = cl
-        cds[i] = cd
-
-    return cls, cds
 
 
 class PropInputTable(InputTable):
@@ -322,7 +293,7 @@ class InputWidget(QWidget):
 
         
         self.foil_path.setText(filepath)
-        self.airfoil_data = self.run_xfoil(airfoil_data)
+        self.airfoil_data = run_xfoil(airfoil_data)
         
         self.prop = indata['prop']
         for key, item in self.prop.items():
@@ -350,7 +321,7 @@ class InputWidget(QWidget):
             QMessageBox.critical(self, "Error", "Failed to load airfoil data from file.")
             return
         
-        airfoil_data = self.run_xfoil(airfoil_data)
+        airfoil_data = run_xfoil(airfoil_data)
         dialog = AirfoilPlotDialog(self, airfoil_data)
         dialog.exec()
 
@@ -391,12 +362,6 @@ class InputWidget(QWidget):
         except:
             QMessageBox.critical(self, "Error", "Failed to save propeller data to file.")
             return
-    
-    def run_xfoil(self, airfoil_data):
-
-        alphas = np.linspace(-20, 20, airfoil_data.shape[0])
-        cls, cds = foil_data(airfoil_data, alphas, 5e5) # Re = 500,000
-        return np.column_stack((airfoil_data, alphas, cls, cds))
 
     
     def load_oper_from_file(self, filename):
