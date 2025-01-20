@@ -12,13 +12,33 @@ def rotate3(X,Y,Z,theta, axis):
     r = R.from_rotvec(theta*axis)
     return r.apply(np.array([X,Y,Z])).T
 
-def generate_blade_mesh(av, are_sections_tangent=True):
+def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False):
+    """creates a mesh of a single blade of a propeller
+
+    Args:
+        av (_type_): _description_
+        are_sections_tangent (bool, optional): _description_. Defaults to True.
+        min_section_thickness (float, optional): _description_. Defaults to 0.0004.
+
+    Returns:
+        _type_: _description_
+    """
     # adapted from code by Lily Board phd
+
+    # for 3D printing a minimum airfoil thickness is applied
+    min_section_thickness = 0.0004
 
     chord, twist, radius = av.prop['c'], av.prop['twist'], av.prop['r0']
     xnf, znf = av.airfoil_data[:,0], av.airfoil_data[:,1]
-    xf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
-    zf = np.interp(np.linspace(0, 1, av.prop['nx']), np.linspace(0, 1, znf.shape[0]), znf)
+    xf = np.interp(np.linspace(0, 1, 2*av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
+    zf = np.interp(np.linspace(0, 1, 2*av.prop['nx']), np.linspace(0, 1, znf.shape[0]), znf)
+    if apply_min_thickness:
+        tf = zf[:av.prop['nx']] - zf[av.prop['nx']:]
+        zmean = (zf[:av.prop['nx']] + zf[av.prop['nx']:]) / 2
+        mask = tf*av.prop['c75'] < min_section_thickness
+        correction = min_section_thickness / av.prop['c75']
+        zf[:av.prop['nx']][mask] = zmean[mask] + correction / 2
+        zf[av.prop['nx']:][mask] = zmean[mask] - correction / 2
 
     xf -= 0.5 # quarter chord
 
@@ -266,8 +286,8 @@ def stitch_meshes(mesh1, mesh2):
     return combined_mesh
 
 
-def generate_propeller_mesh(av):
-    main_blade = generate_blade_mesh(av)
+def generate_propeller_mesh(av, apply_min_thickness=True):
+    main_blade = generate_blade_mesh(av, apply_min_thickness=apply_min_thickness)
     
     # List to hold all blade meshes
     blade_meshes = [main_blade.data]
@@ -279,7 +299,7 @@ def generate_propeller_mesh(av):
         new_blade.rotate([0.0, 0.0, 1.0], rotation_angle)
         blade_meshes.append(new_blade.data)
 
-    height = 1.1 * np.sin(av.prop['twist'][0]) * av.prop['c75']
+    height = (0.1 + np.abs(np.sin(av.prop['twist'][0]))) * av.prop['c75']
     
     hub = generate_hub(
         av.prop['rh'],

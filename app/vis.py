@@ -123,7 +123,7 @@ class STLViewerWidget(QWidget):
             return
         
         self.dialog = STLViewerDialog(self)
-        self.dialog.widget.set_mesh(self.stl_mesh, self.num_blades)
+        self.dialog.widget.set_mesh(self.stl_mesh)
         self.dialog.show()
     
     def load_stl_file(self, stl_file):
