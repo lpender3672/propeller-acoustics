@@ -57,7 +57,10 @@
 
 \lstset{style=mystyle}
 
-
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
 
 \begin{document}
 \immediate\write18{py mergebib.py}
@@ -118,8 +121,7 @@ Blade Element Momentum theory is a common method to predict the aerodynamic perf
 In BEM, the blade is divided into annular sections and the induced velocity at each section is assumed to be due to only the forces on that section.
 Then actuator disk theory is combined with momentum theory to create a system of non-linear equations which can be solved iteratively.
 
-
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}
             % Some profiles look better when using plot[smooth]
@@ -128,7 +130,7 @@ Then actuator disk theory is combined with momentum theory to create a system of
                 plot file{../../app/foils/NACA2412.surf} -- cycle;
         \end{scope}
         % hoirzontal line
-        \draw[thick, dashed] (-4,0) -- (4, 0) node[above] {Rotation Plane};
+        \draw[thick, dashed] (-4,0) -- (4, 0) node[below] {Rotation Plane};
         % velocity vector labelled at midline
         \draw[->] (0,-1) -- (0,0) node[midway,right] {$V(1-a)$};
         \draw[->] (-2,-1) -- (0,-1) node[midway,below] {$\Omega r(1+a')$};
@@ -139,14 +141,13 @@ Then actuator disk theory is combined with momentum theory to create a system of
         \draw[->] (-2,0) arc (0:15:-2) node[midway, left] {$\theta$};
         \draw[->] (-3,0) arc (0:26.565:-3) node[midway, left] {$\phi$};
         \draw[->] (-1.7888,-0.8944) arc (26.565:15:-2) node[midway, left] {$\alpha$};
+        % force coefficients
+        \draw[->] (0.75, 0.194) -- (0.75,2) node[midway, right] {$c_n$};
+        \draw[->] (0.75, 0.194) -- (3, 0.194) node[above] {$c_t$};
     \end{tikzpicture}
     \caption{Local section of propeller blade for BEM. Anticlockwise angles are positive.}
     \label{fig:bem_section}
 \end{figure}
-
-
-S. Andrew Ning developed a fast method with guaranteed convergence \cite{Ning_BEM}.
-
 
 BEM is implemented with Prantl's tip correction factor.
 This is based on a prescribed wake model
@@ -162,6 +163,7 @@ Theory developed by Hanson predicts the far field harmonic noise from propellers
 \end{equation}
 
 The noise harmonic is decomposed into thickness and loading as per the Lighthill analogy.
+
 \begin{equation}
     P_{mB} = P_{Vm} + P_{Dm} + P_{Lm}
 \end{equation}
@@ -180,21 +182,40 @@ The noise harmonic is decomposed into thickness and loading as per the Lighthill
         \end{bmatrix}dz
     \end{aligned}
 \end{equation}
-
-With 
+Where $\Psi$ is the chordwise spatial fourier transform of the respective sectional thickness, drag and lift distributions.
+The distributions are normalised such that $\Psi(0) = 1$.
+\begin{equation}
+    \Psi_V(k_x) = \int_{-1/2}^{1/2} H(X) \exp(jk_x X) dX
+\end{equation}
+With wavenumbers and sectional phase lags given by
 \begin{equation}
     k_x = \frac{mB b}{r_0}, \quad
     k_y = \frac{mB\Omega b}{z c_0} \cos \theta, \quad
     \phi_0 = k_y \frac{FA}{b}, \quad
     \phi_s = k_x \frac{MCA}{b}, \quad
 \end{equation}
-Where $\Psi$ is a normalised chordwise integral of sectional thickness, drag and lift distributions that satisfies $\Psi(0) = 1$.
-\begin{equation}
-    \Psi_V(k_x) = \int_{-1/2}^{1/2} H(X) \exp(jk_x X) dX
-\end{equation}
 
-Hansons
 
+The spanwise integral is performed over a number of discrete airfoil sections.
+
+Directivity
+
+$\Psi(k_x)$ accounts for \textit{non-compactness} of distributed sources in the chordwise direction.
+The far field noise from non-compact sources is a result of interference and phase lag. 
+This explains its dependence on wavenumber and normalised source strengths.
+
+Hanson also showed that strong peaks in the chordwise lift distribution should be avoided
+as these lead to compact, high amplitude noise sources that are difficult to cancel out.
+A near uniform loading is shown to have destructive interference at some wavenumbers \cite{hanson_influence}.
+However, strong suction peaks are a standard feature of high lift to drag ratio airfoils \cite{?}
+and so are difficult to avoid without compromising significantly on aerodynamic performance.
+
+
+For a given harmonic, the spanwise integral can be written as a sum of complex vectors representing the far field noise from each section.
+The destructive interference of each component can then easily be visualised in head-to-tail vector addition seen below.
+
+The problem for minimising noise of a given harmonic is then to sweep the blade in such a way that minimises the final magnitude of the vector summation.
+The magnitudes of the vectors will be assumed fixed ie constant thickness and loading.
 
 \section{Progress}
 
@@ -234,7 +255,16 @@ Hansons
 \end{figure}
 
 \subsection{Software design tool}
-A software design tool implements the theory with to design propellers
+A software design tool implementing the theoretical framework has been developed.
+This allows rapid design
+
+The software, given parameters and spanwise distributions, calculates aerodynamic performance and harmonic noise of the propeller.
+Its also required to load an airfoil coordinate file in the standard format found on the UIUC database \cite{UIUC_database}.
+
+In practice the BEM equations can be difficult to solve \cite{?}.
+S. Ning developed a root finding method with guaranteed convergence \cite{Ning_BEM}.
+
+
 
 \begin{figure}[H]
     \centering
