@@ -7,7 +7,11 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 import matplotlib as mpl
 from betz import betz_off_design, guaranteed_convergence_BEM
-from hanson import hanson, calc_noise_components
+from hanson import (
+    hanson, 
+    calc_noise_components,
+    hanson_secondary_variables
+)
 
 from routines import (
     load_oper_from_file,
@@ -26,14 +30,6 @@ def Psi(kx, X, fX):
 
 def radial_bessel(oper: dict, prop: dict):
 
-    oper['Min'] = 0;                  #% inflow Mach number [-]
-    oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
-    oper['Mht'] = np.sqrt((oper['Omega']*2*np.pi*prop['rt'])**2 + oper['V']**2)/oper['c0'];                 #% Helical tip Mach number [-]
-
-    oper['Mx'] = oper['Mfl'] + oper['Min']                       # Effective Mach number [-]
-    oper['Mt'] = np.sqrt(oper['Mht']**2 - oper['Mx']**2)     # Tip mach number [-]
-    oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
-
     theta = 3 * np.pi / 4 # np.arange(0, np.pi, 0.01)
 
     fig, ax = plt.subplots()
@@ -47,20 +43,7 @@ def radial_bessel(oper: dict, prop: dict):
     plt.show()
 
 def get_radial_magnitudes(oper: dict, prop: dict, m: int):
-    # calc dopfac for observer
-    oper['Min'] = 0;                  #% inflow Mach number [-]
-    oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
-    oper['Mht'] = np.sqrt((oper['Omega']*2*np.pi*prop['rt'])**2 + oper['V']**2)/oper['c0'];                 #% Helical tip Mach number [-]
-
-    oper['Mx'] = oper['Mfl'] + oper['Min']                       # Effective Mach number [-]
-    oper['Mt'] = np.sqrt(oper['Mht']**2 - oper['Mx']**2)     # Tip mach number [-]
-    oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
-
-    dx = prop['r0_rt'] * prop['rt'] * np.sin( prop['sweep'] )
-    phi = np.arcsin(oper['Mx'] / oper['Mr'])
-    #phi = prop['twist'] - res['alpha']
-    prop['FA'] = dx * np.sin(phi)
-    prop['MCA'] = dx * np.cos(phi)
+    # secondary variables required
 
     theta = 3 * np.pi / 4 # np.arange(0, np.pi, 0.01)
 
@@ -144,13 +127,14 @@ def plot_harmonic_components(oper: dict, prop: dict, ms = np.arange(1,5), ax=Non
     return ax
 
 
-def optimise_lift_magnitude(oper: dict, prop: dict, m, ax=None, plot=True, colour=None):
+def optimise_lift_magnitude(av, m, ax=None, plot=True, colour=None):
 
+    avc = av.copy()
 
     def objective_function(x):
-        prop['sweep'] = x[0] * prop['r0_rt'] + x[1] * prop['r0_rt']**2
-        range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
-        
+        avc.prop['sweep'] = x[0] * avc.prop['r0_rt'] + x[1] * avc.prop['r0_rt']**2
+        range_penalty = np.max(avc.prop['sweep']) - np.min(avc.prop['sweep'])
+        oper, prop, _ = hanson_secondary_variables(avc)
         _, PLm, _ = get_radial_magnitudes(oper, prop, m)
         nois = np.log10(np.abs(PLm[-1]))
         return nois
@@ -160,9 +144,13 @@ def optimise_lift_magnitude(oper: dict, prop: dict, m, ax=None, plot=True, colou
     res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
     print(res)
 
+    x = res.x
+    av.prop['sweep'] = x[0] * av.prop['r0_rt'] + x[1] * av.prop['r0_rt']**2
+
     if not plot:
         return
     
+    oper, prop, _ = hanson_secondary_variables(avc)
     ax = radial_locus(oper, prop, ax, m=m, colour=colour)
     ax[0,0].set_title('Thickness')
     ax[0,1].set_title('Lift')
@@ -170,16 +158,16 @@ def optimise_lift_magnitude(oper: dict, prop: dict, m, ax=None, plot=True, colou
     ax[1,1].set_title('Total')
 
     sfig, sax = plt.subplots()
-    x = res.x
-    prop['sweep'] = x[0] * prop['r0_rt'] + x[1] * prop['r0_rt']**2
-    sax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
+    sax.plot(av.prop['r0_rt'], av.prop['sweep'] * 180 / np.pi)
 
-def optimise_lift_harmonic_ratio(oper: dict, prop: dict, m1, m2):
+def optimise_lift_harmonic_ratio(av, m1, m2, plot=True):
     """maximise the ratio of two harmonics of lift at specific observer location
     """
+    avc = av.copy()
 
     def objective_function(x):
-        prop['sweep'] = x[0] * prop['r0_rt'] + x[1] * prop['r0_rt']**2
+        avc.prop['sweep'] = x[0] * avc.prop['r0_rt'] + x[1] * avc.prop['r0_rt']**2
+        oper, prop, _ = hanson_secondary_variables(avc)
         range_penalty = np.max(prop['sweep']) - np.min(prop['sweep'])
         
         _, PLm1, _ = get_radial_magnitudes(oper, prop, m1)
@@ -192,6 +180,12 @@ def optimise_lift_harmonic_ratio(oper: dict, prop: dict, m1, m2):
     res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
     print(res)
 
+    x = res.x
+    av.prop['sweep'] = x[0] * av.prop['r0_rt'] + x[1] * av.prop['r0_rt']**2
+
+    if not plot:
+        return
+    oper, prop, _ = hanson_secondary_variables(avc)
     fig, ax = plt.subplots(2, 2, figsize=(6, 6))
     B = prop['B']
     ax = radial_locus(oper, prop, ax=ax, m=m1, label=f'mB={m1 * B} (Minimised)', colour='b')
@@ -209,8 +203,6 @@ def optimise_lift_harmonic_ratio(oper: dict, prop: dict, m1, m2):
     fig.savefig('deliverables/tms/figures/optimised_ratio.png', dpi=300)
 
     fig, ax = plt.subplots()
-    x = res.x
-    prop['sweep'] = x[0] + x[1] * prop['r0_rt'] + x[2] * prop['r0_rt']**2
     ax.plot(prop['r0_rt'], prop['sweep'] * 180 / np.pi)
 
 
@@ -233,16 +225,7 @@ def radial_locus(oper: dict, prop: dict, ax=None, colour=None, label=None, m=1):
     return ax
 
 
-def chord_locus(oper: dict, prop: dict):
-
-# calc dopfac for observer
-    oper['Min'] = 0;                  #% inflow Mach number [-]
-    oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
-    oper['Mht'] = np.sqrt((oper['Omega']*2*np.pi*prop['rt'])**2 + oper['V']**2)/oper['c0'];                 #% Helical tip Mach number [-]
-
-    oper['Mx'] = oper['Mfl'] + oper['Min']                       # Effective Mach number [-]
-    oper['Mt'] = np.sqrt(oper['Mht']**2 - oper['Mx']**2)     # Tip mach number [-]
-    oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
+def chord_locus(oper: dict, prop: dict, m, ax = None):
 
     theta = 3 * np.pi / 4 # np.arange(0, np.pi, 0.01)
 
@@ -252,12 +235,58 @@ def chord_locus(oper: dict, prop: dict):
 
     _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
 
-    for i, m in enumerate(np.arange(1, 2)):
-        fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
-        yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
+    fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
+    yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
 
+    kx = fac * prop['Bd'] * oper['Mt']
+    ky = fac * yofac * prop['Bd'] / prop['r0_rt']
+
+    dpsiVKx = prop['HX'] * np.exp(1j * kx * xc)
+    dpsiLKx = prop['dCl_dxc'] * np.exp(1j * kx * xc)
+    dpsiDKx = prop['dCd_dxc'] * np.exp(1j * kx * xc)
+
+    I1plt = cumtrapz(dpsiVKx, xc, axis=0, initial=0)
+    I2plt = cumtrapz(dpsiLKx, xc, axis=0, initial=0)
+    I3plt = cumtrapz(dpsiDKx, xc, axis=0, initial=0)
+    total = I1plt + I2plt + I3plt
+
+    if ax is None:
+        fig,ax = plt.subplots(2, 2)
+
+    viridis = plt.get_cmap('viridis')
+    step = 1
+    clrs = viridis(prop['r0_rt'][::step])
+
+    for j in range(prop['nr']//step):
+
+        ax[0,0].quiver(I1plt[::step,j].real[:-1], I1plt[::step,j].imag[:-1], np.diff(I1plt[::step,j].real), np.diff(I1plt[::step,j].imag), angles='xy', scale_units='xy', scale=1, color=clrs[j])
+        ax[0,1].quiver(I2plt[::step,j].real[:-1], I2plt[::step,j].imag[:-1], np.diff(I2plt[::step,j].real), np.diff(I2plt[::step,j].imag), angles='xy', scale_units='xy', scale=1, color=clrs[j])
+        ax[1,0].quiver(I3plt[::step,j].real[:-1], I3plt[::step,j].imag[:-1], np.diff(I3plt[::step,j].real), np.diff(I3plt[::step,j].imag), angles='xy', scale_units='xy', scale=1, color=clrs[j])
+        ax[1,1].quiver(total[::step,j].real[:-1], total[::step,j].imag[:-1], np.diff(total[::step,j].real), np.diff(total[::step,j].imag), angles='xy', scale_units='xy', scale=1, color=clrs[j])
+
+    return ax
+    
+
+def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
+
+    fig,ax = plt.subplots(2, 2)
+    theta = 3 * np.pi / 4 # np.arange(0, np.pi, 0.01)
+
+    viridis = plt.get_cmap('viridis')
+    step = 1
+    alpha_norm = (alpha - np.min(alpha)) / (np.max(alpha) - np.min(alpha))
+    clrs = viridis(alpha_norm)
+
+    for i,a in enumerate(alpha):
+        av.res['alpha'][0] = a * np.pi / 180
+        oper, prop, _ = hanson_secondary_variables(av)
+
+        dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
+        r = 10 * prop['rt']
+        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+
+        fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
         kx = fac * prop['Bd'] * oper['Mt']
-        ky = fac * yofac * prop['Bd'] / prop['r0_rt']
 
         dpsiVKx = prop['HX'] * np.exp(1j * kx * xc)
         dpsiLKx = prop['dCl_dxc'] * np.exp(1j * kx * xc)
@@ -266,34 +295,17 @@ def chord_locus(oper: dict, prop: dict):
         I1plt = cumtrapz(dpsiVKx, xc, axis=0, initial=0)
         I2plt = cumtrapz(dpsiLKx, xc, axis=0, initial=0)
         I3plt = cumtrapz(dpsiDKx, xc, axis=0, initial=0)
+        total = I1plt + I2plt + I3plt
 
-        viridis = plt.get_cmap('viridis')
-        clrs = viridis(prop['r0_rt'])
+        ax[0,0].quiver(I1plt[:,0].real[:-1], I1plt[::step,0].imag[:-1], np.diff(I1plt[::step,0].real), np.diff(I1plt[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[0,1].quiver(I2plt[:,0].real[:-1], I2plt[::step,0].imag[:-1], np.diff(I2plt[::step,0].real), np.diff(I2plt[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[1,0].quiver(I3plt[:,0].real[:-1], I3plt[::step,0].imag[:-1], np.diff(I3plt[::step,0].real), np.diff(I3plt[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[1,1].quiver(total[:,0].real[:-1], total[::step,0].imag[:-1], np.diff(total[::step,0].real), np.diff(total[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
 
-        fig, ax = plt.subplots()
-        for j in range(prop['nr']):
-            ax.plot(I1plt[:,j].real, I1plt[:,j].imag, color = clrs[j])
-        ax.legend()
-        
-        fig, ax = plt.subplots()
-        for j in range(prop['nr']):
-            ax.plot(I2plt[:,j].real, I2plt[:,j].imag, color = clrs[j])
-        ax.legend()
-        
-        fig, ax = plt.subplots()
-        for j in range(prop['nr']):
-            ax.plot(I3plt[:,j].real, I3plt[:,j].imag, color = clrs[j])
-        ax.legend()
+    return ax
 
 def plot_hansen(oper: dict, prop: dict):
-
-    oper['Min'] = 0;                  #% inflow Mach number [-]
-    oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
-    oper['Mht'] = np.sqrt((oper['Omega']*2*np.pi*prop['rt'])**2 + oper['V']**2)/oper['c0'];                 #% Helical tip Mach number [-]
-
-    oper['Mx'] = oper['Mfl'] + oper['Min']                       # Effective Mach number [-]
-    oper['Mt'] = np.sqrt(oper['Mht']**2 - oper['Mx']**2)     # Tip mach number [-]
-    oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
+    # requires secondary variables
 
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 
@@ -313,15 +325,10 @@ def plot_hansen(oper: dict, prop: dict):
     ax.set_theta_zero_location("N")
     ax.set_xlim(0, np.pi)
 
-def hanson_sweep(oper: dict, prop: dict):
+def hanson_sweep(av):
 
-    oper['Min'] = 0;                  #% inflow Mach number [-]
-    oper['Mfl'] = oper['V']/oper['c0'];                     #% flight Mach number [-] 
-    oper['Mht'] = np.sqrt((oper['Omega']*2*np.pi*prop['rt'])**2 + oper['V']**2)/oper['c0'];                 #% Helical tip Mach number [-]
-
-    oper['Mx'] = oper['Mfl'] + oper['Min']                       # Effective Mach number [-]
-    oper['Mt'] = np.sqrt(oper['Mht']**2 - oper['Mx']**2)     # Tip mach number [-]
-    oper['Mr'] = np.sqrt(oper['Mx']**2 + (oper['Mt']*prop['r0_rt'])**2) #  blade section Mach number [-]
+    prop = av.prop
+    oper = av.oper
 
     fig, ax = plt.subplots()
 
@@ -332,17 +339,11 @@ def hanson_sweep(oper: dict, prop: dict):
     max_sweep = np.pi/2
     nsweeps = 100
     sweep = np.linspace(-max_sweep, max_sweep, nsweeps)
-    SPL = np.zeros((nsweeps, 3))
+    SPL = np.zeros((nsweeps, 4))
     for i in range(nsweeps):
         prop['sweep'] = np.linspace(0, sweep[i], prop['nr'])
-        dx = prop['r0_rt'] * prop['rt'] * np.sin( prop['sweep'] )
-        phi = np.arcsin(oper['Mx'] / oper['Mr'])
-        #phi = prop['twist'] - res['alpha']
-        alpha = prop['twist'] - phi
-        prop['FA'] = dx * np.sin(phi)
-        prop['MCA'] = dx * np.cos(phi)
-        prop['Cl_r'] = (2 * np.pi * alpha) #* np.cos(prop['sweep'])**2
-        prop['Cd_r'] = (0.0087 - 0.021 * alpha + 0.400 * alpha ** 2) #* np.cos(prop['sweep'])**2
+        
+        oper, prop, _ = hanson_secondary_variables(av)
 
         out = hanson(oper, prop, obs, np.arange(1, 5))
         SPL[i] = calc_noise_components(out, oper['pref'])
@@ -352,7 +353,9 @@ def hanson_sweep(oper: dict, prop: dict):
     ax.set_xlabel('Tip Sweep [rad]')
     ax.set_ylabel('SPL [dB]')
 
-def radial_locus_sweep(oper: dict, prop: dict):
+def radial_locus_sweep(av):
+    prop = av.prop
+    oper = av.oper
 
     fig, ax = plt.subplots(2, 2, figsize=(6, 6))
     ax[0,0].set_title('Thickness')
@@ -370,6 +373,7 @@ def radial_locus_sweep(oper: dict, prop: dict):
     SPL = np.zeros((nsweeps, 3))
     for i in range(nsweeps):
         prop['sweep'] = np.linspace(0, sweep[i], prop['nr'])
+        oper, prop, _ = hanson_secondary_variables(av)
 
         colour = cm.jet(i/nsweeps)
         ax = radial_locus(oper, prop, ax=ax, colour=colour, label=f'$\psi= {sweep[i]*180/np.pi:.2f}$')
@@ -445,7 +449,7 @@ def plot_directivity(oper, prop, ms=1, obsr_rt=10, thetamin=0, thetamax=180, ax=
     return ax
 
 
-def plot_optimised_harmonics(prop, oper):
+def plot_optimised_harmonics(av):
     total_width = 0.8
     n = 5
     width = total_width / n
@@ -460,12 +464,13 @@ def plot_optimised_harmonics(prop, oper):
 
     for i in range(n):
         dx = i * width - total_width / 2 + width / 2
+        oper, prop, _ = hanson_secondary_variables(av)
         sweep_deg_zero = (prop['sweep'] - prop['sweep'][0]) * 180 / np.pi
         sweep_ax.plot(prop['r0_rt'], sweep_deg_zero, label=opt_labels[i], color=profile_colours[i])
         bar_ax = plot_harmonic_components(oper, prop, ms=ms, ax=bar_ax, hatching=hatchings[i], w=width, dx=dx)
         dax = plot_directivity(oper, prop, ms=ms, ax=dax, obsr_rt=10, thetamin=0, thetamax=180, label=opt_labels[i])
         #optimise_lift_harmonic_ratio(oper, prop, 2, 1)
-        optimise_lift_magnitude(oper, prop, i+1, plot=False)
+        optimise_lift_magnitude(av, i+1, plot=False)
 
 
     bar_ax.grid()
@@ -510,20 +515,6 @@ def main():
     prop = load_prop_from_file('app/props/constant_chord.prop')
     oper = load_oper_from_file('app/app_vars.json')
     airfoil_data = np.loadtxt(prop['foil_path'])
-
-    prop['Bd'] = prop['c'] / (2 * prop['rt'])
-    n = airfoil_data.shape[0]
-    xf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), airfoil_data[:, 0])
-    yf = np.interp(np.linspace(0,1, 2*prop['nx']), np.linspace(0,1, n), airfoil_data[:, 1])
-    tf = yf[:prop['nx']] - yf[prop['nx']:]
-    _, hf = np.meshgrid(prop['c'], tf)
-    prop['HX'] = hf
-
-    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
-
-    prop['HX'] /= simps(prop['HX'], xc, axis=0) # normalize by area under curve
-
-    prop['tb'] = np.max(tf) * prop['c']
     
     av = AppVars()
     av.oper = oper
@@ -537,37 +528,21 @@ def main():
     if not av.res['converged']:
         print("BEM failed")
         return
+    
+    oper, prop, _ = hanson_secondary_variables(av)
 
-    alpha = av.res['alpha']
-    sweep = prop['sweep']
-
-    Cl,Cd = interpolate_clcd(av.airfoil_data, alpha, 5e5)
-    Cl,Cd = correct_clcd_sweep(Cl, Cd, sweep)
-    prop['Cl_r'] = Cl
-    prop['Cd_r'] = Cd
-
-    prop['dCl_dxc'] = 0.5 * np.ones((prop['nx'], prop['nr']))
-    prop['dCd_dxc'] = 0.01 * np.ones((prop['nx'], prop['nr']))
-
-    prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0) # normalize by area under curve
-    prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0) # normalize by area under curve
-
-    #radial_locus(oper, prop)
-    #radial_locus_sweep(oper, prop)
-
-
-    plot_optimised_harmonics(prop, oper)
+    #plot_optimised_harmonics(av)
 
     #operating_range(av)
-    #optimise_lift_harmonic_ratio(oper, prop, 2, 1)
+    #optimise_lift_harmonic_ratio(av, 2, 1)
     fig, axes = plt.subplots(2, 2)
     m = 2
     axes = radial_locus(oper, prop, axes, m=m, colour='b')
-    optimise_lift_magnitude(oper, prop, m, axes, colour='r')
+    optimise_lift_magnitude(av, m, axes, colour='r')
     fig.tight_layout()
-    #
-    #chord_locus(oper, prop)
-    #hanson_sweep(oper, prop, res)
+    
+    chord_locus_alpha(av, np.arange(1,10), 1)
+    hanson_sweep(av)
 
     plt.show()
 
