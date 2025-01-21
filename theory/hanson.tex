@@ -9,14 +9,39 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{esint}
+\usepackage{tikz}
 % set font size to 11pt
 
 % set margin
 \usepackage[margin=1in]{geometry}
 
+\usetikzlibrary{calc}
+\usetikzlibrary{angles,quotes} % for pic
+\usetikzlibrary{patterns,snakes}
+\usetikzlibrary{arrows}
+\tikzset{>=latex} % for LaTeX arrow head
+
 \setlength{\parskip}{\baselineskip}%
 \setlength{\parindent}{0pt}%
 \setlength{\headsep}{5pt}
+
+% Define the CG symbol style
+\tikzset{
+    cg/.style={
+        draw,
+        circle,
+        thick,
+        minimum size=0.2cm, % Adjust the size of the circle
+        inner sep=0,      % Remove extra padding
+        append after command={
+            \pgfextra{
+                \draw[thick] (\tikzlastnode.south) -- (\tikzlastnode.north);
+                \draw[thick] (\tikzlastnode.west) -- (\tikzlastnode.east);
+            }
+        }
+    }
+}
+
 
 \begin{document}
 
@@ -87,6 +112,13 @@ This is done with the helicoidal coordinates $(\gamma_0, \xi_0, r_0)$.
     R = \sqrt{ \left( x -  \frac{\Omega r_0 \xi_0}{U}\right) + y^2 + r_0^2 - 2yr_0\cos\left( \frac{\Omega \gamma_0}{U} \right)}
     \label{eq:R}
 \end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{hansonfoil.png}
+    \caption{Local section of propeller blade for Hansons theory}
+    \label{fig:bem_section}
+\end{figure}
 
 In the following section thin airfoil theory is used to apply boundary conditions to a \textit{mean surface}.
 This means the source strengths $V_n$ and $f_i$ act on the mean helicoidal surface.
@@ -287,7 +319,7 @@ Which simplifies to
 \begin{equation}
     \psi_D = \frac{1}{2} \rho_0 U^2 C_D \delta(FA + \xi_0) (-jk_x \Psi_D(k_x)) \exp\left( j k_x \frac{MCA}{b} \right)
 \end{equation}
-Lift is found using the right term
+Lift is found using the term containing $f_2$
 \begin{equation}
     \psi_L\left( \frac{mB\Omega}{U}, \xi_0, r_0  \right) = \frac{1}{2} \rho_0 U^2 C_L \frac{\partial }{\partial \xi_0} \Big[ \delta(FA + \xi_0) \Big] \int \Big[  f_L\left(X-\frac{MCA}{b}\right) \Big] \exp\left( j \frac{mB\Omega}{U} \gamma_0 \right) d\gamma_0
 \end{equation}
@@ -338,7 +370,7 @@ The final radial integral is performed over a number of discrete airfoil section
 This means that for a given harmonic the contribution to the noise from each section is summed.
 This can easily be visualised as head-to-tail vector addition seen below.
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{hasonsweep.png}
     \caption{Example of phase interference for three swept planforms Mx=0.8, MT = 0.822, mB = 8 (vector segments between two dots corresponds to 5\% of blade radius, peak radiation angle = 30 deg).}
@@ -349,8 +381,59 @@ The problem for minimising noise of a given harmonic is then to sweep the blade 
 The magnitudes of the vectors will be assumed fixed ie constant thickness and loading.
 
 
-
 \section{Superposition of Propellers with Even Blade Spacing}
+
+Dobrzynski \cite{uneven_blade_spacing} showed that the noise from a propeller with uneven blade spacing can be reduced by superposition of two propellers with even blade spacing.
+
+\section{Extension to looped propellers}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+            % Some profiles look better when using plot[smooth]
+        \begin{scope}[rotate=225, xshift=-1cm, yshift=-1cm]
+            \draw[scale=3,thick=3] node[left=0.5cm] {}
+                plot file{../app/foils/NACA2412.surf} -- cycle;
+        \end{scope}
+        \begin{scope}[rotate=225, xshift=1cm, yshift=1cm]
+            \draw[scale=3,thick=3] node[left=-0.5cm] {}
+                plot file{../app/foils/NACA2412.surf} -- cycle;
+        \end{scope}
+        % hoirzontal line
+        \draw[thick, dashed] (0,-3) -- (0, 2) node[above] {Rotation Plane};
+        \draw[->] (0,0) -- (1,0) node[right] {$x$};
+        \draw[->] (0,0) -- (2,-2) node[above] {$\xi_0$};
+        \draw[->] (0,0) -- (-3,-3) node[left] {$\gamma_0$};
+        \node[cg] at (-0.75,1-0.41) {};
+        \node[cg] at (-0.75,1-0.41-3+0.15) {};
+        \draw[dashed] (0,0) -- (1,1) node[] {};
+
+        \draw[->] (-1.5,-1.5) -- (-2.5+0.2,-0.5-0.2) node[left] {$FA_1$};
+        \draw[->] (-2,-2) -- (-2 + 0.5+0.2,-2.5-0.2) node[left, xshift=-0.1cm] {$FA_2$};
+        \draw[->] (1.5,-1.5) -- (-1.5+1.5,-1.5-3+1.5) node[right] {$MCA_2$};
+    
+    \end{tikzpicture}
+    \caption{Local section of propeller blade for BEM. Anticlockwise angles are positive.}
+    \label{fig:waffler}
+\end{figure}
+
+This means an extended generalised source function can be formed
+
+\begin{equation}
+    \begin{aligned}
+        g(\eta, r_0, \xi_0) = \rho_0 U^2 \frac{\partial^2 }{\partial \eta^2} &\bigg[ h_1(\eta, r_0)\delta(FA_1 + \xi_0) + h_2(\eta, r_0) \delta(FA_2 + \xi_0)\bigg] \\
+        + \frac{\partial }{\partial \boldsymbol{\gamma}_i} &\Big[ f_{1,i}(\eta, r_0) \delta(FA_1 + \xi_0) + f_{2,i}(\eta, r_0) \delta(FA_2 + \xi_0)\Big] \\
+    \end{aligned}
+    \label{eq:generalised_source_extended}
+\end{equation}
+All of the operations performed are linear so the far field harmonic
+\begin{equation}
+    g(\eta, r_0, \xi_0) = g_1(\eta, r_0, \xi_0) + g_2(\eta, r_0, \xi_0)
+\end{equation}
+Which has respective Fourier transforms $\psi_1$ and $\psi_2$.
+\begin{equation}
+    P_{mB} = P^{(1)}_{mB} + P^{(2)}_{2mB}
+\end{equation}
 
 
 

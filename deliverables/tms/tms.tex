@@ -91,23 +91,35 @@ This project aims to investigate acoustic sources of noise in quadcopter propell
 Recent literature has focused on a looped propeller design for eVTOL, known in marine applications.
 Experimental work has verified a reduction in OASPL and in psychoacoustic annoyance factors \cite{shima_toroidal}, \cite{ijerph20031955}.
 Tonal noise is a major source of annoyance in propeller noise \cite{DI2016164} which has been shown experimentally to be reduced in the looped propeller design.
-The mechanisms of harmonic noise reduction of the looped propeller design are thought to be due to sweep and asymmetrical blade spacing \cite{?}.
+The mechanisms of harmonic noise reduction of the looped propeller design are thought to be due to sweep and uneven blade spacing \cite{?}.
 Such mechanisms are well understood for standard propellers in forward flight \cite{hanson_influence}, \cite{DOBRZYNSKI1993123}, \cite{doi:10.2514/3.22938}.
 However a fast low fidelity method implementing this theory to predict noise from looped propellers is missing.
 Such a method would enable iterative design methods to optimise the looped propeller design for noise reduction.
 
+Looped propellers improved structure allows for larger sweep and hence can achieve greater noise reduction than standard propellers \cite{shima_toroidal} ???.
 
+Hypothesis:
+The harmonic noise of loop propellers can be modelled by the superposition of evenly spaced, swept propellers.
 
 \section{Project Management}
 
-\subsection{Timeline}
+Initially the project was planned to have a more experimental approach involving the rapid prototyping of propellers to make recommendations for aerodynamic and acoustic performance.
+However, after discussion at the mini conference, it was decided that a theoretical framework would be developed to predict 
 
 \subsection{Risk and Contingency}
 
 Risks
-Blade deflection causes reduced performance
-Blade flutter
-Motor overheating
+\begin{itemize}
+    \item Discrepancy between aerodynamic and acoustic tests.
+    \item Blade deflection causes reduced performance
+    \item Aeroelastic flutter
+    \item Motor noise interference with acoustic measurements
+    \item Motor overheating in acoustic insulation.
+\end{itemize}
+
+BEM corrected for sweep \cite{bergmann_sweep} is only valid for small sweep angles.
+BEM and hansons theory for asymmetrical spacing becomes less valid for small spacing.
+These contending factors are expected be a significant limitation of the model.
 
 \subsection{Saftey}
 
@@ -219,6 +231,7 @@ The magnitudes of the vectors will be assumed fixed ie constant thickness and lo
 
 \section{Progress}
 
+\iffalse
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/optimised_harmonics.png}
@@ -232,6 +245,7 @@ The magnitudes of the vectors will be assumed fixed ie constant thickness and lo
     \caption{Sweep profiles for different harmonic components}
     \label{fig:optimised_harmonic_profiles}
 \end{figure}
+\fi
 
 \begin{figure}
     \centering
