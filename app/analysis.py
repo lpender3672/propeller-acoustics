@@ -7,7 +7,7 @@ from routines import (
     run_xfoil,
     AppVars
 )
-from betz import (
+from bem import (
     betz_off_design
 )
 # analysis of constant chord

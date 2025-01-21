@@ -11,7 +11,7 @@ from scipy.interpolate import CubicSpline
 from routines import (
     calc_distribution
 )
-import betz
+import bem as bem
 
 
 class DraggableScatterPlotItem(pg.ScatterPlotItem):
@@ -342,10 +342,10 @@ class DistributionsWidget(QWidget):
         if self.avs is None:
             return
         
-        if betz.betz_design(self.avs):
+        if bem.betz_design(self.avs):
             self.set_dists(self.avs)
 
-            betz.betz_off_design(self.avs)
+            bem.betz_off_design(self.avs)
 
         else:
             QMessageBox.critical(

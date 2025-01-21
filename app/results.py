@@ -8,7 +8,7 @@ import numpy as np
 from table import OutputTable, TableVar
 
 from hanson import hanson_av
-from betz import betz_off_design, operating_range, guaranteed_convergence_BEM
+from bem import betz_off_design, operating_range, guaranteed_convergence_BEM
 
 class PlotCanvas(FigureCanvas, QWidget):
     def __init__(self, parent=None, xlabel = "", ylabel = "", title = "", hideaxes = False):
@@ -124,7 +124,7 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.fig.tight_layout()
         self.draw()
 
-    def plot_data(self):
+    def plot_data(self, draw = True):
         # clear
 
         for i, line_data in enumerate(self.line_data):
@@ -153,7 +153,9 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.ax.legend(loc='upper right')
         self.ax.grid(True)
         self.fig.tight_layout()
-        self.draw()
+
+        if draw:
+            self.draw()
 
     def set_ylim(self, bottom_override = None, top_override = None):
         
@@ -207,6 +209,14 @@ class PolarPlotCanvas(PlotCanvas):
         
     def set_ylim(self):
         super().set_ylim(bottom_override=0)
+
+    def plot_data(self):
+        super().plot_data(draw=False)
+
+        self.fig.subplots_adjust(right=0.7)
+        self.ax.legend( loc='center right', bbox_to_anchor=(1.3, 0.5))
+
+        self.draw()
 
 
 class ResultsTable(OutputTable):
@@ -388,7 +398,7 @@ class AerodynamicResultsWidget(QWidget):
 
             self.CTprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCT']],
+                avs.res['dCT'] / sigma],
                 linestyle=['--']
             )
             

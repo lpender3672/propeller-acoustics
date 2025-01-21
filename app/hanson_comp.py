@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 from matplotlib import pyplot as plt
 from matplotlib import cm
 import matplotlib as mpl
-from betz import betz_off_design, guaranteed_convergence_BEM
+from bem import betz_off_design, guaranteed_convergence_BEM
 from hanson import (
     hanson, 
     calc_noise_components,
