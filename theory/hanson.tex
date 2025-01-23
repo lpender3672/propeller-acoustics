@@ -350,6 +350,7 @@ Then all equations can be combined to a final integral in $r_0$ for the Fourier 
             -jk_y (C_L / 2) \Psi_L(k_x)
         \end{bmatrix}dz
     \end{aligned}
+    \label{eq:final_integral}
 \end{equation}
 
 With
@@ -384,6 +385,13 @@ The magnitudes of the vectors will be assumed fixed ie constant thickness and lo
 \section{Superposition of Propellers with Even Blade Spacing}
 
 Dobrzynski \cite{uneven_blade_spacing} showed that the noise from a propeller with uneven blade spacing can be reduced by superposition of two propellers with even blade spacing.
+
+\begin{equation}
+    p(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t) + \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB(\Omega t + \varepsilon))
+    \label{eq:Dobrzynski}
+\end{equation}
+
+However, the next section explores this more generally.
 
 \section{Extension to looped propellers}
 
@@ -432,9 +440,17 @@ All of the operations performed are linear so the far field harmonic
 \end{equation}
 Which has respective Fourier transforms $\psi_1$ and $\psi_2$.
 \begin{equation}
-    P_{mB} = P^{(1)}_{mB} + P^{(2)}_{2mB}
+    P_{mB} = P^{(1)}_{mB} + P^{(2)}_{mB}
 \end{equation}
-
+To validate this a small, constant sweep offset $\varepsilon$ is applied to the otherwise identical second blade.
+\begin{equation}
+    MCA_2 = MCA_1 + r_0 \varepsilon
+\end{equation}
+When substituted into equation \ref{eq:final_integral} the noise is found to be
+\begin{equation}
+    P^{(2)}_{mB} = P^{(1)}_{mB} \exp ( j mB \varepsilon )
+\end{equation}
+And the result by Dobrzynski is recovered (Equation \ref{eq:Dobrzynski}).
 
 
 \begin{thebibliography}{9}

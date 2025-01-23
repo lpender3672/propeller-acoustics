@@ -20,7 +20,10 @@ from routines import (
     correct_clcd_sweep,
     AppVars,
     XFOIL_INSTALLED,
-    run_xfoil
+    run_xfoil,
+    calc_chordwise_loading,
+    _separate,
+    set_intergrands
 )
 
 def Psi(kx, X, fX):
@@ -277,30 +280,39 @@ def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
     alpha_norm = (alpha - np.min(alpha)) / (np.max(alpha) - np.min(alpha))
     clrs = viridis(alpha_norm)
 
+    lfig, lax = plt.subplots()
+
+    rindex = 0
+
     for i,a in enumerate(alpha):
-        av.res['alpha'][0] = a * np.pi / 180
+        av.res['alpha'][rindex] = a * np.pi / 180
         oper, prop, _ = hanson_secondary_variables(av)
 
         dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
-        r = 10 * prop['rt']
-        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
         fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
         kx = fac * prop['Bd'] * oper['Mt']
+        kx = kx.reshape((-1, 1))
 
         dpsiVKx = prop['HX'] * np.exp(1j * kx * xc)
         dpsiLKx = prop['dCl_dxc'] * np.exp(1j * kx * xc)
         dpsiDKx = prop['dCd_dxc'] * np.exp(1j * kx * xc)
 
-        I1plt = cumtrapz(dpsiVKx, xc, axis=0, initial=0)
-        I2plt = cumtrapz(dpsiLKx, xc, axis=0, initial=0)
-        I3plt = cumtrapz(dpsiDKx, xc, axis=0, initial=0)
+        lax.plot(prop['xc'], prop['dCl_dxc'][rindex,:], color=clrs[i])
+
+        I1plt = cumtrapz(dpsiVKx, xc, axis=1, initial=0)
+        I2plt = cumtrapz(dpsiLKx, xc, axis=1, initial=0)
+        I3plt = cumtrapz(dpsiDKx, xc, axis=1, initial=0)
         total = I1plt + I2plt + I3plt
 
-        ax[0,0].quiver(I1plt[:,0].real[:-1], I1plt[::step,0].imag[:-1], np.diff(I1plt[::step,0].real), np.diff(I1plt[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
-        ax[0,1].quiver(I2plt[:,0].real[:-1], I2plt[::step,0].imag[:-1], np.diff(I2plt[::step,0].real), np.diff(I2plt[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
-        ax[1,0].quiver(I3plt[:,0].real[:-1], I3plt[::step,0].imag[:-1], np.diff(I3plt[::step,0].real), np.diff(I3plt[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
-        ax[1,1].quiver(total[:,0].real[:-1], total[::step,0].imag[:-1], np.diff(total[::step,0].real), np.diff(total[::step,0].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[0,0].quiver(I1plt[rindex,:-1].real, I1plt[rindex,:-1:step].imag, np.diff(I1plt[rindex,::step].real), np.diff(I1plt[rindex,::step].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[0,1].quiver(I2plt[rindex,:-1].real, I2plt[rindex,:-1:step].imag, np.diff(I2plt[rindex,::step].real), np.diff(I2plt[rindex,::step].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[1,0].quiver(I3plt[rindex,:-1].real, I3plt[rindex,:-1:step].imag, np.diff(I3plt[rindex,::step].real), np.diff(I3plt[rindex,::step].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+        ax[1,1].quiver(total[rindex,:-1].real, total[rindex,:-1:step].imag, np.diff(total[rindex,::step].real), np.diff(total[rindex,::step].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
+
+    for axi in ax.flatten():
+        axi.set_aspect('equal', 'box')
 
     return ax
 
@@ -425,6 +437,18 @@ def operating_range(av, ):
 
     plt.show()
 
+def plot_raw_airfoil_loading(airfoil_data):
+    fig, ax = plt.subplots(2, 1)
+    
+    alphas = airfoil_data[:,2]
+    xs = airfoil_data[:,0]
+    cls, cds = calc_chordwise_loading(airfoil_data)
+
+    xs_u, _ = _separate(airfoil_data[:,0])
+
+    ax[0].plot(xs_u, cls)
+    ax[1].plot(xs_u, cds)
+
 def plot_directivity(oper, prop, ms=1, obsr_rt=10, thetamin=0, thetamax=180, ax=None, label=None):
 
     if ax is None:
@@ -508,13 +532,22 @@ def plot_optimised_harmonics(av):
     sfig.tight_layout()
     sfig.savefig('deliverables/tms/figures/optimised_harmonic_profiles.png', dpi=300)
 
+def plot_simple_optimised_harmonic(av, m):
+    oper, prop, _ = hanson_secondary_variables(av)
 
+    fig, axes = plt.subplots(2, 2)
+    m = 2
+    axes = radial_locus(oper, prop, axes, m=m, colour='b')
+    optimise_lift_magnitude(av, m, axes, colour='r')
+    fig.savefig('deliverables/tms/figures/radial_locus.png', dpi=300)
+    fig.tight_layout()
 
 def main():
     
-    prop = load_prop_from_file('app/props/constant_chord.prop')
+    prop = load_prop_from_file('app/props/constant_chord_hires.prop')
     oper = load_oper_from_file('app/app_vars.json')
-    airfoil_data = np.loadtxt(prop['foil_path'])
+    #airfoil_data = np.loadtxt(prop['foil_path'])
+    airfoil_data = np.loadtxt("app/foils/naca0012.surf")
     
     av = AppVars()
     av.oper = oper
@@ -523,7 +556,7 @@ def main():
     airfoil_data = run_xfoil(airfoil_data)
     av.airfoil_data = airfoil_data
 
-    av = betz_off_design(av)
+    av = guaranteed_convergence_BEM(av)
 
     if not av.res['converged']:
         print("BEM failed")
@@ -535,14 +568,9 @@ def main():
 
     #operating_range(av)
     #optimise_lift_harmonic_ratio(av, 2, 1)
-    fig, axes = plt.subplots(2, 2)
-    m = 2
-    axes = radial_locus(oper, prop, axes, m=m, colour='b')
-    optimise_lift_magnitude(av, m, axes, colour='r')
-    fig.tight_layout()
     
-    chord_locus_alpha(av, np.arange(1,10), 1)
-    hanson_sweep(av)
+    chord_locus_alpha(av, np.arange(-15,15,3), 3)
+    #hanson_sweep(av)
 
     plt.show()
 

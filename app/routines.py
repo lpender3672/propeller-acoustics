@@ -318,8 +318,25 @@ def calc_chordwise_loading(airfoil_data):
 
         cl_x_alpha[:, i] = cl_lower - cl_upper
         cd_x_alpha[:, i] = cd_lower + cd_upper
-        
+
+    ## insert 0 at the start of the array
+    cl_x_alpha = np.insert(cl_x_alpha, 0, 0, axis=0)
+    cd_x_alpha = np.insert(cd_x_alpha, 0, 0, axis=0)
+
     return cl_x_alpha, cd_x_alpha
+
+def set_intergrands(prop):
+    
+    xc_pts = np.linspace(-0.5,0.5,prop['nx']+1)
+    if prop['rdist'] == "Linear":
+        rarr_pts = np.linspace(prop['rh'], prop['rt'], prop['nr']+1)
+    elif prop['rdist'] == "Cosine":
+        rarr_pts = prop['rh'] + (prop['rt']-prop['rh'])/2 * (1 - np.cos(np.linspace(0,np.pi,prop['nr']+1)))
+
+    prop['xc']  = (xc_pts[1:] + xc_pts[:-1]) / 2
+    prop['r0'] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
+    prop['r0_rt'] = prop['r0'] / prop['rt']
+    prop['dz'] = np.diff(rarr_pts)
 
 if __name__ == "__main__":
     raw = np.loadtxt("app/foils/naca0012.surf")
