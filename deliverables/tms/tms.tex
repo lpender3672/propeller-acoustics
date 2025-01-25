@@ -10,6 +10,7 @@
 \usepackage{subcaption}
 \usepackage{hyperref}
 \usepackage{tikz}
+\usepackage{pgfgantt}
 \usepackage{layout}
 
 \usepackage[margin=1in]{geometry}
@@ -24,6 +25,7 @@
 \usetikzlibrary{angles,quotes} % for pic
 \usetikzlibrary{patterns,snakes}
 \usetikzlibrary{arrows}
+\usetikzlibrary{shapes.geometric, arrows}
 \tikzset{>=latex} % for LaTeX arrow head
 
 \setlength{\parskip}{\baselineskip}%
@@ -61,6 +63,7 @@
 \tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
 \tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30]
 \tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
 
 \begin{document}
 \immediate\write18{py mergebib.py}
@@ -72,7 +75,7 @@
 
 \begin{abstract}
     \centering
-    This report presents th
+    Motivation, method, results, conclusion
 \end{abstract}
 
 %-----------------------------------------------------------------------------------------
@@ -104,7 +107,24 @@ The harmonic noise of loop propellers can be modelled by the superposition of ev
 \section{Project Management}
 
 Initially the project was planned to have a more experimental approach involving the rapid prototyping of propellers to make recommendations for aerodynamic and acoustic performance.
-However, after discussion at the mini conference, it was decided that a theoretical framework would be developed to predict 
+However, after discussion at the mini conference, it was decided to predict the harmonic noise using a theoretical framework.
+
+\begin{figure}
+    \centering
+    \begin{ganttchart}{1}{12}
+        \gantttitle{2024}{12} \\
+        \gantttitlelist{1,...,12}{1} \\
+        \ganttgroup{Group 1}{1}{7} \\
+        \ganttbar{Task 1}{1}{2} \\
+        \ganttlinkedbar{Task 2}{3}{7} \ganttnewline
+        \ganttmilestone{Milestone}{7} \ganttnewline
+        \ganttbar{Final Task}{8}{12}
+        \ganttlink{elem2}{elem3}
+        \ganttlink{elem3}{elem4}
+    \end{ganttchart}
+    \caption{Gantt chart of project timeline}
+    \label{fig:gantt}
+\end{figure}
 
 \subsection{Risk and Contingency}
 
@@ -171,6 +191,9 @@ In practice the BEM equations can be difficult to solve and so a root finding me
 
 The accuracy of BEM for prescribed wake model at low or zero advance ratios 
 % prescribed wake model and impirical aspect of the model
+
+The Reynolds number over the blade is assumed to be constant but in reality can vary as much as a factor of 5 \cite{?}.
+
 
 \subsection{Hansons Helicoidal Surface Theory}
 Theory developed by Hanson predicts the far field harmonic noise from propellers.
@@ -239,6 +262,16 @@ The destructive interference of each component can then easily be visualised in 
 The problem for minimising noise of a given harmonic is then to sweep the blade in such a way that minimises the final magnitude of the vector summation.
 The magnitudes of the vectors will be assumed fixed ie constant thickness and loading.
 
+\subsection{Validation of theory}
+
+To validate theory the following tests are proposed
+
+\begin{itemize}
+    \item Optimised sweep profiles to maximise constructive, and deconstructive interference for a specific harmonic.
+    \item Comparison of single and looped (but axi-symmetric profile) blade designs evaluate superimposed model.
+    \item If time allows predict and test axi-asymmetrical looped propeller designs.
+\end{itemize}
+
 \section{Progress}
 
 \iffalse
@@ -257,28 +290,61 @@ The magnitudes of the vectors will be assumed fixed ie constant thickness and lo
 \end{figure}
 \fi
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.6\textwidth]{figures/optimised_ratio.png}
-    \caption{Example of radial cancellation due to sweep}
-    \label{fig:optimised_ratio}
-\end{figure}
+
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{figures/loop.jpg}
-    \caption{Test print of looped propeller}
-    \label{fig:printed_demo}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\textwidth]{figures/setup.jpg}
+    \includegraphics[width=0.3\textwidth]{figures/setup.jpg}
     \caption{Aerodynamic Setup}
     \label{fig:aero_setup}
 \end{figure}
 
 \subsection{Software design tool}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=2cm, scale=0.6, transform shape]
+
+        \node (in1) [io] {Input Propeller, OP};
+        \node (start) [startstop, right of=in1, xshift=6cm] {Start};
+
+        \node (pro1) [process, below of=in1] {Run XFoil};
+        \node (midin) [below of=pro1, yshift=1cm] {};
+        \node (pro5) [process, right of=midin, xshift=2cm] {Calculate new $\phi$};
+        \node (dec1) [decision, below of=pro1, yshift=-2cm] {$\delta \phi < \texttt{tol}$};
+        \draw [arrow] (pro1) -- (dec1); 
+        
+        \node (pro2a) [process, below of=dec1, yshift=-0.5cm] {Calculate Noise};
+        
+        \node (pro2b) [process, right of=dec1, xshift=2cm] {$\alpha = \beta - \phi$};
+        \node (dec2) [decision, right of=pro2b, xshift=2cm] {$\alpha < \alpha_{stall}$};
+        \node (pro3) [process, above of=dec2] {Interpolate $Cl$,$Cd$};
+        \node (pro4) [process, right of=dec2, xshift=2.5cm] {Viterna Extrapolate};
+
+        \draw [arrow] (pro2b) -- (dec2);
+
+        \draw [arrow] (dec2) -- node[anchor=south, right] {yes} (pro3);
+        \draw [arrow] (dec2) -- node[anchor=east, above] {no} (pro4);
+
+
+        \node (out1) [io, below of=pro2a] {Output};
+        \node (stop) [startstop, right of=out1, xshift = 4cm] {Stop};
+        
+        \draw [arrow] (start) -- (in1);
+        \draw [arrow] (in1) -- (pro1);
+        \draw [arrow] (dec1) -- node[anchor=east] {yes} (pro2a);
+        \draw [arrow] (dec1) -- node[anchor=south] {no} (pro2b);
+        \draw [arrow] (pro3) |- (pro5);
+        \draw [arrow] (pro4) |- (pro5);
+        \draw [arrow] (pro5) -- (midin);
+        \draw [arrow] (pro2a) -- (out1);
+        \draw [arrow] (out1) -- (stop);
+        
+        \end{tikzpicture}
+    \caption{Flowchart of software design tool}
+    \label{fig:flowchart}
+\end{figure}
+
 A software design tool implementing the theoretical framework has been developed.
 This allows rapid design
 
@@ -308,6 +374,26 @@ It will also be at a 45 degree angle such that a graviational mass can calibrate
 
 Large currents in the motor can induce voltages in the strain gauge wire which can interfere with the measurement.
 Efforts to mitigate this include twisted pair wiring and shielding the wires.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/radial_locus.png}
+    \caption{Spanwise cancellation due to sweep}
+    \label{fig:optimised_ratio}
+\end{figure}
+
+\subsection{Propeller manufacturing}
+
+Propellers will be manufactured on an Objet30 3D printer which has planar accuracy of $30\mu m$ and minimum layer thickness of $28 \mu m$.
+The primary advantage of this printer is the gel support material which does not produce rough connection points on overhangs like traditional resin printers.
+A test print of a looped propeller is shown in figure \ref{fig:printed_demo}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/loop.jpg}
+    \caption{Test print of looped propeller}
+    \label{fig:printed_demo}
+\end{figure}
 
 
 

@@ -22,8 +22,9 @@ except ModuleNotFoundError:
     
 
 def Psi(kx, X, fX):
+    kx = kx.reshape(1, -1)
     f = fX * np.exp(1j * kx * X)
-    ans = simps(f, x=X, axis=0)
+    ans = simps(f, x=X, axis=1)
     return ans
 
 
@@ -72,7 +73,7 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
     PDm = np.zeros((Nobs, Nms), dtype=complex)
     PLm = np.zeros((Nobs, Nms), dtype=complex)
 
-    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
     if prop['HX'].shape != xc.shape:
         pass
@@ -259,29 +260,30 @@ def hanson_secondary_variables(av, compact_chord = False):
         prop['dCd_dxc'] = np.ones((prop['nx'], prop['nr']))
     else:
 
-        _, prop['HX'] = np.meshgrid(prop['c'], tf)
-        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+        _, prop['HX'] = np.meshgrid(prop['c'], tf, indexing='ij')
+        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
         cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data)
         xcdata, _ = _separate(av.airfoil_data[:, 0])
-        xcdata = xcdata[:-1] - 0.5 # center the data
+        xcdata = xcdata - 0.5 # center the data#
         interp_clx = RectBivariateSpline(xcdata, av.airfoil_data[:, 2], cl_x_alpha)
         interp_cdx = RectBivariateSpline(xcdata, av.airfoil_data[:, 2], cd_x_alpha)
         # some reason RectBivariateSpline requires eval data to be in increasing order
         argsort_resalp = np.argsort(res['alpha'])
-        prop['dCl_dxc'] = np.zeros((prop['nx'], prop['nr']))
-        prop['dCl_dxc'][:, argsort_resalp] = interp_clx(
+        prop['dCl_dxc'] = np.zeros((prop['nr'],prop['nx']))
+        prop['dCl_dxc'][argsort_resalp, :] = interp_clx(
             prop['xc'], res['alpha'][argsort_resalp] * 180/np.pi
-            )
-        prop['dCd_dxc'] = np.zeros((prop['nx'], prop['nr']))
-        prop['dCd_dxc'][:, argsort_resalp] = interp_cdx(
+            ).T
+        prop['dCd_dxc'] = np.zeros((prop['nr'],prop['nx']))
+        prop['dCd_dxc'][argsort_resalp, :] = interp_cdx(
             prop['xc'], res['alpha'][argsort_resalp] * 180/np.pi
-            )
+            ).T
 
     # ensure that the integrals of the chordwise loading are equal to 1
-    prop['HX'] /= simps(prop['HX'], xc, axis=0)
-    prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=0)
-    prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=0)
+
+    prop['HX'] /= simps(prop['HX'], xc, axis=1)[:, np.newaxis]
+    prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=1)[:, np.newaxis]
+    prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=1)[:, np.newaxis]
 
     return oper, prop, obs
 
@@ -301,6 +303,21 @@ def hanson_av(av):
     vector_contributions = radial_noise_contributions(oper, prop, peak_observer, ms, False)
 
     return obs['theta'], V, L, D, peak_observer['theta'], vector_contributions
+
+def harmonics(av):
+
+    oper, prop, _ = hanson_secondary_variables(av)
+    peak_observer = {
+        'r': [av.oper['r_obs'] * av.prop['rt']],
+        'theta': [av.oper['theta_obs']]
+    }
+
+    ms = np.arange(1, 30)
+    PVm, PDm, PLm = hanson(oper, prop, peak_observer, ms, False)
+
+    total = PVm[0] + PDm[0] + PLm[0]
+    pref = oper['pref']
+    av.res['harmonics'] = 20*np.log10(np.sqrt(2*total*np.conj(total))/pref)
 
 def validate():
 

@@ -5,6 +5,7 @@ from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionsWidget
 from results import NoiseResultsWidget, AerodynamicResultsWidget, ResultsTable
+from sound import SoundPlayer
 from geometry import generate_propeller_mesh
 from routines import AppVars
 
