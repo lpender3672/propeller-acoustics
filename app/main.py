@@ -1,13 +1,12 @@
 from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from vis import STLViewerWidget
 from input import InputWidget
 from dists import DistributionsWidget
 from results import NoiseResultsWidget, AerodynamicResultsWidget, ResultsTable
-from sound import SoundPlayer
 from geometry import generate_propeller_mesh
 from routines import AppVars
+from vis import STLViewerWidget
 
 import numpy as np
 import os
