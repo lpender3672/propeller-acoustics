@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import jv as besselj
-from scipy.integrate import trapz, simps, cumtrapz
+from scipy.integrate import trapezoid, simpson, cumulative_trapezoid
 from scipy.interpolate import RectBivariateSpline, griddata
 
 from matplotlib import pyplot as plt
@@ -24,7 +24,7 @@ except ModuleNotFoundError:
 def Psi(kx, X, fX):
     kx = kx.reshape(1, -1)
     f = fX * np.exp(1j * kx * X)
-    ans = simps(f, x=X, axis=1)
+    ans = simpson(f, x=X, axis=1)
     return ans
 
 
@@ -115,9 +115,9 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
             I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
             I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-            PVm[o, i] = trapz( I1, prop['r0_rt'])
-            PDm[o, i] = trapz( I2, prop['r0_rt'])
-            PLm[o, i] = trapz( I3, prop['r0_rt'])
+            PVm[o, i] = trapezoid( I1, prop['r0_rt'])
+            PDm[o, i] = trapezoid( I2, prop['r0_rt'])
+            PLm[o, i] = trapezoid( I3, prop['r0_rt'])
 
     pref = oper['pref']
 
@@ -191,9 +191,9 @@ def radial_noise_contributions(oper: dict, prop: dict, obs: dict, ms: np.ndarray
         I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
         I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-        I1plt_sum += cumtrapz(I1, prop['r0_rt'], initial=0)
-        I2plt_sum += cumtrapz(I2, prop['r0_rt'], initial=0)
-        I3plt_sum += cumtrapz(I3, prop['r0_rt'], initial=0)
+        I1plt_sum += cumulative_trapezoid(I1, prop['r0_rt'], initial=0)
+        I2plt_sum += cumulative_trapezoid(I2, prop['r0_rt'], initial=0)
+        I3plt_sum += cumulative_trapezoid(I3, prop['r0_rt'], initial=0)
 
     out = np.array([I1plt_sum, I2plt_sum, I3plt_sum], dtype=complex)
 
@@ -281,9 +281,9 @@ def hanson_secondary_variables(av, compact_chord = False):
 
     # ensure that the integrals of the chordwise loading are equal to 1
 
-    prop['HX'] /= simps(prop['HX'], xc, axis=1)[:, np.newaxis]
-    prop['dCl_dxc'] /= simps(prop['dCl_dxc'], xc, axis=1)[:, np.newaxis]
-    prop['dCd_dxc'] /= simps(prop['dCd_dxc'], xc, axis=1)[:, np.newaxis]
+    prop['HX'] /= simpson(prop['HX'], xc, axis=1)[:, np.newaxis]
+    prop['dCl_dxc'] /= simpson(prop['dCl_dxc'], xc, axis=1)[:, np.newaxis]
+    prop['dCd_dxc'] /= simpson(prop['dCd_dxc'], xc, axis=1)[:, np.newaxis]
 
     return oper, prop, obs
 

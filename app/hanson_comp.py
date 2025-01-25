@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import jv as besselj
-from scipy.integrate import trapz, simps, cumtrapz
+from scipy.integrate import trapezoid, simpson, cumulative_trapezoid
 from scipy.optimize import minimize
 
 from matplotlib import pyplot as plt
@@ -28,7 +28,7 @@ from routines import (
 
 def Psi(kx, X, fX):
     f = fX * np.exp(1j * kx * X)
-    ans = simps(f, x=X, axis=0)
+    ans = simpson(f, x=X, axis=0)
     return ans
 
 def radial_bessel(oper: dict, prop: dict):
@@ -81,9 +81,9 @@ def get_radial_magnitudes(oper: dict, prop: dict, m: int):
     I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
     I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-    PVm = cumtrapz(I1, prop['r0_rt'], initial=0)
-    PDm = cumtrapz(I2, prop['r0_rt'], initial=0)
-    PLm = cumtrapz(I3, prop['r0_rt'], initial=0)
+    PVm = cumulative_trapezoid(I1, prop['r0_rt'], initial=0)
+    PDm = cumulative_trapezoid(I2, prop['r0_rt'], initial=0)
+    PLm = cumulative_trapezoid(I3, prop['r0_rt'], initial=0)
 
     return PVm, PLm, PDm
 
@@ -248,9 +248,9 @@ def chord_locus(oper: dict, prop: dict, m, ax = None):
     dpsiLKx = prop['dCl_dxc'] * np.exp(1j * kx * xc)
     dpsiDKx = prop['dCd_dxc'] * np.exp(1j * kx * xc)
 
-    I1plt = cumtrapz(dpsiVKx, xc, axis=0, initial=0)
-    I2plt = cumtrapz(dpsiLKx, xc, axis=0, initial=0)
-    I3plt = cumtrapz(dpsiDKx, xc, axis=0, initial=0)
+    I1plt = cumulative_trapezoid(dpsiVKx, xc, axis=0, initial=0)
+    I2plt = cumulative_trapezoid(dpsiLKx, xc, axis=0, initial=0)
+    I3plt = cumulative_trapezoid(dpsiDKx, xc, axis=0, initial=0)
     total = I1plt + I2plt + I3plt
 
     if ax is None:
@@ -301,9 +301,9 @@ def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
 
         lax.plot(prop['xc'], prop['dCl_dxc'][rindex,:], color=clrs[i])
 
-        I1plt = cumtrapz(dpsiVKx, xc, axis=1, initial=0)
-        I2plt = cumtrapz(dpsiLKx, xc, axis=1, initial=0)
-        I3plt = cumtrapz(dpsiDKx, xc, axis=1, initial=0)
+        I1plt = cumulative_trapezoid(dpsiVKx, xc, axis=1, initial=0)
+        I2plt = cumulative_trapezoid(dpsiLKx, xc, axis=1, initial=0)
+        I3plt = cumulative_trapezoid(dpsiDKx, xc, axis=1, initial=0)
         total = I1plt + I2plt + I3plt
 
         ax[0,0].quiver(I1plt[rindex,:-1].real, I1plt[rindex,:-1:step].imag, np.diff(I1plt[rindex,::step].real), np.diff(I1plt[rindex,::step].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
@@ -539,8 +539,8 @@ def plot_simple_optimised_harmonic(av, m):
     m = 2
     axes = radial_locus(oper, prop, axes, m=m, colour='b')
     optimise_lift_magnitude(av, m, axes, colour='r')
-    fig.savefig('deliverables/tms/figures/radial_locus.png', dpi=300)
     fig.tight_layout()
+    fig.savefig('deliverables/tms/figures/radial_locus.png', dpi=300)
 
 def main():
     
@@ -568,6 +568,7 @@ def main():
 
     #operating_range(av)
     #optimise_lift_harmonic_ratio(av, 2, 1)
+    plot_simple_optimised_harmonic(av, 2)
     
     chord_locus_alpha(av, np.arange(-15,15,3), 3)
     #hanson_sweep(av)
