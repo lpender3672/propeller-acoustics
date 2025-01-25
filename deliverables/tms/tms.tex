@@ -111,17 +111,42 @@ However, after discussion at the mini conference, it was decided to predict the 
 
 \begin{figure}
     \centering
-    \begin{ganttchart}{1}{12}
-        \gantttitle{2024}{12} \\
-        \gantttitlelist{1,...,12}{1} \\
-        \ganttgroup{Group 1}{1}{7} \\
-        \ganttbar{Task 1}{1}{2} \\
-        \ganttlinkedbar{Task 2}{3}{7} \ganttnewline
-        \ganttmilestone{Milestone}{7} \ganttnewline
-        \ganttbar{Final Task}{8}{12}
+    \resizebox{\textwidth}{!}{
+    \begin{tikzpicture}[x=.5cm, y=1cm]
+    \begin{ganttchart}[
+        canvas/.append style={fill=none, draw=black!5, line width=.75pt},
+        vgrid,
+        hgrid,
+        %hgrid style/.style={draw=black!5, line width=.75pt},
+        %vgrid={*1{draw=black!5, line width=.75pt}},
+        today=16,
+        today rule/.style={
+        draw=black!64,
+        dash pattern=on 3.5pt off 4.5pt,
+        line width=1.5pt,
+        link/.style={-latex, line width=1.5pt},
+        },
+        today label font=\small\bfseries]{1}{37}
+        \gantttitle{Michaelmas Term}{8} \gantttitle{Christmas Break}{7} \gantttitle{Lent Term}{8} \gantttitle{Easter Break}{6} \gantttitle{Easter Term}{8}\\
+        \gantttitlelist{1,...,8}{1} \gantttitlelist{1,...,7}{1} \gantttitlelist{1,...,8}{1} \gantttitlelist{1,...,6}{1} \gantttitlelist{1,...,8}{1}\\
+        \ganttgroup{Theory}{1}{23} \\
+        \ganttbar{Harmonic noise}{7}{18} \\
+        \ganttbar{BEM}{9}{20} \\
+        \ganttbar{Software Tool}{13}{23} \\
+        \ganttbar{Final Task}{8}{12} \\
         \ganttlink{elem2}{elem3}
         \ganttlink{elem3}{elem4}
+
+        \ganttgroup{Practical}{1}{7} \\
+        \ganttbar{Aerodynamic setup}{1}{2} \\
+        \ganttbar{Acoustic setup}{3}{7} \\
+        \ganttmilestone{Milestone}{7} \ganttnewline
+        \ganttbar{Final Task}{8}{12}
+        \ganttlink{elem1}{elem3}
+        \ganttlink{elem3}{elem4}
     \end{ganttchart}
+    \end{tikzpicture}
+    }
     \caption{Gantt chart of project timeline}
     \label{fig:gantt}
 \end{figure}
@@ -298,7 +323,7 @@ To validate theory the following tests are proposed
         \node (in1) [io] {Input Propeller, OP};
         \node (start) [startstop, right of=in1, xshift=6cm] {Start};
 
-        \node (pro1) [process, below of=in1] {Run XFoil};
+        \node (pro1) [process, below of=in1] {Run XFoil \cite{xfoil}};
         \node (midin) [below of=pro1, yshift=1cm] {};
         \node (pro5) [process, right of=midin, xshift=2cm] {Calculate new $\phi$};
         \node (dec1) [decision, below of=pro1, yshift=-2cm] {$\delta \phi < \texttt{tol}$};
