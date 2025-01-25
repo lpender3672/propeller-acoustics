@@ -90,7 +90,7 @@ This project aims to investigate acoustic sources of noise in quadcopter propell
 
 Recent literature has focused on a looped propeller design for eVTOL, known in marine applications.
 Experimental work has verified a reduction in OASPL and in psychoacoustic annoyance factors \cite{shima_toroidal}, \cite{ijerph20031955}.
-Tonal noise is a major source of annoyance in propeller noise \cite{DI2016164} which has been shown experimentally to be reduced in the looped propeller design.
+Tonal noise is a major source of annoyance in propeller noise \cite{ijerph20031955} which has been shown experimentally to be reduced in the looped propeller design.
 The mechanisms of harmonic noise reduction of the looped propeller design are thought to be due to sweep and uneven blade spacing \cite{?}.
 Such mechanisms are well understood for standard propellers in forward flight \cite{hanson_influence}, \cite{DOBRZYNSKI1993123}, \cite{doi:10.2514/3.22938}.
 However a fast low fidelity method implementing this theory to predict noise from looped propellers is missing.
@@ -130,7 +130,7 @@ Experimental tests on manufactured propellers will be performed remotely
 \subsection{BEM}
 % hansons theory
 Blade Element Momentum theory is a common method to predict the aerodynamic performance of propellers.
-In BEM, the blade is divided into annular sections and the induced velocity at each section is assumed to be due to only the forces on that section.
+BEM is a simplification of lifting line theory in that the induced velocity at each annular section is assumed to be due to only the forces on that section.
 Then actuator disk theory is combined with momentum theory to create a system of non-linear equations which can be solved iteratively.
 
 \begin{figure}[H]
@@ -161,10 +161,15 @@ Then actuator disk theory is combined with momentum theory to create a system of
     \label{fig:bem_section}
 \end{figure}
 
-BEM is implemented with Prantl's tip correction factor.
-This is based on a prescribed wake model
+The assumptions of BEM break down near the tip of the blade and so a tip correction factor was introduced by Prantl \cite{prantl_tip}.
+This was based on a prescribed wake model...
 
-The accuracy of BEM at low advance ratios
+Sweep corrections for lift, drag and power cofficient will follow the same method as Bergmann \cite{bergmann_sweep}.
+
+In practice the BEM equations can be difficult to solve and so a root finding method by S. Ning \cite{Ning_BEM} will be implemented into the software tool.
+
+
+The accuracy of BEM for prescribed wake model at low or zero advance ratios 
 % prescribed wake model and impirical aspect of the model
 
 \subsection{Hansons Helicoidal Surface Theory}
@@ -179,6 +184,11 @@ The noise harmonic is decomposed into thickness and loading as per the Lighthill
 \begin{equation}
     P_{mB} = P_{Vm} + P_{Dm} + P_{Lm}
 \end{equation}
+
+Then Hanson derived the far field noise from Goldsteins version of the acoustic analogy.
+Thin airfoil theory is used, along with generalised forms of thickness and loading, to derive a generalised source function.
+A chordwise spatial fourier transform of source function then separates the contributions of different wavenumbers (spatial frequencies) along the chord.
+The resulting chordwise wavenumber is shown to depend on the time harmonic showing periodicity in both space and time which is expected from intuition.
 
 \begin{equation}
     \begin{aligned}
@@ -212,7 +222,7 @@ The spanwise integral is performed over a number of discrete airfoil sections.
 
 Directivity
 
-$\Psi(k_x)$ accounts for \textit{non-compactness} of distributed sources in the chordwise direction.
+$\Psi(k_x)$ is the chordwise spatial fourier transform which accounts for \textit{non-compactness} of the distributed sources.
 The far field noise from non-compact sources is a result of interference and phase lag. 
 This explains its dependence on wavenumber and normalised source strengths.
 
@@ -274,10 +284,6 @@ This allows rapid design
 
 The software, given parameters and spanwise distributions, calculates aerodynamic performance and harmonic noise of the propeller.
 Its also required to load an airfoil coordinate file in the standard format found on the UIUC database \cite{UIUC_database}.
-
-In practice the BEM equations can be difficult to solve \cite{?}.
-S. Ning developed a root finding method with guaranteed convergence \cite{Ning_BEM}.
-
 
 
 \begin{figure}[H]
