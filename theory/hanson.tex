@@ -120,6 +120,31 @@ This is done with the helicoidal coordinates $(\gamma_0, \xi_0, r_0)$.
     \label{fig:bem_section}
 \end{figure}
 
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+            % Some profiles look better when using plot[smooth]
+        \begin{scope}[rotate=225, xshift=-2cm, yshift=-1cm]
+            \draw[scale=3,thick=3] node[left=0.5cm] {}
+                plot file{../app/foils/NACA2412.surf} -- cycle;
+        \end{scope}
+        % hoirzontal line
+        \draw[thick, dashed] (0,-1) -- (0, 3) node[above] {Rotation Plane};
+        \draw[->] (0,0) -- (1,0) node[right] {$x$};
+        \draw[->] (0,0) -- (1,-1) node[above] {$\xi_0$};
+        \draw[->] (0,0) -- (-1,-1) node[left] {$\gamma_0$};
+        \node[cg] at (-0.75+1.05,1-0.41+1.05) {};
+        \draw[dashed] (0,0) -- (1,1) node[] {};
+
+        \draw[->] (0,0) -- (1,1) node[right, midway] {$MCA$};
+        \draw[->] (1,1) -- (0.4,1.6) node[right, midway] {$FA$};
+    
+    \end{tikzpicture}
+    \caption{Local section of propeller blade for BEM. Anticlockwise angles are positive.}
+    \label{fig:single_blade}
+\end{figure}
+
 In the following section thin airfoil theory is used to apply boundary conditions to a \textit{mean surface}.
 This means the source strengths $V_n$ and $f_i$ act on the mean helicoidal surface.
 
@@ -452,6 +477,81 @@ When substituted into equation \ref{eq:final_integral} the noise is found to be
 \end{equation}
 And the result by Dobrzynski is recovered (Equation \ref{eq:Dobrzynski}).
 
+
+\section{ $\boldsymbol{\xi_0}$ Noncompactness }
+
+Superimposing sources in $\xi_0$ is only valid if the distance between them are small relative to the acoustic wavelength.
+
+We rewrite $\psi$ as
+\begin{equation}
+    \psi \left(\frac{\omega}{U}, r_0, \frac{\varpi}{U}\right) = \int_{-\infty}^\infty \int_{-\infty}^\infty g(\gamma_0, r_0, \xi_0) \exp \left(j \frac{\omega}{U} \gamma_0 \right) d\gamma_0 \exp \left(j \frac{\varpi}{U} \xi_0 \right) d\xi_0
+    \label{eq:doublefourier}
+\end{equation}
+
+\begin{equation}
+    g(\gamma_0, r_0, \xi_0) = \frac{1}{4\pi^2 U^2} \int_{-\infty}^\infty \int_{-\infty}^\infty \psi\left(\frac{\omega}{U}, r_0, \xi_0\right) \exp \left(-j \frac{\omega}{U} \gamma_0 \right) d\omega \exp \left(-j \frac{\varpi}{U} \xi_0 \right) d\varpi
+    \label{eq:inverse_doublefourier}
+\end{equation}
+
+Then substituting this into equation \ref{eq:sifted_progress}
+
+\section{Subfigure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+            % Some profiles look better when using plot[smooth]
+        \begin{scope}[rotate=225, xshift=-2.5cm, yshift=-1cm]
+            \draw[scale=3,thick=3] node[left=0.5cm] {}
+                plot file{../app/foils/NACA2412.surf} -- cycle;
+        \end{scope}
+        % hoirzontal line
+        \draw[thick, dashed] (0,-1) -- (0, 3) node[above] {Rotation Plane};
+        \draw[->] (0,0) -- (1,0) node[right] {$x$};
+        \draw[->] (0,0) -- (1,-1) node[above] {$\xi_0$};
+        \draw[->] (0,0) -- (-1,-1) node[left] {$\gamma_0$};
+        \node[cg] at (-0.75+1.05,1-0.41+1.05) {};
+        \draw[dashed] (0,0) -- (1,1) node[] {};
+
+        \draw[->] (0,0) -- (1,1) node[right, midway] {$MCA$};
+        \draw[->] (1,1) -- (0.4,1.6) node[right, midway] {$FA$};
+    
+    \end{tikzpicture}
+        \caption{Single blade section}
+        \label{fig:single}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+                % Some profiles look better when using plot[smooth]
+            \begin{scope}[rotate=225, xshift=-1cm, yshift=-1cm]
+                \draw[scale=3,thick=3] node[left=0.5cm] {}
+                    plot file{../app/foils/NACA2412.surf} -- cycle;
+            \end{scope}
+            \begin{scope}[rotate=225, xshift=1cm, yshift=1cm]
+                \draw[scale=3,thick=3] node[left=-0.5cm] {}
+                    plot file{../app/foils/NACA2412.surf} -- cycle;
+            \end{scope}
+            % hoirzontal line
+            \draw[thick, dashed] (0,-3) -- (0, 2) node[above] {Rotation Plane};
+            \draw[->] (0,0) -- (1,0) node[right] {$x$};
+            \draw[->] (0,0) -- (2,-2) node[above] {$\xi_0$};
+            \draw[->] (0,0) -- (-3,-3) node[left] {$\gamma_0$};
+            \node[cg] at (-0.75,1-0.41) {};
+            \node[cg] at (-0.75,1-0.41-3+0.15) {};
+            \draw[dashed] (0,0) -- (1,1) node[] {};
+
+            \draw[->] (-1.5,-1.5) -- (-2.5+0.2,-0.5-0.2) node[left] {$FA_1$};
+            \draw[->] (-2,-2) -- (-2 + 0.5+0.2,-2.5-0.2) node[left, xshift=-0.1cm] {$FA_2$};
+            \draw[->] (1.5,-1.5) -- (-1.5+1.5,-1.5-3+1.5) node[right] {$MCA_2$};
+        \end{tikzpicture}
+        \caption{Superimposed blade sections}
+        \label{fig:double}
+    \end{subfigure}
+    \caption{Mid chord alignment (MCA) and face alignment (FA) for single and superimposed blade sections.}
+\end{figure}
 
 \begin{thebibliography}{9}
 

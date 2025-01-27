@@ -56,6 +56,31 @@
     showtabs=false,                  
     tabsize=2
 }
+\tikzset{
+    cg/.style={
+        draw,
+        circle,
+        thick,
+        minimum size=0.2cm, % Adjust the size of the circle
+        inner sep=0,      % Remove extra padding
+        append after command={
+            \pgfextra{
+                \draw[thick] (\tikzlastnode.south) -- (\tikzlastnode.north);
+                \draw[thick] (\tikzlastnode.west) -- (\tikzlastnode.east);
+            }
+        }
+    }
+}
+\newcommand\textganttbar[4]{%
+    \ganttbar{#1}{#3}{#4}
+    \ganttbar[inline,bar label font=\footnotesize]
+    {#2}{#3}{#4}
+}
+\newcommand\textganttmilestone[3]{%
+    \ganttmilestone{#1}{#3}
+    \ganttmilestone[inline,bar label font=\footnotesize]
+    {#2}{#3}
+}
 
 \lstset{style=mystyle}
 
@@ -102,12 +127,11 @@ Such a method would enable iterative design methods to optimise the looped prope
 Looped propellers improved structure allows for larger sweep and hence can achieve greater noise reduction than standard propellers \cite{shima_toroidal} ???.
 
 Hypothesis:
+Noise reduction through spanwise compactness is more effective than chordwise compactness.
 The harmonic noise of loop propellers can be modelled by the superposition of evenly spaced, swept propellers.
-
 \section{Project Management}
 
-Initially the project was planned to have a more experimental approach involving the rapid prototyping of propellers to make recommendations for aerodynamic and acoustic performance.
-However, after discussions at the mini conference, focus was placed on identifying parameters that influence the harmonic noise.
+Initially the project took too broad of an approach and after the mini conference focus was placed on identifying parameters that can reduce harmonic noise.
 This was done to reduce the scope of the project and allow for a more in depth investigation of the theory.
 An interactive software tool is being developed to see the effect of different parameters on both aerodynamic performance and harmonic noise.
 
@@ -131,21 +155,18 @@ An interactive software tool is being developed to see the effect of different p
         today label font=\small\bfseries]{1}{37}
         \gantttitle{Michaelmas Term}{8} \gantttitle{Christmas Break}{7} \gantttitle{Lent Term}{8} \gantttitle{Easter Break}{6} \gantttitle{Easter Term}{8}\\
         \gantttitlelist{1,...,8}{1} \gantttitlelist{1,...,7}{1} \gantttitlelist{1,...,8}{1} \gantttitlelist{1,...,6}{1} \gantttitlelist{1,...,8}{1}\\
-        \ganttgroup{Theory}{1}{23} \\
-        \ganttbar{Harmonic noise}{7}{18} \\
-        \ganttbar{BEM}{9}{20} \\
-        \ganttbar{Software Tool}{13}{23} \\
-        \ganttbar{Final Task}{8}{12} \\
-        \ganttlink{elem2}{elem3}
-        \ganttlink{elem3}{elem4}
+        \ganttgroup{Progress}{1}{24} \ganttgroup{}{30}{37}\\
+        \textganttbar{Acoustic Theory}{Reading}{1}{6} \textganttbar{}{FWH}{7}{8} \textganttbar{}{Hanson}{9}{20} \textganttbar{}{Data processing and Analysis}{21}{33} \\
+        \textganttbar{Aerodynamic Theory}{A.disk}{4}{5} \textganttbar{}{BEM}{6}{7} \textganttbar{}{Data processing and Analysis}{21}{33}\\
+        \textganttbar{Software Tool}{XFoil \& Mesh}{12}{15}\textganttbar{}{BEM}{16}{17} \textganttbar{}{Iterate}{18}{20} \textganttbar{}{Comparative Cases}{26}{30}\\
+        \textganttbar{Aerodynamic setup}{Design}{1}{5} \textganttbar{}{CAD}{6}{7} \textganttbar{}{Assembly}{15}{17} \textganttbar{}{Make \& Test}{19}{22} \\
+        \textganttbar{Acoustic setup}{Design}{6}{7} \textganttbar{}{Test}{20}{23}\\
+        %\ganttlink{elem2}{elem3}
+        %\ganttlink{elem3}{elem4}
 
-        \ganttgroup{Practical}{1}{7} \\
-        \ganttbar{Aerodynamic setup}{1}{2} \\
-        \ganttbar{Acoustic setup}{3}{7} \\
-        \ganttmilestone{Milestone}{7} \ganttnewline
-        \ganttbar{Final Task}{8}{12}
-        \ganttlink{elem1}{elem3}
-        \ganttlink{elem3}{elem4}
+        \ganttgroup{Deliverables}{6}{7} \ganttgroup{}{14}{16} \ganttgroup{}{14}{16} \ganttgroup{}{31}{35} \\
+
+        \textganttmilestone{}{Presentation}{7} \textganttmilestone{}{TMS Report}{16} \textganttmilestone{}{Final Report and Presentation}{34} \textganttmilestone{}{}{35}
     \end{ganttchart}
     \end{tikzpicture}
     }
@@ -155,30 +176,159 @@ An interactive software tool is being developed to see the effect of different p
 
 \subsection{Risk and Contingency}
 
-Risks
-\begin{itemize}
-    \item Discrepancy between aerodynamic and acoustic tests.
-    \item Blade deflection causes reduced performance
-    \item Aeroelastic flutter
-    \item Motor noise interference with acoustic measurements
-    \item Motor overheating in acoustic insulation.
-\end{itemize}
+\begin{table}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{|p{4cm}|p{4cm}|p{5cm}|p{5cm}|}
+    \hline
+    \textbf{Risk} & \textbf{Consequence} & \textbf{Mitigation} & \textbf{Contingency} \\ \hline
+    Discrepancy between aerodynamic and acoustic tests & Results may not align, reducing reliability of findings & Compare noise of uninsulated acoustic setup with aerodynamic setup & Identify source and quantify the discrepancy and if required redesign setup \\ \hline
+    Blade deflection & Lower thrust and efficiency; altered noise characteristics & Limit sweep to $60^\circ$ and select thick airfoil sections& Increase airfoil thickness or reduce sweep \\ \hline
+    Aeroelastic flutter & Structural damage, catastrophic failure & High acceleration to reduce modal responses. Operator not in same room & Reduce operating point \\ \hline
+    Motor noise interference with acoustic measurements & Misinterpretation of acoustic signatures & Acoustic insulation of motor. Measurement of loadmatched motor noise. & Spectral subtraction of load matched signal\\ \hline
+    Motor overheating in acoustic insulation & Damage to motor; invalid results due to test interruptions & Monitor temperature, pausing to allow cooling& Increase passive cooling with heatsink \\ \hline
+    \end{tabular}
+    }
+    \caption{Project risk analysis with consequences, mitigations, and contingencies.}
+\end{table}
 
 BEM corrected for sweep \cite{bergmann_sweep} is only valid for small sweep angles.
 BEM and hansons theory for asymmetrical spacing becomes less valid for small spacing.
 These contending factors are expected be a significant limitation of the model.
 
-\subsection{Saftey}
-
-Experimental tests on manufactured propellers will be performed remotely
-
 \section{Theoretical framework}
+\subsection{Hansons Helicoidal Surface Theory}
+Theory developed by Hanson predicts the far field harmonic noise from propellers.
+\begin{equation}
+    p(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t)
+\end{equation}
+The noise is decomposed into thickness and loading terms in the standard acoustic analogy.
+Helicoidal coordinates $(\gamma_0, \xi_0, r_0)$
+\begin{equation}
+    P_{mB} = P_{Vm} + P_{Dm} + P_{Lm}
+\end{equation}
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+            % Some profiles look better when using plot[smooth]
+        \begin{scope}[rotate=225, xshift=-2.5cm, yshift=-1cm]
+            \draw[scale=3,thick=3] node[left=0.5cm] {}
+                plot file{../../app/foils/NACA2412.surf} -- cycle;
+        \end{scope}
+        % hoirzontal line
+        \draw[thick, dashed] (0,-1) -- (0, 3) node[above] {Rotation Plane};
+        \draw[->] (0,0) -- (1,0) node[right] {$x$};
+        \draw[->] (0,0) -- (1,-1) node[above] {$\xi_0$};
+        \draw[->] (0,0) -- (-1,-1) node[left] {$\gamma_0$};
+        \node[cg] at (-0.75+1.05,1-0.41+1.05) {};
+        \draw[dashed] (0,0) -- (1,1) node[] {};
+        \draw[->] (0,0) -- (1,1) node[right, midway] {$MCA$};
+        \draw[->] (1,1) -- (0.4,1.6) node[right, midway] {$FA$};
+    \end{tikzpicture}
+        \caption{Single blade section}
+        \label{fig:single}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \begin{tikzpicture}
+                % Some profiles look better when using plot[smooth]
+            \begin{scope}[rotate=225, xshift=-1cm, yshift=-1cm]
+                \draw[scale=3,thick=3] node[left=0.5cm] {}
+                    plot file{../../app/foils/NACA2412.surf} -- cycle;
+            \end{scope}
+            \begin{scope}[rotate=225, xshift=1cm, yshift=1cm]
+                \draw[scale=3,thick=3] node[left=-0.5cm] {}
+                    plot file{../../app/foils/NACA2412.surf} -- cycle;
+            \end{scope}
+            % hoirzontal line
+            \draw[thick, dashed] (0,-3) -- (0, 2) node[above] {Rotation Plane};
+            \draw[->] (0,0) -- (1,0) node[right] {$x$};
+            \draw[->] (0,0) -- (2,-2) node[above] {$\xi_0$};
+            \draw[->] (0,0) -- (-3,-3) node[left] {$\gamma_0$};
+            \node[cg] at (-0.75,1-0.41) {};
+            \node[cg] at (-0.75,1-0.41-3+0.15) {};
+            \draw[dashed] (0,0) -- (1,1) node[] {};
+            \draw[->] (-1.5,-1.5) -- (-2.5+0.2,-0.5-0.2) node[left] {$FA_1$};
+            \draw[->] (-2,-2) -- (-2 + 0.5+0.2,-2.5-0.2) node[left, xshift=-0.1cm] {$FA_2$};
+            \draw[->] (1.5,-1.5) -- (-1.5+1.5,-1.5-3+1.5) node[right] {$MCA_2$};
+        \end{tikzpicture}
+        \caption{Superimposed blade sections}
+        \label{fig:double}
+    \end{subfigure}
+    \caption{Mid chord alignment (MCA) and face alignment (FA) for single and superimposed blade sections.}
+\end{figure}
+Then Hanson derived the far field noise from Goldsteins version of the acoustic analogy.
+Thin airfoil theory is used, along with generalised forms of thickness and loading, to derive a generalised source function.
+A chordwise spatial fourier transform of the source function then separates the contributions of different wavenumbers (spatial frequencies) along the chord.
+The resulting chordwise wavenumber is shown to depend on the time harmonic showing periodicity in both space and time which is expected from intuition.
+\begin{equation}
+    \begin{aligned}
+        \begin{bmatrix}
+            P_{Vm} \\
+            P_{Dm} \\
+            P_{Lm}
+        \end{bmatrix} = - \frac{\rho_0 c_0^2 \sin(\theta )\exp\left(jmB \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right)}{4\pi r} \\
+        \times \int M_r^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB\Omega r_0}{c_0} \sin \theta \right) \begin{bmatrix}
+            k_x^2 t_b \Psi_V(k_x) \\
+            jk_x (C_D / 2) \Psi_D(k_x) \\
+            -jk_y (C_L / 2) \Psi_L(k_x)
+        \end{bmatrix}dz
+    \end{aligned}
+\end{equation}
+Where $\Psi$ is the chordwise spatial fourier transform of the respective sectional thickness, drag and lift distributions.
+The distributions are normalised such that $\Psi(0) = 1$.
+\begin{equation}
+    \Psi_V(k_x) = \int_{-1/2}^{1/2} H(X) \exp(jk_x X) dX
+\end{equation}
+With wavenumbers and sectional phase lags given by
+\begin{equation}
+    k_x = \frac{mB b}{r_0}, \quad
+    k_y = \frac{mB\Omega b}{z c_0} \cos \theta, \quad
+    \phi_0 = k_y \frac{FA}{b}, \quad
+    \phi_s = k_x \frac{MCA}{b}, \quad
+\end{equation}
 
-\subsection{BEM}
-% hansons theory
-Blade Element Momentum theory is a common method to predict the aerodynamic performance of propellers.
+It is required to know the thickness and loading distribution at each section.
+The thickness is simply defined by airfoil geometry, however the loading will require aerodynamic analysis.
+This will be done in the next section using the Blade Element Method (BEM).
+
+\subsubsection{Chordwise Loading}
+% explain from theory how destructive interference can be obtained by from chordwise loading
+$\Psi(k_x)$ is the chordwise spatial fourier transform which accounts for \textit{non-compactness} of the distributed sources.
+The far field noise from non-compact sources is a result of interference and phase lag. 
+This explains its dependence on wavenumber and normalised source strengths.
+
+Hanson also showed that strong peaks in the chordwise lift distribution should be avoided
+as these lead to compact, high amplitude noise sources that are difficult to cancel out.
+A near uniform loading is shown to have destructive interference at some wavenumbers \cite{hanson_influence}.
+However, strong suction peaks are a standard feature of high lift to drag ratio airfoils \cite{?}
+and so are difficult to avoid without compromising significantly on aerodynamic performance.
+
+
+\subsubsection{Sweep}
+% explain from theory how destructive interference can be obtained by sweep
+For a given harmonic, the spanwise integral can be written as a sum of complex vectors representing the far field noise from each section.
+The destructive interference of each component can then easily be visualised in head-to-tail vector addition seen below.
+
+The problem for minimising noise of a given harmonic is then to sweep the blade in such a way that minimises the final magnitude of the vector summation.
+The magnitudes of the vectors will be assumed fixed ie constant thickness and loading.
+
+
+
+\subsection{Superposition to looped propeller}
+
+As the acoustic theory discussed has been linear a generalised source function
+can be simply written as the superposition of the source functions of each blade.
+The acoustic non-compactness of the thinly distributed sources is accounted for 
+
+
+\subsection{Blade Element Method}
+
+Blade Element Momentum theory is a popular method to predict the aerodynamic performance of propellers in the early design stage \cite{?}.
 BEM is a simplification of lifting line theory in that the induced velocity at each annular section is assumed to be due to only the forces on that section.
-Then actuator disk theory is combined with momentum theory to create a system of non-linear equations which can be solved iteratively.
+Then blade element theory (BET) is combined with momentum theory to create a system of non-linear equations which can be solved iteratively.
 
 \begin{figure}[H]
     \centering
@@ -208,12 +358,11 @@ Then actuator disk theory is combined with momentum theory to create a system of
     \label{fig:bem_section}
 \end{figure}
 
-The assumptions of BEM break down near the tip of the blade and so a tip correction factor was introduced by Prantl \cite{prantl_tip}.
-This was based on a prescribed wake model...
+The assumptions of BEM break down near the tip of the blade and so a tip correction factor based on a prescribed wake model was introduced by Prantl \cite{prandtl_loss}.
 
 Sweep corrections for lift, drag and power cofficient will follow the same method as Bergmann \cite{bergmann_sweep}.
 
-In practice the BEM equations can be difficult to solve and so a root finding method by S. Ning \cite{Ning_BEM} will be implemented into the software tool.
+In practice the BEM equations can be difficult to solve and so a root finding method by S. Ning \cite{Ning_BEM} is planned to be implemented into the software tool.
 
 
 The accuracy of BEM for prescribed wake model at low or zero advance ratios 
@@ -221,84 +370,6 @@ The accuracy of BEM for prescribed wake model at low or zero advance ratios
 
 The Reynolds number over the blade is assumed to be constant but in reality can vary as much as a factor of 5 \cite{?}.
 
-
-\subsection{Hansons Helicoidal Surface Theory}
-Theory developed by Hanson predicts the far field harmonic noise from propellers.
-\begin{equation}
-    p(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t)
-\end{equation}
-The noise harmonic is decomposed into thickness and loading as per the Lighthill analogy.
-\begin{equation}
-    P_{mB} = P_{Vm} + P_{Dm} + P_{Lm}
-\end{equation}
-Then Hanson derived the far field noise from Goldsteins version of the acoustic analogy.
-Thin airfoil theory is used, along with generalised forms of thickness and loading, to derive a generalised source function.
-A chordwise spatial fourier transform of source function then separates the contributions of different wavenumbers (spatial frequencies) along the chord.
-The resulting chordwise wavenumber is shown to depend on the time harmonic showing periodicity in both space and time which is expected from intuition.
-\begin{equation}
-    \begin{aligned}
-        \begin{bmatrix}
-            P_{Vm} \\
-            P_{Dm} \\
-            P_{Lm}
-        \end{bmatrix} = - \frac{\rho_0 c_0^2 \sin(\theta )\exp\left(jn \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right)}{4\pi r} \\
-        \times \int M_r^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB\Omega r_0}{c_0} \sin \theta \right) \begin{bmatrix}
-            k_x^2 t_b \Psi_V(k_x) \\
-            jk_x (C_D / 2) \Psi_D(k_x) \\
-            -jk_y (C_L / 2) \Psi_L(k_x)
-        \end{bmatrix}dz
-    \end{aligned}
-\end{equation}
-Where $\Psi$ is the chordwise spatial fourier transform of the respective sectional thickness, drag and lift distributions.
-The distributions are normalised such that $\Psi(0) = 1$.
-\begin{equation}
-    \Psi_V(k_x) = \int_{-1/2}^{1/2} H(X) \exp(jk_x X) dX
-\end{equation}
-With wavenumbers and sectional phase lags given by
-\begin{equation}
-    k_x = \frac{mB b}{r_0}, \quad
-    k_y = \frac{mB\Omega b}{z c_0} \cos \theta, \quad
-    \phi_0 = k_y \frac{FA}{b}, \quad
-    \phi_s = k_x \frac{MCA}{b}, \quad
-\end{equation}
-
-
-\subsubsection{Chordwise Loading}
-% explain from theory how destructive interference can be obtained by from chordwise loading
-$\Psi(k_x)$ is the chordwise spatial fourier transform which accounts for \textit{non-compactness} of the distributed sources.
-The far field noise from non-compact sources is a result of interference and phase lag. 
-This explains its dependence on wavenumber and normalised source strengths.
-
-Hanson also showed that strong peaks in the chordwise lift distribution should be avoided
-as these lead to compact, high amplitude noise sources that are difficult to cancel out.
-A near uniform loading is shown to have destructive interference at some wavenumbers \cite{hanson_influence}.
-However, strong suction peaks are a standard feature of high lift to drag ratio airfoils \cite{?}
-and so are difficult to avoid without compromising significantly on aerodynamic performance.
-
-
-\subsubsection{Sweep}
-% explain from theory how destructive interference can be obtained by sweep
-For a given harmonic, the spanwise integral can be written as a sum of complex vectors representing the far field noise from each section.
-The destructive interference of each component can then easily be visualised in head-to-tail vector addition seen below.
-
-The problem for minimising noise of a given harmonic is then to sweep the blade in such a way that minimises the final magnitude of the vector summation.
-The magnitudes of the vectors will be assumed fixed ie constant thickness and loading.
-
-\subsection{Superposition to looped propeller}
-
-As the acoustic theory discussed has been linear a generalised source function
-can be simply written as the superposition of the source functions of each blade.
-
-
-\subsection{Validation of theory}
-
-To validate theory the following tests are proposed
-
-\begin{itemize}
-    \item Optimised sweep profile to maximise constructive, and deconstructive interference for a specific harmonic and observer position.
-    \item Comparison of single and looped (but axi-symmetric profile) blade designs evaluate superimposed model.
-    \item If time allows predict and test axi-asymmetrical looped propeller designs.
-\end{itemize}
 
 \section{Progress}
 
@@ -318,28 +389,11 @@ To validate theory the following tests are proposed
 \end{figure}
 \fi
 
-\subsection{Theoretical results}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{figures/radial_locus.png}
-    \caption{Spanwise cancellation due to sweep}
-    \label{fig:optimised_ratio}
-\end{figure}
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.3\textwidth]{figures/setup.jpg}
-    \caption{Aerodynamic Setup}
-    \label{fig:aero_setup}
-\end{figure}
-
 \subsection{Software design tool}
 
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=2cm, scale=0.6, transform shape]
+    \begin{tikzpicture}[node distance=2cm, scale=0.5, transform shape]
 
         \node (in1) [io] {Input Propeller, OP};
         \node (start) [startstop, right of=in1, xshift=6cm] {Start};
@@ -387,13 +441,40 @@ This allows rapid design
 The software, given parameters and spanwise distributions, calculates aerodynamic performance and harmonic noise of the propeller.
 Its also required to load an airfoil coordinate file in the standard format found on the UIUC database \cite{UIUC_database}.
 
-
+\iffalse % dont have space for this
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/app.png}
     \caption{Software design tool for looped propellers}
     \label{fig:software_design_tool}
 \end{figure}
+\fi
+
+\subsection{Theoretical results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/radial_locus.png}
+    \caption{Spanwise cancellation due to sweep}
+    \label{fig:optimised_ratio}
+\end{figure}
+
+
+\begin{figure}[H]
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/oldsetup.jpg}
+        \caption{Initial setup}
+        \label{fig:old_aero_setup}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{figures/newsetup.jpg}
+        \caption{Future setup}
+        \label{fig:new_aero_setup}
+    \end{subfigure}
+\end{figure}
+
 
 \subsection{Experimental setup}
 
@@ -420,13 +501,39 @@ Propellers will be manufactured on an Objet30 3D printer which has planar accura
 The primary advantage of this printer is the gel support material which does not produce rough connection points on overhangs like traditional resin printers.
 A test print of a looped propeller is shown in figure \ref{fig:printed_demo}.
 
+\iffalse
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/loop.jpg}
     \caption{Test print of looped propeller}
     \label{fig:printed_demo}
 \end{figure}
+\fi
 
+
+\section{Future work}
+
+\subsection{Finalise software tool}
+
+\begin{itemize}
+    \item Finish Implementation of BEM
+    \item Validate aerodynamic performance against UIUC propeller data \cite{UIUC_database}.
+    \item Mesh geometry for tips of looped propellers
+\end{itemize}
+
+\subsection{Experimental work}
+
+\begin{itemize}
+    \item Finish electrical work
+\end{itemize}
+
+To validate theory the following tests are planned.
+
+\begin{itemize}
+    \item A propeller with optimised sweep profile to maximise destructive interference for a chosen harmonic and observer position.
+    \item Comparison of single and symmetrical looped blade designs to evaluate superimposed model.
+    \item If time allows predict and test axi-asymmetrical looped propeller designs.
+\end{itemize}
 
 
 % components of propeller noise
