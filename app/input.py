@@ -13,6 +13,7 @@ import os
 from routines import (
     interpolate_clcd,
     run_xfoil,
+    load_foil
 )
 
 XFOIL_INSTALLED = True
@@ -272,7 +273,7 @@ class InputWidget(QWidget):
         
         try:
             filepath = indata['prop']['foil_path']
-            airfoil_data = np.loadtxt(filepath)
+            airfoil_data = load_foil(filepath)
         except (KeyError, IndexError):
             QMessageBox.critical(self, "Error", "Failed to load airfoil data from file for propeller.")
             return
@@ -289,7 +290,7 @@ class InputWidget(QWidget):
             else:
                 QMessageBox.critical(self, "Error", "Failed to find airfoil file in current directory.")
                 return
-            airfoil_data = np.loadtxt(filepath)
+            airfoil_data = load_foil(filepath)
 
         
         self.foil_path.setText(filepath)
@@ -316,7 +317,7 @@ class InputWidget(QWidget):
             return
         
         try:
-            airfoil_data = np.loadtxt(path)
+            airfoil_data = load_foil(path)
         except:
             QMessageBox.critical(self, "Error", "Failed to load airfoil data from file.")
             return

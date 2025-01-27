@@ -22,7 +22,7 @@ except ModuleNotFoundError:
     
 
 def Psi(kx, X, fX):
-    kx = kx.reshape(1, -1)
+    kx = kx.reshape(-1, 1)
     f = fX * np.exp(1j * kx * X)
     ans = simpson(f, x=X, axis=1)
     return ans

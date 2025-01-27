@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from routines import (
     XFOIL_INSTALLED,
     run_xfoil,
+    load_foil,
     AppVars,
     load_oper_from_file,
     load_prop_from_file,
@@ -569,7 +570,7 @@ def main():
     av.oper = load_oper_from_file('app/app_vars.json')
     av.prop = load_prop_from_file('app/props/constant_chord.prop')
 
-    av.airfoil_data = np.loadtxt(av.prop['foil_path'])
+    av.airfoil_data = load_foil(av.prop['foil_path'])
     av.airfoil_data = run_xfoil(av.airfoil_data)
 
     av.oper['V'] = 10

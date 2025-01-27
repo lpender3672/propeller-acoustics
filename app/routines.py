@@ -12,7 +12,7 @@ except ModuleNotFoundError:
     print("Warning Xfoil not installed")
 
 
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, interp1d
 
     
 class AppVars():
@@ -79,6 +79,14 @@ def foil_data(airfoil_data, alpha, Re, collect_cp=False):
         return cls, cds, cps
 
     return cls, cds
+
+def load_foil(fpath):
+    raw_coords = np.loadtxt(fpath)
+    nxnodes = raw_coords.shape[0] * 2 + 1
+    fx, fy = sample_airfoil(raw_coords, nxnodes)
+
+    return np.column_stack([fx, fy])
+
 
 def run_xfoil(airfoil_data, collect_cp=True):
     Re = 5e5
@@ -262,10 +270,16 @@ def load_oper_from_file(file_path):
     return oper
 
 
-def _separate(arr):
+def _separate(arr): # NODES
     npts = arr.shape[0] // 2
     up_var = np.flip(arr[:npts], axis=0)
     low_var = arr[npts+1:]
+    return up_var, low_var
+
+def _separate_panels(arr):
+    npx = arr.shape[0] // 2
+    up_var = np.flip(arr[:npx], axis=0)
+    low_var = arr[npx:]
     return up_var, low_var
 
 def upscale_airfoil_geometry(airfoil_data, n_panels):
@@ -277,6 +291,29 @@ def upscale_airfoil_geometry(airfoil_data, n_panels):
     newz = np.interp(newidx, oldidx, airfoil_data[:,1])
 
     return np.column_stack((newx, newz))
+
+def sample_airfoil(airfoil_data, nxnodes = None):
+
+    xs = airfoil_data[:, 0]
+    ys = airfoil_data[:, 1]
+
+    dx = np.diff(xs)
+    dy = np.diff(ys)
+    ds = np.sqrt(dx**2 + dy**2)
+    sarr = np.concatenate(([0], np.cumsum(ds)))  # Arc length array
+
+    f_x = interp1d(sarr, xs, kind='cubic', fill_value="extrapolate")
+    f_y = interp1d(sarr, ys, kind='cubic', fill_value="extrapolate")
+
+    if nxnodes is None:
+        nxnodes = xs.shape[0]
+
+    s_uniform = np.linspace(0, sarr[-1], nxnodes)
+
+    xs_resampled = f_x(s_uniform)
+    ys_resampled = f_y(s_uniform)
+
+    return xs_resampled, ys_resampled
 
 def calc_chordwise_loading(airfoil_data):
 
@@ -290,38 +327,44 @@ def calc_chordwise_loading(airfoil_data):
     # n = 6 -> cp at alpha[1]
     # etc
 
-    xs_u, xs_l = _separate(airfoil_data[:,0])
-    ys_u, ys_l = _separate(airfoil_data[:,1])
+    xs = airfoil_data[:, 0]  # x-coordinates of the panels
+    ys = airfoil_data[:, 1]  # y-coordinates of the panels
+    alphas = airfoil_data[:, 2] * np.pi / 180  # AoA in radians
+    cps = airfoil_data[:, 5:]  # Pressure coefficient data for each AoA case
 
-    cl_x_alpha = np.zeros((airfoil_data.shape[0] // 2 - 1, airfoil_data.shape[0]))
-    cd_x_alpha = np.zeros((airfoil_data.shape[0] // 2 - 1, airfoil_data.shape[0]))
+    # Compute panel properties
+    dx = np.diff(xs)  # x-component of panel vectors
+    dy = np.diff(ys)  # y-component of panel vectors
+    ds = np.sqrt(dx**2 + dy**2)  # Panel lengths
 
-    for i,n in enumerate(range(5, airfoil_data.shape[1])):
+    # Unit normal vectors (perpendicular to panels in airfoil frame)
+    nx = dy / ds  # Normal vector x-component
+    ny = -dx / ds  # Normal vector y-component
 
-        cpup, cplo = _separate(airfoil_data[:,n])
+    # Initialize arrays for lift and drag distributions
+    npx = (cps.shape[1] - 1) // 2
+    cl_x_alpha = np.zeros((npx, len(alphas)))  # Chordwise lift loading
+    cd_x_alpha = np.zeros((npx, len(alphas)))  # Chordwise drag loading
 
-        alpha = airfoil_data[i,2] * np.pi / 180
+    # Loop over AoA cases
+    for i in range(cps.shape[1]):
+        cp = cps[:, i]  # Pressure coefficients for this AoA
+        cp_mid = 0.5 * (cp[:-1] + cp[1:])  # Panel midpoint pressures (average)
 
-        dtheta_u = np.arctan2(np.diff(ys_u), np.diff(xs_u))
-        dtheta_l = np.arctan2(np.diff(ys_l), np.diff(xs_l))
+        # Compute force components in the airfoil frame
+        fx = -cp_mid * nx * ds  # Force in the x-direction
+        fy = -cp_mid * ny * ds  # Force in the y-direction
 
-        ds_u = np.sqrt(np.diff(xs_u)**2 + np.diff(ys_u)**2)
-        ds_l = np.sqrt(np.diff(xs_l)**2 + np.diff(ys_l)**2)
+        # Rotate forces by AoA to compute lift and drag
+        alpha = alphas[i]
+        cl = fy * np.cos(alpha) - fx * np.sin(alpha)  # Lift
+        cd = fx * np.cos(alpha) + fy * np.sin(alpha)  # Drag
 
-        # the panel lengths are not included because currently they are
-        # very discontinuous, which causes false discontinuities in the loading
-        cl_upper = -cpup[:-1] * np.cos(dtheta_u - alpha) #* ds_u
-        cl_lower = -cplo[:-1] * np.cos(dtheta_l - alpha) #* ds_l
+        cl_u, cl_l = _separate_panels(cl)
+        cd_u, cd_l = _separate_panels(cd)
 
-        cd_upper = -cpup[:-1] * np.sin(dtheta_u - alpha) #* ds_u
-        cd_lower = -cplo[:-1] * np.sin(dtheta_l - alpha) #* ds_l
-
-        cl_x_alpha[:, i] = cl_lower - cl_upper
-        cd_x_alpha[:, i] = cd_lower + cd_upper
-
-    ## insert 0 at the start of the array
-    cl_x_alpha = np.insert(cl_x_alpha, 0, 0, axis=0)
-    cd_x_alpha = np.insert(cd_x_alpha, 0, 0, axis=0)
+        cl_x_alpha[:, i] = cl_u + cl_l
+        cd_x_alpha[:, i] = cd_u + cd_l
 
     return cl_x_alpha, cd_x_alpha
 
@@ -339,7 +382,7 @@ def set_intergrands(prop):
     prop['dz'] = np.diff(rarr_pts)
 
 if __name__ == "__main__":
-    raw = np.loadtxt("app/foils/naca0012.surf")
+    raw = load_foil("app/foils/naca0012.surf")
     airfoil_data = upscale_airfoil_geometry(raw, 100)
     airfoil_data = run_xfoil(airfoil_data, collect_cp=True)
 
@@ -351,7 +394,6 @@ if __name__ == "__main__":
 
     cl_x_alpha, cd_x_alpha = calc_chordwise_loading(airfoil_data)
 
-    ax[0].plot(xs_u[:-1], cl_x_alpha[:,::20])
-    ax[0].legend()
+    plt.plot(xs_u, cl_x_alpha[:,0])
 
     plt.show()

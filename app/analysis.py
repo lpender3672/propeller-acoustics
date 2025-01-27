@@ -5,7 +5,8 @@ from routines import (
     load_oper_from_file,
     load_prop_from_file,
     run_xfoil,
-    AppVars
+    AppVars,
+    load_foil
 )
 from bem import (
     betz_off_design
@@ -65,7 +66,7 @@ def main():
     av.oper = load_oper_from_file('app/app_vars.json')
     av.prop = load_prop_from_file('app/props/constant_chord.prop')
 
-    av.airfoil_data = np.loadtxt(av.prop['foil_path'])
+    av.airfoil_data = load_foil(av.prop['foil_path'])
     av.airfoil_data = run_xfoil(av.airfoil_data)
 
     plot_twist_vs_FM(av)

@@ -23,12 +23,14 @@ from routines import (
     run_xfoil,
     calc_chordwise_loading,
     _separate,
-    set_intergrands
+    set_intergrands,
+    load_foil
 )
 
 def Psi(kx, X, fX):
+    kx = kx.reshape(-1, 1)
     f = fX * np.exp(1j * kx * X)
-    ans = simpson(f, x=X, axis=0)
+    ans = simpson(f, x=X, axis=1)
     return ans
 
 def radial_bessel(oper: dict, prop: dict):
@@ -55,7 +57,7 @@ def get_radial_magnitudes(oper: dict, prop: dict, m: int):
     y = r * np.sin(theta)
     omegaDop_o = oper['Omega'] / dopfac_o
 
-    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
     fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
     yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
@@ -272,8 +274,8 @@ def chord_locus(oper: dict, prop: dict, m, ax = None):
 
 def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
 
-    fig,ax = plt.subplots(2, 2)
-    theta = 3 * np.pi / 4 # np.arange(0, np.pi, 0.01)
+    fig, ax = plt.subplots(2, 2)
+    theta = 3 * np.pi / 4  # np.arange(0, np.pi, 0.01)
 
     viridis = plt.get_cmap('viridis')
     step = 1
@@ -282,9 +284,14 @@ def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
 
     lfig, lax = plt.subplots()
 
+    # Create a ScalarMappable for the colorbar
+    norm = plt.Normalize(np.min(alpha), np.max(alpha))
+    sm = plt.cm.ScalarMappable(cmap=viridis, norm=norm)
+    sm.set_array([])
+
     rindex = 0
 
-    for i,a in enumerate(alpha):
+    for i, a in enumerate(alpha):
         av.res['alpha'][rindex] = a * np.pi / 180
         oper, prop, _ = hanson_secondary_variables(av)
 
@@ -299,7 +306,11 @@ def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
         dpsiLKx = prop['dCl_dxc'] * np.exp(1j * kx * xc)
         dpsiDKx = prop['dCd_dxc'] * np.exp(1j * kx * xc)
 
-        lax.plot(prop['xc'], prop['dCl_dxc'][rindex,:], color=clrs[i])
+        cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data)
+        xf_u, _ = _separate(av.airfoil_data[:, 0])
+
+        #lax.plot(prop['xc'], prop['dCl_dxc'][rindex, :], color=clrs[i], linewidth=1)
+        lax.plot(xf_u, cl_x_alpha[:, i], color=clrs[i], linewidth=1)
 
         I1plt = cumulative_trapezoid(dpsiVKx, xc, axis=1, initial=0)
         I2plt = cumulative_trapezoid(dpsiLKx, xc, axis=1, initial=0)
@@ -312,7 +323,15 @@ def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
         ax[1,1].quiver(total[rindex,:-1].real, total[rindex,:-1:step].imag, np.diff(total[rindex,::step].real), np.diff(total[rindex,::step].imag), angles='xy', scale_units='xy', scale=1, color=clrs[i])
 
     for axi in ax.flatten():
-        axi.set_aspect('equal', 'box')
+        axi.set_aspect('equal')
+    
+    cbar = lfig.colorbar(sm, ax=lax)
+    cbar.set_label('Alpha (Degrees)')
+
+    lax.grid()
+
+    fig.savefig("deliverables/tms/figures/chord_locus.png", dpi=300)
+    lfig.savefig("deliverables/tms/figures/chordwise_loading", dpi=300)
 
     return ax
 
@@ -449,6 +468,44 @@ def plot_raw_airfoil_loading(airfoil_data):
     ax[0].plot(xs_u, cls)
     ax[1].plot(xs_u, cds)
 
+def plot_raw_airfoil_cps(airfoil_data):
+    import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
+    import numpy as np
+
+    fig, ax = plt.subplots()
+
+    alphas = airfoil_data[:, 2]
+    xs = airfoil_data[:, 0]
+
+    norm = plt.Normalize(np.min(alphas), np.max(alphas))
+    cmap = cm.viridis
+
+    arg0 = np.argmin(alphas**2)
+
+    for i in [arg0-5,arg0, arg0+5]:
+        cps = airfoil_data[:, 5:][:, i]
+        # Get the corresponding AoA and its color
+        alpha = alphas[i]
+        color = cmap(norm(alpha))
+
+        # Plot upper and lower surface Cp with color
+        ax.plot(xs, cps, color=color, label=f"Alpha = {alpha:.1f}°" if i == 0 else None)
+
+    sm = cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax)
+    cbar.set_label("Angle of Attack (°)")
+
+    ax.set_xlabel("Chordwise Position (x/c)")
+    ax.set_ylabel("Pressure Coefficient (Cp)")
+    ax.invert_yaxis()  # Invert y-axis for typical airfoil Cp plot
+    ax.grid()
+    ax.set_title("Raw Airfoil Cp Curves")
+
+    return ax
+
+
 def plot_directivity(oper, prop, ms=1, obsr_rt=10, thetamin=0, thetamax=180, ax=None, label=None):
 
     if ax is None:
@@ -546,8 +603,8 @@ def main():
     
     prop = load_prop_from_file('app/props/constant_chord_hires.prop')
     oper = load_oper_from_file('app/app_vars.json')
-    #airfoil_data = np.loadtxt(prop['foil_path'])
-    airfoil_data = np.loadtxt("app/foils/naca0012.surf")
+    #airfoil_data = load_foil(prop['foil_path'])
+    airfoil_data = load_foil("app/foils/naca0012.surf")
     
     av = AppVars()
     av.oper = oper
@@ -558,6 +615,8 @@ def main():
 
     av = guaranteed_convergence_BEM(av)
 
+    av.res['alpha'] = 5 * np.ones(av.prop['nr'])
+
     if not av.res['converged']:
         print("BEM failed")
         return
@@ -565,12 +624,13 @@ def main():
     oper, prop, _ = hanson_secondary_variables(av)
 
     #plot_optimised_harmonics(av)
+    plot_raw_airfoil_cps(av.airfoil_data)
 
     #operating_range(av)
     #optimise_lift_harmonic_ratio(av, 2, 1)
     plot_simple_optimised_harmonic(av, 2)
     
-    chord_locus_alpha(av, np.arange(-15,15,3), 3)
+    chord_locus_alpha(av, np.arange(0,10,2), 3)
     #hanson_sweep(av)
 
     plt.show()
