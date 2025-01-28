@@ -1,5 +1,13 @@
 from stl import mesh
 import numpy as np
+import vis
+
+from PyQt6.QtWidgets import QApplication
+
+from routines import (
+    load_prop_from_file,
+    AppVars
+)
 
 from scipy.spatial.transform import Rotation as R
 
@@ -11,6 +19,28 @@ def rotate3(X,Y,Z,theta, axis):
     axis = axis / np.linalg.norm(axis)
     r = R.from_rotvec(theta*axis)
     return r.apply(np.array([X,Y,Z])).T
+
+def rotate3p(X,Y,Z, theta, axis, P):
+    # rotate about a point and axis
+    axis = axis / np.linalg.norm(axis)
+    r = R.from_rotvec(theta*axis)
+    points = np.vstack([X, Y, Z])
+    translated = points - P[:, np.newaxis]
+    rotated = r.apply(translated.T).T
+    out = rotated + P[:, np.newaxis]
+    return out
+
+
+def airfoil_to_ellipse(x, y, x_factor, y_factor):
+
+    x_centered = x - 0.5
+
+    x_ellipse = 0.5 + x_centered * (1 - np.abs(x_factor))
+    y_ellipse = np.sqrt(1 - (x_centered**2)) * np.abs(y_factor)
+
+    y_transformed = (1 - y_factor) * y + y_ellipse * np.sign(y)
+    
+    return x_ellipse, y_transformed
 
 def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False):
     """creates a mesh of a single blade of a propeller
@@ -26,7 +56,8 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     # adapted from code by Lily Board phd
 
     # for 3D printing a minimum airfoil thickness is applied
-    min_section_thickness = 0.0004
+    #min_section_thickness = 0.0004
+    min_section_thickness = 0
 
     chord, twist, radius = av.prop['c'], av.prop['twist'], av.prop['r0']
     xnf, znf = av.airfoil_data[:,0], av.airfoil_data[:,1]
@@ -48,9 +79,25 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
 
     nf = xf.shape[0]
     Nsect = radius.shape[0]
-    X = np.zeros((Nsect+2,nf))
-    Z = np.zeros((Nsect+2,nf))
-    Y= np.zeros((Nsect+2,nf))
+
+    if av.prop['twinB'] == 'Single':
+        Ntip = 0
+        Rtip = 0
+        coords = np.zeros((nf*(Nsect+2),3))
+        triangles = np.zeros((2*nf*(Nsect+1)+2*(nf-2),3),dtype = np.int64)
+
+        X = np.zeros((Nsect+2,nf))
+        Z = np.zeros((Nsect+2,nf))
+        Y= np.zeros((Nsect+2,nf))
+    else:
+        Ntip = 20 # number of tip sections
+        Rtip = av.prop['rt'] / np.cos(sweep_angle[-1])
+        coords = np.zeros((nf*(2*Nsect+2+Ntip),3))
+        triangles = np.zeros((2*nf*(2*Nsect+1+Ntip)+2*(nf-2),3),dtype = np.int64)
+
+        X = np.zeros((2*Nsect+Ntip+2,nf))
+        Z = np.zeros((2*Nsect+Ntip+2,nf))
+        Y= np.zeros((2*Nsect+Ntip+2,nf))
 
     if are_sections_tangent:
         # sections tangent to the radius
@@ -59,13 +106,24 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
         sy = radius[0] * np.ones(nf)
         X[0,:], _ = rotate2(sx, sy, -sweep_angle[0])
         Y[0,:] = av.prop['dthread'] / 2
-        for i in range(1,Nsect+1):
+        start = 0
+        end = Nsect+1
+        for i in range(1,end):
             sx, Z[i,:] = rotate2(xf*chord[i-1], zf*chord[i-1], -twist[i-1])
             sy = radius[i-1] * np.ones(nf)
             X[i,:], Y[i,:] = rotate2(sx, sy, -sweep_angle[i-1])
-        sx, Z[Nsect+1,:] = rotate2(xf*chord[Nsect-1], zf*chord[Nsect-1], -twist[Nsect-1])
+        if Ntip > 0:
+            # second blade loops back through span
+            start = Nsect+Ntip+1
+            end = 2*Nsect+Ntip+1
+            for i in range(Nsect+Ntip+1, end+1):
+                sx, Z[i,:] = rotate2(xf*chord[end-i-1], zf*chord[end - i-1], -twist[end - i-1])
+                sy = radius[end - i-1] * np.ones(nf)
+                X[i,:], Y[i,:] = rotate2(sx, sy, +sweep_angle[end - i-1])
+
+        sx, Z[end,:] = rotate2(xf*chord[Nsect-1], zf*chord[Nsect-1], -twist[Nsect-1])
         sy = radius[Nsect-1] * np.ones(nf)
-        X[Nsect+1,:], Y[Nsect+1,:] = rotate2(sx, sy, -sweep_angle[Nsect-1])
+        X[end,:], Y[end,:] = rotate2(sx, sy, +sweep_angle[Nsect-1])
 
     else:
         # sections wrap around the radius
@@ -85,16 +143,38 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             Z[i,:] = sz
             X[i,:] = radius[i-1] * np.sin(thetas)
             Y[i,:] = radius[i-1] * np.cos(thetas)
+
         sx, sz = rotate2(xf*chord[Nsect-1], zf*chord[Nsect-1], -twist[Nsect-1])
         thetas = sweep_angle[Nsect-1] + sx / radius[Nsect-1]
         thetas = np.clip(thetas, -np.pi/2, np.pi/2)
         Z[Nsect+1,:] = sz
         X[Nsect+1,:] = radius[Nsect-1] * np.sin(thetas)
         Y[Nsect+1,:] = Y[Nsect,:]
+
+    # create tip verticies
+    thetas = np.linspace(0, np.pi + 2 * sweep_angle[-1], Ntip, endpoint=True)
+    unitz = np.array([0,0,1])
+    rotcenter = np.array([0, Rtip, 0])
+    midfactorhalf = np.linspace(0, 1, Ntip // 2)
+    midfactor = np.hstack([midfactorhalf, -midfactorhalf[::-1]])
+    tipfactorhalf = np.linspace(1, 0, Ntip // 2)
+    tipfactor = np.hstack([tipfactorhalf, -tipfactorhalf[::-1]])
+    tiptwist = -twist[-1] * tipfactor
+    ellipsivity = 0.5 * midfactor
     
-    coords = np.zeros((nf*(Nsect+2),3))
-    # loop over blade elements
-    for i in range(Nsect+2):
+    for i, theta in zip(range(Nsect+1, Nsect+Ntip+1), thetas):
+        j = i-(Nsect+1)
+        if j > Ntip//2:
+            xfs, zfs = airfoil_to_ellipse(-xf, zf, ellipsivity[j], 0)
+        else:
+            xfs, zfs = airfoil_to_ellipse(xf, zf, ellipsivity[j], 0)
+            
+        sx, sz = rotate2(xfs*chord[-1], zfs*chord[-1], tiptwist[j])
+        sy = radius[-1] * np.ones(nf)
+        sx, sy = rotate2(sx, sy, -sweep_angle[-1])
+        X[i,:], Y[i,:], Z[i,:] = rotate3p(sx, sy, sz, theta, unitz, rotcenter)
+
+    for i in range(end+1):
         # loop over nf in airfoil
         for j in range(nf):
             k = i*nf + j
@@ -102,13 +182,45 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             coords[k,1] = Y[i,j]
             coords[k,2] = Z[i,j]
     
-    triangles = np.zeros((2*nf*(Nsect+1)+2*(nf-2),3),dtype = np.int64)
     # loop over blade elements
     # not including end faces
     k = 0
-    for i in range(1,Nsect+2):
+    for i in range(1,end):
         # loop over nf in airfoil
         for j in range(nf):
+            if i == (Nsect + Ntip//2 + 2):
+                l = nf//2 - j
+                if j > nf//2:
+                    l += nf
+                    
+                    #    __@
+                    #   | 
+                triangles[k,0] = i*nf + j
+                
+                if j == 0:
+                    triangles[k,1] = i*nf + nf-1
+                else:
+                    triangles[k,1] = i*nf + j - 1
+                if l == 0:
+                    triangles[k,2] = (i-1)*nf + nf-1
+                else:
+                    triangles[k,2] = (i-1)*nf + l - 1
+
+                k = k+1
+                #     @
+                #   __|
+                
+                if j == 0:
+                    triangles[k,0] = i*nf + j - 1 + nf
+                    triangles[k,1] = (i-1)*nf + nf//2-1
+                else:
+                    triangles[k,0] = i*nf + j - 1
+                    triangles[k,1] = (i-1)*nf + l - 1
+                triangles[k,2] = (i-1)*nf + l
+
+                k = k+1
+                continue
+
             #    __@
             #   | 
             triangles[k,0] = i*nf + j
@@ -122,6 +234,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             k = k+1
             #     @
             #   __|
+
             triangles[k,0] = i*nf + j
             if j == 0:
                 triangles[k,1] = (i-1)*nf + nf-1
@@ -129,6 +242,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
                 triangles[k,1] = (i-1)*nf + j - 1
             triangles[k,2] = (i-1)*nf + j 
             k = k+1
+
     # end faces
     for j in range(nf-2):
         # bottom face
@@ -143,13 +257,13 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
         k = k+1
         # top face
         if j%2 == 0:
-            triangles[k,0] = nf*(Nsect+1) + int(j/2)
-            triangles[k,1] = nf*(Nsect+1) + int(j/2) + 1
-            triangles[k,2] = nf*(Nsect+1) + nf-1 - int(j/2)
+            triangles[k,0] = nf*end + int(j/2)
+            triangles[k,1] = nf*end + int(j/2) + 1
+            triangles[k,2] = nf*end + nf-1 - int(j/2)
         else:
-            triangles[k,0] = nf*(Nsect+1) + nf-1 - int((j-1)/2)
-            triangles[k,1] = nf*(Nsect+1) + int((j-1)/2) + 1
-            triangles[k,2] = nf*(Nsect+1) + nf-1 - int((j-1)/2) - 1
+            triangles[k,0] = nf*end + nf-1 - int((j-1)/2)
+            triangles[k,1] = nf*end + int((j-1)/2) + 1
+            triangles[k,2] = nf*end + nf-1 - int((j-1)/2) - 1
         k = k+1
 
     blademesh = mesh.Mesh(np.zeros(triangles.shape[0], dtype=mesh.Mesh.dtype))
@@ -315,3 +429,25 @@ def generate_propeller_mesh(av, apply_min_thickness=True):
     
     return combined
 
+
+def main():
+    import sys
+    prop = load_prop_from_file('app/props/first_loop.prop')
+    airfoil_data = np.loadtxt(prop['foil_path'])
+
+    av = AppVars()
+    av.prop = prop
+    av.airfoil_data = airfoil_data
+
+    app = QApplication(sys.argv)
+    viewer = vis.STLViewerWidget()
+
+    viewer.set_mesh(
+        generate_propeller_mesh(av)
+    )
+    viewer.resize(800, 600)
+    viewer.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
