@@ -122,11 +122,8 @@ Such mechanisms are well understood for standard propellers in forward flight \c
 However a fast low fidelity method implementing this theory to predict noise from looped propellers is missing.
 Such a method would enable iterative design methods to optimise the looped propeller design for noise reduction.
 
-Looped propellers improved structure allows for larger sweep and hence can achieve greater noise reduction than standard propellers \cite{shima_toroidal} ???.
+%Looped propellers improved structure allows for larger sweep and hence can achieve greater noise reduction than standard propellers \cite{shima_toroidal} ???.
 
-Hypothesis:
-Noise reduction through spanwise compactness is more effective than chordwise compactness.
-The harmonic noise of loop propellers can be modelled by the superposition of evenly spaced, swept propellers.
 \section{Project Management}
 
 
@@ -134,7 +131,16 @@ The harmonic noise of loop propellers can be modelled by the superposition of ev
 Initially the project took too broad of an approach and after the mini conference focus was placed on identifying parameters that can reduce harmonic noise.
 This was done to reduce the scope of the project and allow for a more in depth investigation of the theory.
 An interactive software tool is being developed to see the effect of different parameters on both aerodynamic performance and harmonic noise.
-This also allows predictions to be compared with experimental results to understand limitations of methods.
+This also allows predictions to be compared with experimental results to understand limitations of the model.
+
+Objectives for the project are classified into groups: Acoustic and aerodynamic theory, and also their respective practical setups. 
+A seperate group is made for progress on the software tool.
+The key component of the project is the prediction of harmonic noise for an arbitrary propeller design.
+Hanson's method \cite{hanson_theory}, described in detail later, requires knowledge of aerodynamic forces acting over the blade.
+These are calculated in the most reduced represenation of the problem for arbitrary designs, the Blade Element Method (BEM), also discussed later.
+
+
+
 
 % organise report structure 
 % require far field noise
@@ -161,11 +167,11 @@ This also allows predictions to be compared with experimental results to underst
         \gantttitle{Michaelmas Term}{8} \gantttitle{Christmas Break}{7} \gantttitle{Lent Term}{8} \gantttitle{Easter Break}{6} \gantttitle{Easter Term}{8}\\
         \gantttitlelist{1,...,8}{1} \gantttitlelist{1,...,7}{1} \gantttitlelist{1,...,8}{1} \gantttitlelist{1,...,6}{1} \gantttitlelist{1,...,8}{1}\\
         \ganttgroup{Progress}{1}{24} \ganttgroup{}{30}{37}\\
-        \textganttbar{Acoustic Theory}{Reading}{1}{6} \textganttbar{}{FWH}{7}{8} \textganttbar{}{Hanson}{9}{20} \textganttbar{}{Data processing and Analysis}{21}{33} \\
-        \textganttbar{Aerodynamic Theory}{A.disk}{4}{5} \textganttbar{}{BEM}{6}{7} \textganttbar{}{Data processing and Analysis}{21}{33}\\
+        \textganttbar{Acoustic Theory}{Reading}{1}{6} \textganttbar{}{FWH}{7}{8} \textganttbar{}{Hanson}{9}{16} \textganttbar{}{Analysis}{21}{33} \\
+        \textganttbar{Aerodynamic Theory}{A.disk}{4}{5} \textganttbar{}{BEM}{6}{7} \textganttbar{}{Analysis and Improvements}{21}{33}\\
         \textganttbar{Software Tool}{XFoil \& Mesh}{12}{15}\textganttbar{}{BEM}{16}{17} \textganttbar{}{Iterate}{18}{20} \textganttbar{}{Comparative Cases}{26}{30}\\
-        \textganttbar{Aerodynamic setup}{Design}{1}{5} \textganttbar{}{CAD}{6}{7} \textganttbar{}{Assembly}{15}{17} \textganttbar{}{Make \& Test}{19}{22} \\
-        \textganttbar{Acoustic setup}{Design}{6}{7}\textganttbar{}{Training}{17}{19} \textganttbar{}{Test}{20}{23}\\
+        \textganttbar{Aerodynamic setup}{Design}{1}{5} \textganttbar{}{CAD}{6}{7} \textganttbar{}{Assembly}{15}{17} \textganttbar{}{Make \& Test}{19}{22} \textganttbar{}{Data Processing}{23}{27} \\
+        \textganttbar{Acoustic setup}{Design}{6}{7}\textganttbar{}{Training}{18}{19} \textganttbar{}{Test}{20}{23} \textganttbar{}{Data Processing}{23}{27}\\
         %\ganttlink{elem2}{elem3}
         %\ganttlink{elem3}{elem4}
 
@@ -185,11 +191,12 @@ This also allows predictions to be compared with experimental results to underst
     \begin{tabular}{|p{4cm}|p{4cm}|p{5cm}|p{5cm}|}
     \hline
     \textbf{Risk} & \textbf{Consequence} & \textbf{Mitigation} & \textbf{Contingency} \\ \hline
-    Discrepancy between aerodynamic and acoustic tests & Results may not align, reducing reliability of findings & Compare noise of uninsulated acoustic setup with aerodynamic setup & Identify source and quantify the discrepancy and if required redesign setup \\ \hline
-    Blade deflection & Lower thrust and efficiency; altered noise characteristics & Limit sweep to $60^\circ$ and select thick airfoil sections& Increase airfoil thickness or reduce sweep \\ \hline
-    Aeroelastic flutter & Structural damage, catastrophic failure & High acceleration to reduce modal responses. Operator not in same room & Reduce operating point \\ \hline
-    Motor noise interference with acoustic measurements & Misinterpretation of acoustic signatures & Acoustic insulation of motor. Measurement of loadmatched motor noise. & Spectral subtraction of load matched signal\\ \hline
-    Motor overheating in acoustic insulation & Damage to motor; invalid results due to test interruptions & Monitor temperature, pausing to allow cooling& Increase passive cooling with heatsink \\ \hline
+    Discrepancy between aerodynamic and acoustic tests. & Results may not align, reducing reliability of findings. & Compare noise of uninsulated acoustic setup with aerodynamic setup & Identify source and quantify the discrepancy and if required redesign setup. \\ \hline
+    Blade deflection. & Lower thrust and efficiency; altered noise characteristics & Limit sweep to $60^\circ$ and select thick airfoil sections. & Increase airfoil thickness or reduce sweep. \\ \hline
+    Aeroelastic flutter. & Structural damage, catastrophic failure. & High acceleration to reduce modal responses. Operator not in same room. & Reduce operating point. \\ \hline
+    Motor noise interference with acoustic measurements. & Misinterpretation of acoustic signatures. & Acoustic insulation of motor. Measurement of load-matched motor noise. & Spectral subtraction of load-matched signal. \\ \hline
+    Motor overheating in acoustic insulation. & Damage to motor; invalid results due to test interruptions & Monitor temperature, pausing to allow cooling & Increase passive cooling with heatsink. \\ \hline
+    Large motor currents inducing voltages in strain gauge wires. & Interference with force measurements, leading to inaccurate data. & Time average readings and plot dimensional groups. & Use twisted pair wiring and shielding to reduce interference. \\ \hline
     \end{tabular}
     }
     \caption{Project risk analysis with consequences, mitigations, and contingencies.}
@@ -327,55 +334,29 @@ The harmonic noise then follows from hansons derivation to be
 \begin{equation}
     P_{mB} = P^{(1)}_{mB} + P^{(2)}_{mB}
 \end{equation}
-Dobrzynski showed that the noise from a propeller with uneven blade spacing, or a constant sweep, to have... \cite{DOBRZYNSKI1993123}
-\begin{equation}
-    p(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t) + \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB(\Omega t + \varepsilon))
-    \label{eq:Dobrzynski}
-\end{equation}
-This can be recovered by substituting $MCA_2 = MCA_1 + r_0 \varepsilon$ with otherwise identical geometry into equation \ref{eq:hansons_result} giving the result $P^{(2)}_{mB} = P^{(1)}_{mB} \exp ( j mB \varepsilon )$
-
 \subsection{Blade Element Method}
 Blade Element Momentum theory is a popular method to predict the aerodynamic performance of propellers in the early design stage \cite{?}.
+It is also the most simple represenation of the arbitrary geometry.
 BEM is a simplification of lifting line theory in that the induced velocity at each annular section is assumed to be due to only the forces on that section.
 Then blade element theory (BET) is combined with momentum theory to create a system of non-linear equations which can be solved iteratively.
-
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}
-            % Some profiles look better when using plot[smooth]
-        \begin{scope}[rotate=15]
-            \draw[scale=3,thick=3] node[left=0.5cm] {}
-                plot file{../../app/foils/NACA2412.surf} -- cycle;
-        \end{scope}
-        % hoirzontal line
-        \draw[thick, dashed] (-4,0) -- (4, 0) node[below] {Rotation Plane};
-        % velocity vector labelled at midline
-        \draw[->] (0,-1) -- (0,0) node[midway,right] {$V(1-a)$};
-        \draw[->] (-2,-1) -- (0,-1) node[midway,below] {$\Omega r(1+a')$};
-        \draw[->] (-2,-1) -- (0,0) node[midway,below] {$W$};
-        \draw[dashed] (-3,-1.5) -- (-2,-1) node[above] {};
-        \draw[dashed] (-2.5,-0.67) -- (3,0.804) node[above] {};
-        % curved arrows
-        \draw[->] (-2,0) arc (0:15:-2) node[midway, left] {$\theta$};
-        \draw[->] (-3,0) arc (0:26.565:-3) node[midway, left] {$\phi$};
-        \draw[->] (-1.7888,-0.8944) arc (26.565:15:-2) node[midway, left] {$\alpha$};
-        % force coefficients
-        \draw[->] (0.75, 0.194) -- (0.75,1.2) node[midway, left] {$c_n$};
-        \draw[->] (0.75, 0.194) -- (3, 0.194) node[above] {$c_t$};
-    \end{tikzpicture}
-    \caption{Local section of propeller blade for BEM. Anticlockwise angles are positive.}
-    \label{fig:bem_section}
-\end{figure}
-The assumptions of BEM break down near the tip of the blade and so a tip correction factor based on a prescribed wake model was introduced by Prantl \cite{prandtl_loss}.
-Corrections applied to lift, drag and power cofficients to account for swept geometry will follow the same method as Bergmann \cite{bergmann_sweep}.
 Airfoil data for a wide range of angles of attack, sometimes beyond stall, can be required for the solution.
-Viterna extrapolation \cite{MAHMUDDIN2017811}
-In practice the BEM equations can be difficult to solve and so a root finding method by S. Ning \cite{Ning_BEM} is planned to be implemented into the software tool.
+For this reason Viterna extrapolation is used to help convergence \cite{MAHMUDDIN2017811}.
+Corrections applied to local lift, drag and power cofficients to account for swept geometry will follow the same method as Bergmann \cite{bergmann_sweep}.
+In practice the BEM equations can be difficult to solve and so a root finding method by S. Ning \cite{Ning_BEM} is partially implemented into the software tool.
 
-The Reynolds number over the blade is assumed to be constant but in reality can vary as much as a factor of 5 \cite{?}.
+At its most basic implementation the loss effects, where assumptions of BEM near the hub and tips break down, will be neglected.
+The Reynolds number over the blade span is assumed to be constant but in reality can vary as much as a factor of 5 \cite{?}.
+Future work could implement correction factors based on a prescribed wake model was introduced by Prantl \cite{prandtl_loss}.
+Airfoil data could also be interpolated in both angle of attack and Reynolds number to better match reality.
+
 
 % The accuracy of BEM for prescribed wake model at low or zero advance ratios 
 % prescribed wake model and impirical aspect of the model
+
+
+\subsection{Hypothesis}
+Noise reduction through spanwise compactness is more effective than chordwise compactness.
+The harmonic noise of loop propellers can be modelled by the superposition of evenly spaced, swept propellers.
 
 \section{Progress}
 
@@ -383,7 +364,6 @@ The Reynolds number over the blade is assumed to be constant but in reality can 
 
 A software design tool implementing the theoretical framework is being developed.
 This will allow rapid iterative testing of parameters to understand their significance 
-
 The software, given parameters and spanwise distributions, calculates aerodynamic performance and harmonic noise of the propeller.
 Its also required to load an airfoil coordinate file in the standard format found on the UIUC database \cite{UIUC_database}.
 Distributions can be selected from a list of linear, quadratic, cubic spline, inverse $(a/x + b)$ or $a \cdot \arctan(b/r)$
@@ -396,7 +376,7 @@ Cubic spline control points can be added and removed.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth]{figures/radial_locus.png}
-    \caption{Spanwise cancellation due to sweep of uniformly loaded propeller}
+    \caption{Spanwise cancellation due to zero sweep, and optimised quadratic sweep for uniformly loaded propeller. Chordwise }
     \label{fig:optimised_harmonic}
 \end{figure}
 
@@ -429,13 +409,11 @@ For the aerodynamic test, the thrust and torque of the propeller will be measure
 Strain gauge load cells were chosen for force measurement over null methods for simplicity and the potential to measure dynamic loads.
 The propeller will be mounted upside down to prevent the ground effect, and such that the force is in the direction and range of calibration loads.
 It will also be at a 45 degree angle such that a graviational mass can calibrate the torque load cell.
-
-Large currents in the motor can induce voltages in the strain gauge wire which can interfere with the measurement.
-Efforts to mitigate this include twisted pair wiring and shielding the wires.
+Code written for a preliminary setup using a Pi Pico microcontroller to interface with a HX711 load cell amplifiers will be reused.
 \subsection{Propeller manufacturing}
 Propellers will be manufactured on an Objet30 3D printer which has planar accuracy of $30\mu m$ and minimum layer thickness of $28 \mu m$.
 The primary advantage of this printer is the gel support material which does not produce rough connection points on overhangs like traditional resin printers.
-A test print of a looped propeller is shown in figure \ref{fig:printed_demo}.
+A test print of a looped propeller has been done successfully.
 
 \section{Future work}
 \subsection{Finish software tool}
@@ -455,12 +433,6 @@ To validate theory the following tests are planned.
     \item Comparison of single and symmetrical looped blade designs to evaluate superimposed model.
     \item If time allows predict and test axi-asymmetrical looped propeller designs.
 \end{itemize}
-
-\section{Conclusion}
-
-Reducing the harmonic noise of quadcopter propellers would
-% components of propeller noise
-% 
 
 % bibliography
 
