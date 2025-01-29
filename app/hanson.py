@@ -151,7 +151,7 @@ def radial_noise_contributions(oper: dict, prop: dict, obs: dict, ms: np.ndarray
     ms: np.ndarray - Harmonic numbers to calculate noise for
     """
 
-    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'])
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
 
     theta = obs['theta']

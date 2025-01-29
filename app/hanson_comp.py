@@ -12,6 +12,9 @@ from hanson import (
     calc_noise_components,
     hanson_secondary_variables
 )
+from PyQt6.QtWidgets import QApplication
+import vis
+from geometry import generate_propeller_mesh
 
 from routines import (
     load_oper_from_file,
@@ -24,7 +27,8 @@ from routines import (
     calc_chordwise_loading,
     _separate,
     set_intergrands,
-    load_foil
+    load_foil,
+    save_prop_to_file
 )
 
 def Psi(kx, X, fX):
@@ -589,6 +593,19 @@ def plot_optimised_harmonics(av):
     sfig.tight_layout()
     sfig.savefig('deliverables/tms/figures/optimised_harmonic_profiles.png', dpi=300)
 
+def vismesh(av):
+    import sys
+
+    app = QApplication(sys.argv)
+    viewer = vis.STLViewerWidget()
+
+    viewer.set_mesh(
+        generate_propeller_mesh(av)
+    )
+    viewer.resize(800, 600)
+    viewer.show()
+    sys.exit(app.exec())
+
 def plot_simple_optimised_harmonic(av, m):
     oper, prop, _ = hanson_secondary_variables(av)
 
@@ -596,12 +613,24 @@ def plot_simple_optimised_harmonic(av, m):
     m = 2
     axes = radial_locus(oper, prop, axes, m=m, colour='b')
     optimise_lift_magnitude(av, m, axes, colour='r')
+
+    vismesh(av)
+
+    """
+    n = av.prop['nr'] - 1
+    av.dist['CTL_sweep_type'] = "quadratic"
+    av.dist['CTL_sweep'] = [
+        [0,0], [av.prop['r0_rt'][n//2], av.prop['sweep'][n//2]], [av.prop['r0_rt'][n], av.prop['sweep'][n]]
+        ]
+    save_prop_to_file("app/props/constant_chord.prop", av.prop, av.dist)
+    """
+
     fig.tight_layout()
     fig.savefig('deliverables/tms/figures/radial_locus.png', dpi=300)
 
 def main():
     
-    prop = load_prop_from_file('app/props/constant_chord_hires.prop')
+    prop, dist = load_prop_from_file('app/props/constant_chord_swept.prop', True)
     oper = load_oper_from_file('app/app_vars.json')
     #airfoil_data = load_foil(prop['foil_path'])
     airfoil_data = load_foil("app/foils/naca0012.surf")
@@ -609,6 +638,7 @@ def main():
     av = AppVars()
     av.oper = oper
     av.prop = prop
+    av.dist = dist
 
     airfoil_data = run_xfoil(airfoil_data)
     av.airfoil_data = airfoil_data
@@ -628,7 +658,7 @@ def main():
 
     #operating_range(av)
     #optimise_lift_harmonic_ratio(av, 2, 1)
-    plot_simple_optimised_harmonic(av, 2)
+    plot_simple_optimised_harmonic(av, 5)
     
     chord_locus_alpha(av, np.arange(0,10,2), 3)
     #hanson_sweep(av)

@@ -204,7 +204,7 @@ def calc_distribution(dist_index, ctrl_pts, x_dist):
     return y_dist
 
 
-def load_prop_from_file(file_path):
+def load_prop_from_file(file_path, include_dists=False):
     
     with open(file_path, 'r') as propj:
         propf = json.load(propj)
@@ -240,7 +240,9 @@ def load_prop_from_file(file_path):
     prop['sweep'] = calc_distribution(
         distypes.index(dists['CTL_sweep_type']), dists['CTL_sweep'], prop['r0_rt']
     ) * np.pi / 180
-
+    
+    if include_dists:
+        return prop, dists
     return prop
 
 def save_custom_prop_to_file(file_path, prop):
@@ -255,9 +257,21 @@ def save_custom_prop_to_file(file_path, prop):
     save_prop_to_file(file_path, prop, dists)
 
 def save_prop_to_file(file_path, prop, dists):
+
+    propc = prop.copy()
+    distsc = dists.copy()
+
+    for key,elem in propc.items():
+        if isinstance(elem, np.ndarray):
+            distsc[key] = list(elem)
+
+    for key,elem in distsc.items():
+        if isinstance(elem, np.ndarray):
+            distsc[key] = list(elem)
+    
     propf = {
-        'prop': prop,
-        'dist': dists
+        'prop': propc,
+        'dist': distsc
     }
     with open(file_path, 'w') as propj:
         json.dump(propf, propj, indent=4)
