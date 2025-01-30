@@ -123,7 +123,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
 
         sx, Z[end,:] = rotate2(xf*chord[Nsect-1], zf*chord[Nsect-1], -twist[Nsect-1])
         sy = radius[Nsect-1] * np.ones(nf)
-        X[end,:], Y[end,:] = rotate2(sx, sy, +sweep_angle[Nsect-1])
+        X[end,:], Y[end,:] = rotate2(sx, sy, -sweep_angle[Nsect-1])
 
     else:
         # sections wrap around the radius

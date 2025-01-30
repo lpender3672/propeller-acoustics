@@ -136,7 +136,8 @@ def plot_harmonic_components(oper: dict, prop: dict, ms = np.arange(1,5), ax=Non
     return ax
 
 
-def optimise_lift_magnitude(av, m, ax=None, plot=True, colour=None):
+
+def optimise_lift_magnitude(av, m, ax=None, plot=True, colour=None, label=None):
 
     avc = av.copy()
 
@@ -148,19 +149,26 @@ def optimise_lift_magnitude(av, m, ax=None, plot=True, colour=None):
         nois = np.log10(np.abs(PLm[-1]))
         return nois
     
-    # get initial magnitude and sweep
+    def constraint_sweep_range(x):
+        avc.prop['sweep'] = x[0] * avc.prop['r0_rt'] + x[1] * avc.prop['r0_rt']**2
+        sweep_range = np.max(avc.prop['sweep']) - np.min(avc.prop['sweep'])
+        return 60.0 - sweep_range
+
+    # Initial guess
     x0 = [0.01, 0.01]
-    res = minimize(objective_function, x0 ,method='Nelder-Mead', options={'disp': True})
-    print(res)
+
+
+    constraint = {'type': 'ineq', 'fun': constraint_sweep_range}
+    res = minimize(objective_function, x0, method='Nelder-Mead')
 
     x = res.x
     av.prop['sweep'] = x[0] * av.prop['r0_rt'] + x[1] * av.prop['r0_rt']**2
 
     if not plot:
-        return
+        return ax
     
     oper, prop, _ = hanson_secondary_variables(avc)
-    ax = radial_locus(oper, prop, ax, m=m, colour=colour)
+    ax = radial_locus(oper, prop, ax, m=m, colour=colour, label=label)
     ax[0,0].set_title('Thickness')
     ax[0,1].set_title('Lift')
     ax[1,0].set_title('Drag')
@@ -168,6 +176,63 @@ def optimise_lift_magnitude(av, m, ax=None, plot=True, colour=None):
 
     sfig, sax = plt.subplots()
     sax.plot(av.prop['r0_rt'], av.prop['sweep'] * 180 / np.pi)
+
+    return ax
+
+
+
+def constrained_optimise_lift_magnitude(av, m, ax=None, plot=True, colour=None, label=None):
+
+    avc = av.copy()
+
+    def objective_function(x):
+        # Update the sweep values
+        avc.prop['sweep'] = x[0] * avc.prop['r0_rt'] + x[1] * avc.prop['r0_rt']**2
+
+        # Calculate the finite difference derivative
+        r0_rt = avc.prop['r0_rt']
+        dsweep = np.diff(avc.prop['sweep']) / np.diff(r0_rt)
+
+        # Apply a penalty only if the derivative exceeds the threshold
+        max_derivative_allowed = 100.0 * np.pi/180  # Adjust this as needed
+        excessive_derivative = np.maximum(np.abs(dsweep) - max_derivative_allowed, 0.0)
+
+        # Quadratic penalty for excessive derivative values
+        penalty = np.sum(excessive_derivative**2)
+
+        # Original objective calculation
+        oper, prop, _ = hanson_secondary_variables(avc)
+        _, PLm, _ = get_radial_magnitudes(oper, prop, m)
+        nois = np.log10(np.abs(PLm[-1]))
+
+        # Add a weighted penalty to the objective function
+        penalty_weight = 1e4  # Adjust the weight to balance the objective and penalty
+        return nois + penalty_weight * penalty
+    
+    # Initial guess
+    x0 = [0.01, 0.01]
+
+    #res = minimize(objective_function, x0, method='Nelder-Mead', options={'disp': True})
+    #res = minimize(objective_function, x0, method='SLSQP', constraints=[constraint], options={'disp': True})
+    res = minimize(objective_function, x0, method='Nelder-Mead')
+    x = res.x
+    av.prop['sweep'] = x[0] * av.prop['r0_rt'] + x[1] * av.prop['r0_rt']**2
+
+    if not plot:
+        return ax
+    
+    oper, prop, _ = hanson_secondary_variables(avc)
+    ax = radial_locus(oper, prop, ax, m=m, colour=colour, label=label)
+    ax[0,0].set_title('Thickness')
+    ax[0,1].set_title('Lift')
+    ax[1,0].set_title('Drag')
+    ax[1,1].set_title('Total')
+
+    sfig, sax = plt.subplots()
+    sax.plot(av.prop['r0_rt'], av.prop['sweep'] * 180 / np.pi)
+
+    return ax
+
 
 def optimise_lift_harmonic_ratio(av, m1, m2, plot=True):
     """maximise the ratio of two harmonics of lift at specific observer location
@@ -604,17 +669,21 @@ def vismesh(av):
     )
     viewer.resize(800, 600)
     viewer.show()
-    sys.exit(app.exec())
+    app.exec()
 
 def plot_simple_optimised_harmonic(av, m):
     oper, prop, _ = hanson_secondary_variables(av)
 
-    fig, axes = plt.subplots(2, 2)
+    fig, axes = plt.subplots(2, 2, figsize=(6,6))
     m = 2
-    axes = radial_locus(oper, prop, axes, m=m, colour='b')
-    optimise_lift_magnitude(av, m, axes, colour='r')
+    axes = radial_locus(oper, prop, axes, m=m, colour='b', label='Unswept')
+    axes = optimise_lift_magnitude(av, m, axes, colour='g', label='Optimised')
+    #vismesh(av)
+    axes = constrained_optimise_lift_magnitude(av, m, axes, colour='r', label='Constrained Optimised')
 
-    vismesh(av)
+    fig.legend(loc='lower center', bbox_to_anchor=(0.5, 0.0), ncol=3, frameon=False)
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.1)  # Extra space for the legend
 
     """
     n = av.prop['nr'] - 1
@@ -625,7 +694,6 @@ def plot_simple_optimised_harmonic(av, m):
     save_prop_to_file("app/props/constant_chord.prop", av.prop, av.dist)
     """
 
-    fig.tight_layout()
     fig.savefig('deliverables/tms/figures/radial_locus.png', dpi=300)
 
 def main():
@@ -658,9 +726,9 @@ def main():
 
     #operating_range(av)
     #optimise_lift_harmonic_ratio(av, 2, 1)
-    plot_simple_optimised_harmonic(av, 5)
+    plot_simple_optimised_harmonic(av, 4)
     
-    chord_locus_alpha(av, np.arange(0,10,2), 3)
+    #chord_locus_alpha(av, np.arange(0,10,2), 3)
     #hanson_sweep(av)
 
     plt.show()

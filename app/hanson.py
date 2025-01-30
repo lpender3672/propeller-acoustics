@@ -280,6 +280,7 @@ def hanson_secondary_variables(av, compact_chord = False):
             ).T
 
     # ensure that the integrals of the chordwise loading are equal to 1
+    prop['dCd_dxc'] = np.ones((prop['nx'], prop['nr']))
 
     prop['HX'] /= simpson(prop['HX'], xc, axis=1)[:, np.newaxis]
     prop['dCl_dxc'] /= simpson(prop['dCl_dxc'], xc, axis=1)[:, np.newaxis]
