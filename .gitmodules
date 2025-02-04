@@ -1,6 +1,6 @@
 [submodule "loading/hx711-pico-c"]
 	path = loading/hx711-pico-c
 	url = https://github.com/endail/hx711-pico-c.git
-[submodule "practical/piconewton/hx711-pico-c"]
-	path = practical/piconewton/hx711-pico-c
-	url = https://github.com/endail/hx711-pico-c
+[submodule "practical/pico/hx711-pico-c"]
+	path = practical/pico/hx711-pico-c
+	url = https://github.com/endail/hx711-pico-c.git
