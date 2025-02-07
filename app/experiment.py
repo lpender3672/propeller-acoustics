@@ -131,7 +131,18 @@ class ForceWidget(QWidget):
         self.torque_cal_curve.plot(self.calibration_data[:,1,0], self.calibration_data[:,1,1], pen='b')
 
         # TODO: save calibration data
+    
+    def interpolate_calibration(self, raw_data):
+        # curve fit to calibration data
+        thrustcoeffs = np.polyfit(self.calibration_data[:,0,0], self.calibration_data[:,0,1], 1)
+        torquecoeffs = np.polyfit(self.calibration_data[:,1,0], self.calibration_data[:,1,1], 1)
 
+        thrust = np.polyval(thrustcoeffs, raw_data[0])
+        torque = np.polyval(torquecoeffs, raw_data[1])
+
+        return np.array([thrust, torque])
+
+        
     def about_to_close(self):
         if self.serial_thread:
             self.serial_thread.stop()
