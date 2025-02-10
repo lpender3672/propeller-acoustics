@@ -1,4 +1,5 @@
 
+import nidaqmx.error_codes
 import nidaqmx.stream_readers
 import serial
 from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer
@@ -83,7 +84,11 @@ class DAQThread(QThread):
     newSample = pyqtSignal(np.ndarray)
     errorOccurred = pyqtSignal(str)
 
-    def __init__(self, parent=None, sample_rate=44000, group_samples=167, runtime=10):
+    startLogging = pyqtSignal(str, int) # finite or continous
+    finishedLogging = pyqtSignal() # is emitted when a finite log finishes
+    stopLogging = pyqtSignal() # finite or continous
+
+    def __init__(self, parent=None, sample_rate=44000, group_samples=167, runtime=0):
         super().__init__(parent)
 
         self.task = nidaqmx.Task()
@@ -94,17 +99,27 @@ class DAQThread(QThread):
         self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
         self.runtime = runtime
 
+        self.is_logging = False
+        self.log_file = None
+        self.max_buffers = None
+        self.buffers_logged = 0
+
     def add_channel(self):
         self.total_channels += 1
 
         channels_per_module = 4
         nmod = self.total_channels // channels_per_module
         nch = self.total_channels % channels_per_module
-        chstr = f"cDAQ1Mod{nmod}/ai{nch}"
+        chstr = f"cDAQ1Mod{nmod+1}/ai{nch}"
 
-        self.task.ai_channels.add_ai_voltage_chan(chstr)
+        try:
+            self.task.ai_channels.add_ai_voltage_chan(chstr)
+        except nidaqmx.DaqError as e:
+            #if e.error_type == nidaqmx.error_codes.DAQmxErrors.DEV_CANNOT_BE_ACCESSED:
+            return False
 
         self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
+        return True
 
     def remove_channel(self):
         if self.total_channels > 0:
@@ -113,7 +128,7 @@ class DAQThread(QThread):
             channels_per_module = 4
             nmod = self.total_channels // channels_per_module
             nch = self.total_channels % channels_per_module
-            chstr = f"cDAQ1Mod{nmod}/ai{nch}"
+            chstr = f"cDAQ1Mod{nmod+1}/ai{nch}"
 
             self.task.ai_channels.remove_ai_voltage_chan(chstr)
             self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
@@ -123,14 +138,14 @@ class DAQThread(QThread):
         self.task.timing.cfg_samp_clk_timing(
             self.sample_rate, sample_mode=AcquisitionType.CONTINUOUS
         )
-        self.task.register_every_n_samples_acquired_into_buffer_event(1000, self.callback)
+        self.task.register_every_n_samples_acquired_into_buffer_event(self.group_samples, self.callback)
         self.reader = AnalogMultiChannelReader(self.task.in_stream)
 
         self.task.start()
 
-        self.msleep(self.runtime * 1000)
-
-        self.task.stop()
+        if self.runtime > 0:
+            self.msleep(self.runtime * 1000)
+            self.task.stop()
         
     def callback(self, task_handle, every_n_samples_event_type, number_of_samples, callback_data):
         
@@ -138,16 +153,34 @@ class DAQThread(QThread):
             self.sample_buffer,
             self.group_samples,
         )
-        
         self.newSample.emit(self.sample_buffer)
+
+        if self.is_logging and self.log_file:
+                self.sample_buffer.T.tofile(self.log_file)
+                self.buffers_logged += 1
+                if self.max_buffers is not None and self.buffers_logged >= self.max_buffers:
+                    self.stop_logging()
+        return 0
+
+    def start_logging(self, file_name, max_buffers=None):
+        self.log_file = open(file_name, "ab")  # binary append mode
+        self.is_logging = True
+        self.max_buffers = max_buffers
+        self.buffers_logged = 0
+
+    def stop_logging(self):
+        self.is_logging = False
+        if self.log_file:
+            self.log_file.close()
+            self.log_file = None
+        self.max_buffers = None
 
     def stop(self):
         self.is_running = False
-        self.wait()
-
-    def __del__(self):
+        self.stop_logging()
         if self.task:
-            self.task.close()
+            self.task.stop()
+        self.wait()
 
 
 class Controller(QObject):
@@ -313,3 +346,56 @@ class Controller(QObject):
 
         self.odrv = odrive.find_any()
 
+
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+import pyqtgraph as pg
+import sys
+
+class CollectionTestWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Real-Time DAQ Plotter")
+        self.resize(800, 600)
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground("w")
+        self.plot_widget.setTitle("Real-Time Voltage Data", color="b", size="12pt")
+        self.plot_widget.setLabel("left", "Voltage", units="V")
+        self.plot_widget.setLabel("bottom", "Sample Index")
+        self.plot_widget.showGrid(x=True, y=True)
+        self.plot_curve = self.plot_widget.plot(pen=pg.mkPen(color="r", width=2))
+
+        layout.addWidget(self.plot_widget)
+
+        self.data_buffer = np.zeros(4400)
+        self.daq_thread = DAQThread(sample_rate=44000, group_samples=4400)
+        self.daq_thread.newSample.connect(self.update_plot)
+
+        self.daq_thread.add_channel()
+        self.daq_thread.start()
+
+    def update_plot(self, data):
+        if data.shape[0] > 0:
+            channel_data = data[0]
+            self.data_buffer = np.roll(self.data_buffer, -len(channel_data))
+            self.data_buffer[-len(channel_data):] = channel_data
+            self.plot_curve.setData(self.data_buffer)
+
+    def closeEvent(self, event):
+        self.daq_thread.stop()
+        event.accept()
+
+def main():
+    app = QApplication(sys.argv)
+    window = CollectionTestWindow()
+    window.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
