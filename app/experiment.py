@@ -1,7 +1,7 @@
 # Handles Odrive, Serial, and NI-DAQ communication
 
 
-from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QComboBox, QPushButton, QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QLabel
+from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QComboBox, QPushButton, QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtGui import QDoubleValidator
 
@@ -31,7 +31,7 @@ class FloatInputDialog(QDialog):
         self.label = QLabel(prompt)
         self.layout.addWidget(self.label)
         self.input_field = QLineEdit()
-        self.float_validator = QDoubleValidator()
+        self.float_validator = QDoubleValidator(-1e9, 1e9, 10, self)
         self.input_field.setValidator(self.float_validator)
         self.layout.addWidget(self.input_field)
         self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -42,12 +42,62 @@ class FloatInputDialog(QDialog):
         self.setLayout(self.layout)
 
     def get_value(self):
-        return float(self.input_field.text()) if self.input_field.text() else None
+        text = self.input_field.text()
+        return float(text) if text.strip() != "" else None
 
 
 class ControlWidget(QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.speed_box = QLineEdit()
+        self.speed_box.setPlaceholderText("Enter speed setpoint")
+        self.speed_box.setValidator(QDoubleValidator(-1e9, 1e9, 2, self))
+
+        self.start_button = QPushButton("Start")
+        self.stop_button = QPushButton("Stop")
+        self.stop_button.setEnabled(False)  # Initially disabled
+
+        self.output_box = QLineEdit()
+        self.output_box.setReadOnly(True)
+
+        layout = QVBoxLayout()
+
+        layout.addWidget(QLabel("Speed Setpoint:"))
+        layout.addWidget(self.speed_box)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.start_button)
+        buttons_layout.addWidget(self.stop_button)
+        layout.addLayout(buttons_layout)
+
+        layout.addWidget(QLabel("Current Speed:"))
+        layout.addWidget(self.output_box)
+
+        self.setLayout(layout)
+
+        self.controller = Controller(self)
+
+        self.start_button.clicked.connect(self.start_control)
+        self.stop_button.clicked.connect(self.stop_control)
+
+    def start_control(self):
+        setpoint = self.speed_box.text().strip()
+
+        self.speed_box.setEnabled(False)
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+
+        self.controller.start()
+
+
+    def stop_control(self):
+        self.speed_box.setEnabled(True)
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+
+        self.controller.stop()
+    
 
 class ForceWidget(QWidget):
     def __init__(self, parent = None):
@@ -56,11 +106,14 @@ class ForceWidget(QWidget):
         self.thrust_cal_plot = pg.PlotWidget()
         self.torque_cal_plot = pg.PlotWidget()
 
+        self.thrust_cal_curve = self.thrust_cal_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.torque_cal_curve = self.torque_cal_plot.plot(pen=pg.mkPen(color="b", width=2))
+
         self.thrust_plot = pg.PlotWidget()
         self.torque_plot = pg.PlotWidget()
 
         self.thrust_plot_curve = self.thrust_plot.plot(pen=pg.mkPen(color="r", width=2))
-        self.torque_plot_curve = self.torque_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.torque_plot_curve = self.torque_plot.plot(pen=pg.mkPen(color="b", width=2))
 
         self.serial_thread = None
         self.cal_thread = None
@@ -81,6 +134,8 @@ class ForceWidget(QWidget):
         layout.addWidget(self.add_calibration_point_button, 1, 0)
         layout.addWidget(self.thrust_plot, 2, 0)
         layout.addWidget(self.torque_plot, 2, 1)
+        layout.addWidget(self.thrust_cal_plot, 3, 0)
+        layout.addWidget(self.torque_cal_plot, 3, 1)
 
         self.setLayout(layout)
 
@@ -144,13 +199,17 @@ class ForceWidget(QWidget):
 
     def cal_plot_update(self, sample):
 
+        if not self.serial_thread.running:
+            self.serial_thread.running = True
+            self.serial_thread.start()
+
         _, raw_thrust, raw_torque = np.mean(sample, axis=0)
 
         mcal_dialog = FloatInputDialog("Enter Calibration Mass", "Enter the mass of the calibration weight in kg:")
         mcal_dialog.exec()
 
         mcal = mcal_dialog.get_value()
-        if not mcal:
+        if mcal is None:
             return
         
         mes_thrust = mcal * gravity * np.sqrt(2)/2
@@ -161,10 +220,11 @@ class ForceWidget(QWidget):
         self.calibration_data = np.concatenate((self.calibration_data, new_data))
 
         # add points to calibration plots
-        self.thrust_cal_curve.plot(self.calibration_data[:,0,0], self.calibration_data[:,0,1], pen='r')
-        self.torque_cal_curve.plot(self.calibration_data[:,1,0], self.calibration_data[:,1,1], pen='b')
+        self.thrust_cal_curve.setData(self.calibration_data[:,:,0], pen='r')
+        self.torque_cal_curve.setData(self.calibration_data[:,:,1], pen='b')
 
         # TODO: save calibration data
+        print(self.calibration_data)
     
     def interpolate_calibration(self, raw_data):
         # curve fit to calibration data
@@ -245,6 +305,9 @@ class AudioWidget(QWidget):
         freqs = np.fft.fftfreq(len(sample), d=dt)
 
         self.spectrum_curve.setData(freqs, np.abs(dtft))
+
+    def about_to_quit(self):
+        self.daq_thread.stop()
 
 class MainWindow(QWidget):
     def __init__(self):

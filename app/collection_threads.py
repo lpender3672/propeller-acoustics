@@ -65,20 +65,16 @@ class SerialThreadWrapper(QObject):
         self.data = np.zeros((samples, 3), dtype=np.float64)
 
         self.serial_thread.data_received.connect(self.append_data)
-
-        self.stop_timer = QTimer(is_single_shot=True)
-        self.stop_timer.timeout.connect(self.serial_thread.stop)
-
         self.serial_thread.start()
-        self.stop_timer.start(samples * 1000 / 80) # Hx711 have 80 Hz sampling rate
         
     def append_data(self, time, amp0, amp1):
         self.data[self.sample_idx] = [time, amp0, amp1]
         self.sample_idx += 1
 
         if self.sample_idx == self.samples:
-            self.data_received.emit(self.data)
+            self.sample_idx = 0
             self.serial_thread.stop()
+            self.data_received.emit(self.data)
 
 class DAQThread(QThread):
     newSample = pyqtSignal(np.ndarray)
@@ -189,6 +185,7 @@ class Controller(QObject):
     speedChanged = pyqtSignal(float)
     stateChanged = pyqtSignal(str)
     errorOccurred = pyqtSignal(str)
+    loopUpdate = pyqtSignal(float)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -218,27 +215,32 @@ class Controller(QObject):
     def stop(self):
         self.running = False
         self.timer.stop()
-        self.set_odrive_state(AxisState.AXIS_STATE_IDLE)
+        self.set_odrive_state(AxisState.IDLE)
 
     def control_loop(self):
 
         self.odrv.axis0.watchdog_feed()
 
-        motor_error = self.odrv.axis0.error
-        encoder_error = self.odrv.axis0.encoder.error
+        try:
+            motor_error = self.odrv.axis0.error
+            encoder_error = self.odrv.axis0.encoder.error
+        except AttributeError:
+            pass
 
-        if motor_error or encoder_error:
-            self.stop()
+        else:
+            if motor_error or encoder_error:
+                self.stop()
 
         if not self.running or not self.odrv:
             return
 
         try:
             self.odrv.axis0.controller.input_vel = self.current_speed
+            self.loopUpdate.emit(
+                self.odrv.axis0.vel_estimate)
 
         except Exception as e:
             self.errorOccurred.emit(f"Error in control loop: {e}")
-        
 
     def set_speed(self, speed):
         self.current_speed = speed
