@@ -53,8 +53,14 @@ class ForceWidget(QWidget):
     def __init__(self, parent = None):
         super().__init__(parent)
 
-        self.thrust_cal_curve = pg.PlotWidget()
-        self.torque_cal_curve = pg.PlotWidget()
+        self.thrust_cal_plot = pg.PlotWidget()
+        self.torque_cal_plot = pg.PlotWidget()
+
+        self.thrust_plot = pg.PlotWidget()
+        self.torque_plot = pg.PlotWidget()
+
+        self.thrust_plot_curve = self.thrust_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.torque_plot_curve = self.torque_plot.plot(pen=pg.mkPen(color="r", width=2))
 
         self.serial_thread = None
         self.cal_thread = None
@@ -65,12 +71,16 @@ class ForceWidget(QWidget):
         self.add_calibration_point_button = QPushButton("Add Calibration Point")
 
         self.calibration_data = np.zeros((0, 2, 2))
+        self.time_buffer = []
+        self.amp0_buffer = []
+        self.amp1_buffer = []
+        self.max_buffer_size = 160
 
         layout = QGridLayout()
         layout.addWidget(self.com_selector, 0, 0)
         layout.addWidget(self.add_calibration_point_button, 1, 0)
-        layout.addWidget(self.thrust_cal_curve, 2, 0)
-        layout.addWidget(self.torque_cal_curve, 2, 0)
+        layout.addWidget(self.thrust_plot, 2, 0)
+        layout.addWidget(self.torque_plot, 2, 1)
 
         self.setLayout(layout)
 
@@ -96,6 +106,30 @@ class ForceWidget(QWidget):
     def com_selected(self, idx):
         self.selected_com = self.com_selector.currentText().split(" ")[0]     
         # maybe check data on this port to see if it's valid
+        try:
+            self.serial_thread = SerialReaderThread(self.selected_com, 115200)
+            self.serial_thread.data_received.connect(self.update_live_plots) # Maybe dont update every new datapoint
+            self.serial_thread.start()
+            print("thread started")
+        except:
+            print("failed to start thread")
+            pass
+
+    def update_live_plots(self, time_val, amp0_val, amp1_val):
+        self.time_buffer.append(time_val)
+        self.amp0_buffer.append(amp0_val)
+        self.amp1_buffer.append(amp1_val)
+
+        if len(self.time_buffer) > self.max_buffer_size:
+            self.time_buffer = self.time_buffer[-self.max_buffer_size:]
+            self.amp0_buffer = self.amp0_buffer[-self.max_buffer_size:]
+            self.amp1_buffer = self.amp1_buffer[-self.max_buffer_size:]
+        
+        if len(self.time_buffer) == len(self.amp0_buffer):
+            self.thrust_plot_curve.setData(self.time_buffer, self.amp0_buffer)
+
+        if len(self.time_buffer) == len(self.amp1_buffer):
+            self.torque_plot_curve.setData(self.time_buffer, self.amp1_buffer)
 
     def start_cal(self):
         # get mass of calibration weight from user
@@ -156,11 +190,17 @@ class AudioWidget(QWidget):
         self.signal_plot = pg.PlotWidget()
         self.spectrum_plot = pg.PlotWidget()
 
+        self.signal_curve = self.signal_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.spectrum_curve = self.spectrum_plot.plot(pen=pg.mkPen(color="r", width=2))
+
         self.daq_thread = None
 
         self.bpf = 167
         self.max_harmonic = 10
         self.nyquist_factor = 2
+
+        self.sample_freq = self.nyquist_factor * self.max_harmonic * self.bpf
+        self.buffer_freq = self.nyquist_factor * self.bpf
 
         layout = QGridLayout()
 
@@ -168,28 +208,43 @@ class AudioWidget(QWidget):
         layout.addWidget(self.spectrum_plot, 1, 0)
 
         self.setLayout(layout)
+
+        self.start_daq()
+
+        
         
     def start_daq(self):
+        
         self.daq_thread = DAQThread(
             self, 
-            self.nyquist_factor * self.max_harmonic * self.bpf,
-            self.nyquist_factor * self.bpf
+            self.sample_freq,
+            self.buffer_freq
             )
-        self.daq_thread.newSample.connect(self.update_plot)
+        self.daq_thread.newSample.connect(self.update_signal_plot)
         self.daq_thread.errorOccurred.connect(self.error_occurred)
+        self.data_buffer = np.zeros(self.buffer_freq)
+
+        self.daq_thread.add_channel()
         self.daq_thread.start()
+
+    def update_signal_plot(self, data):
+        if data.shape[0] > 0:
+            channel_data = data[0]
+            self.data_buffer = np.roll(self.data_buffer, -len(channel_data))
+            self.data_buffer[-len(channel_data):] = channel_data
+            self.signal_curve.setData(self.data_buffer)
+            self.update_spectrum_plot(self.data_buffer)
     
     def error_occurred(self, error):
         print(error)
 
-    def update_plot(self, sample):
-        self.signal_plot.plot(sample)
+    def update_spectrum_plot(self, sample):
 
         dtft = np.fft.fft(sample)
         dt = 1 / (self.nyquist_factor * self.max_harmonic * self.bpf)
         freqs = np.fft.fftfreq(len(sample), d=dt)
 
-        self.spectrum_plot.plot(freqs, np.abs(dtft))
+        self.spectrum_curve.setData(freqs, np.abs(dtft))
 
 class MainWindow(QWidget):
     def __init__(self):

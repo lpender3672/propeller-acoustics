@@ -136,9 +136,11 @@ class DAQThread(QThread):
     def run(self):
 
         self.task.timing.cfg_samp_clk_timing(
-            self.sample_rate, sample_mode=AcquisitionType.CONTINUOUS
+            self.sample_rate,
+            sample_mode=AcquisitionType.CONTINUOUS,
+            samps_per_chan=self.group_samples
         )
-        self.task.register_every_n_samples_acquired_into_buffer_event(self.group_samples, self.callback)
+        self.task.register_every_n_samples_acquired_into_buffer_event(100, self.callback)
         self.reader = AnalogMultiChannelReader(self.task.in_stream)
 
         self.task.start()
