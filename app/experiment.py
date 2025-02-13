@@ -74,12 +74,20 @@ class ControlWidget(QWidget):
         layout.addWidget(QLabel("Current Speed:"))
         layout.addWidget(self.output_box)
 
+        self.speed_plot = pg.PlotWidget()
+        self.speed_curve = self.speed_plot.plot(pen=pg.mkPen(color="g", width=2))
+
+        layout.addWidget(self.speed_plot)
+
         self.setLayout(layout)
 
         self.controller = Controller(self)
 
+        self.controller.newSample.connect(self.update_graphs)
+
         self.start_button.clicked.connect(self.start_control)
         self.stop_button.clicked.connect(self.stop_control)
+        self.speed_box.editingFinished.connect(self.set_speed)
 
     def start_control(self):
         setpoint = self.speed_box.text().strip()
@@ -90,11 +98,24 @@ class ControlWidget(QWidget):
 
         self.controller.start()
 
+    def update_graphs(self, data):
+
+        self.speed_curve.setData(data[:,0])
+
 
     def stop_control(self):
         self.speed_box.setEnabled(True)
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+
+        self.controller.stop()
+
+    def set_speed(self):
+        self.controller.set_speed(
+            float(self.speed_box.text()) / 60
+        )
+
+    def about_to_quit(self):
 
         self.controller.stop()
     
@@ -237,7 +258,7 @@ class ForceWidget(QWidget):
         return np.array([thrust, torque])
 
         
-    def about_to_close(self):
+    def about_to_quit(self):
         if self.serial_thread:
             self.serial_thread.stop()
         
@@ -317,12 +338,20 @@ class MainWindow(QWidget):
         self.force_widget = ForceWidget()
         self.audio_widget = AudioWidget()
 
+        QApplication.instance().aboutToQuit.connect(self.about_to_quit)
+
         layout = QGridLayout()
         layout.addWidget(self.control_widget, 0, 0)
         layout.addWidget(self.force_widget, 1, 0)
         layout.addWidget(self.audio_widget, 1, 1, 2, 1)
 
         self.setLayout(layout)
+    
+    def about_to_quit(self):
+
+        self.control_widget.about_to_quit()
+        self.force_widget.about_to_quit()
+        self.audio_widget.about_to_quit()
 
     
 

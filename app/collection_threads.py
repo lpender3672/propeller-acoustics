@@ -5,6 +5,7 @@ import serial
 from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer
 from odrive.enums import *
 import odrive
+from odrive.utils import BulkCapture
 
 import datetime
 
@@ -130,6 +131,10 @@ class DAQThread(QThread):
             self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
 
     def run(self):
+        
+        # check if device attached
+        if not self.task.devices:
+            return
 
         self.task.timing.cfg_samp_clk_timing(
             self.sample_rate,
@@ -185,15 +190,23 @@ class Controller(QObject):
     speedChanged = pyqtSignal(float)
     stateChanged = pyqtSignal(str)
     errorOccurred = pyqtSignal(str)
-    loopUpdate = pyqtSignal(float)
+    newSample = pyqtSignal(np.ndarray)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.control_loop)
+        self.watchdog_timer = QTimer(self)
+        self.watchdog_timer.timeout.connect(self.watchdog_loop)
+
+        self.aquisition_timer = QTimer(self)
+        self.aquisition_timer.timeout.connect(self.aquisition_loop)
+
+        # velocity estimate, current control
+        self.buffer_size = 60
+        self.sample_idx = 0
+        self.data_buffer = np.zeros((self.buffer_size, 2))
 
         self.odrv = None
-        self.current_speed = 0.0
+        self.target_speed = 0.0
         self.running = False
 
         try:
@@ -201,6 +214,14 @@ class Controller(QObject):
             assert self.odrv
         except Exception as e:
             self.errorOccurred.emit(f"Error connecting to ODrive: {e}")
+
+        # controller settings
+        self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
+        self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
+        self.odrv.axis0.controller.config.vel_gain = 0.001
+        self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
+
+        self.aquisition_timer.start(5) # 200Hz
 
     def start(self):
         if not self.odrv:
@@ -210,14 +231,20 @@ class Controller(QObject):
         self.running = True
         self.odrv.axis0.config.watchdog_timeout = 0.5
         self.odrv.axis0.config.enable_watchdog = True
-        self.timer.start(100) # 200 ms
+        self.watchdog_timer.start(100)
+
+        self.set_odrive_state(AxisState.CLOSED_LOOP_CONTROL)
+        self.odrv.axis0.controller.input_vel = self.target_speed
+
 
     def stop(self):
         self.running = False
-        self.timer.stop()
+        self.odrv.axis0.config.enable_watchdog = False
+        self.watchdog_timer.stop()
+        self.odrv.axis0.controller.input_vel = 0.0
         self.set_odrive_state(AxisState.IDLE)
 
-    def control_loop(self):
+    def watchdog_loop(self):
 
         self.odrv.axis0.watchdog_feed()
 
@@ -226,25 +253,29 @@ class Controller(QObject):
             encoder_error = self.odrv.axis0.encoder.error
         except AttributeError:
             pass
-
         else:
             if motor_error or encoder_error:
+                print("hello world")
                 self.stop()
 
         if not self.running or not self.odrv:
             return
+        
+    def aquisition_loop(self):
 
-        try:
-            self.odrv.axis0.controller.input_vel = self.current_speed
-            self.loopUpdate.emit(
-                self.odrv.axis0.vel_estimate)
+        vel = self.odrv.axis0.vel_estimate
+        current = 0
 
-        except Exception as e:
-            self.errorOccurred.emit(f"Error in control loop: {e}")
+        self.data_buffer[self.sample_idx] = [vel, current]
+        self.sample_idx += 1
+
+        if self.sample_idx >= self.buffer_size:
+            self.newSample.emit(self.data_buffer.copy())
+            self.sample_idx = 0
 
     def set_speed(self, speed):
-        self.current_speed = speed
-        self.speedChanged.emit(speed)
+        self.target_speed = float(speed)
+        self.speedChanged.emit(self.target_speed)
 
     def start_motor(self):
         if not self.odrv:
@@ -302,13 +333,17 @@ class Controller(QObject):
         odrv.config.brake_resistor0.enable = False
         odrv.axis0.config.motor.motor_type = MotorType.HIGH_CURRENT
         odrv.axis0.config.motor.pole_pairs = 7
+        odrv.axis0.motor.motor_thermistor.config.r_ref = 10000
+        odrv.axis0.motor.motor_thermistor.config.beta = 3950
+        odrv.axis0.motor.motor_thermistor.config.temp_limit_lower = 280
+        odrv.axis0.motor.motor_thermistor.config.temp_limit_upper = 300
         odrv.axis0.config.motor.torque_constant = 0.0035956521739130432
         odrv.axis0.config.motor.current_soft_max = 10
         odrv.axis0.config.motor.current_hard_max = 15
         odrv.axis0.config.motor.calibration_current = 10
         odrv.axis0.config.motor.resistance_calib_max_voltage = 2
         odrv.axis0.config.calibration_lockin.current = 10
-        odrv.axis0.motor.motor_thermistor.config.enabled = False
+        odrv.axis0.motor.motor_thermistor.config.enabled = True
 
         odrv.axis0.config.torque_soft_min = -np.inf
         odrv.axis0.config.torque_soft_max = np.inf
@@ -316,24 +351,10 @@ class Controller(QObject):
         odrv.can.config.protocol = Protocol.NONE
         odrv.axis0.config.enable_watchdog = False
         odrv.config.enable_uart_a = False
-
-        ## sensorless control
-
-        odrv.axis0.controller.config.vel_limit = 358
-        odrv.axis0.config.sensorless_ramp.vel = 200
-        odrv.axis0.config.sensorless_ramp.accel = 20
-        odrv.axis0.config.sensorless_ramp.current = 10
-        odrv.axis0.controller.config.vel_gain = 0.001
-        odrv.axis0.controller.config.vel_integrator_gain = 0.005
-        odrv.axis0.config.load_encoder = EncoderId.SENSORLESS_ESTIMATOR
-        odrv.axis0.config.commutation_encoder = EncoderId.SENSORLESS_ESTIMATOR
-
-        odrv.axis0.config.sensorless_ramp.current = odrv.axis0.config.motor.current_soft_max
-
-        # set  ramped velocity input mode
-        #odrv0.axis0.controller.config.vel_ramp_rate = 0.5
-        odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
-        odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
+        odrv.axis0.config.load_encoder = EncoderId.SPI_ENCODER0
+        odrv.axis0.config.commutation_encoder = EncoderId.SPI_ENCODER0
+        odrv.spi_encoder0.config.mode = SpiEncoderMode.AMS
+        odrv.spi_encoder0.config.ncs_gpio = 12
 
         print("Applying new configuration")
 
