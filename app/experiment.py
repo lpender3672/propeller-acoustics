@@ -15,7 +15,7 @@ import pyqtgraph as pg
 from collection_threads import (
     SerialReaderThread,
     DAQThread,
-    Controller,
+    ControllerThread,
     SerialThreadWrapper
 )
 
@@ -77,17 +77,24 @@ class ControlWidget(QWidget):
         self.speed_plot = pg.PlotWidget()
         self.speed_curve = self.speed_plot.plot(pen=pg.mkPen(color="g", width=2))
 
+        self.current_plot = pg.PlotWidget()
+        self.current_curve = self.current_plot.plot(pen=pg.mkPen(color="g", width=2))
+        
+        self.motor_data = np.zeros((0,2))
+
         layout.addWidget(self.speed_plot)
 
         self.setLayout(layout)
 
-        self.controller = Controller(self)
+        self.controller = ControllerThread(self)
 
         self.controller.newSample.connect(self.update_graphs)
 
         self.start_button.clicked.connect(self.start_control)
         self.stop_button.clicked.connect(self.stop_control)
         self.speed_box.editingFinished.connect(self.set_speed)
+
+        self.controller.start()
 
     def start_control(self):
         setpoint = self.speed_box.text().strip()
@@ -96,11 +103,14 @@ class ControlWidget(QWidget):
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
 
-        self.controller.start()
+        self.controller.startMotor.emit()
 
     def update_graphs(self, data):
 
-        self.speed_curve.setData(data[:,0])
+        self.motor_data = np.append(self.motor_data, data, axis=0)
+
+        self.speed_curve.setData(self.motor_data[:,0])
+        self.current_curve.setData(self.motor_data[:,1])
 
 
     def stop_control(self):
@@ -108,16 +118,16 @@ class ControlWidget(QWidget):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
 
-        self.controller.stop()
+        self.controller.stopMotor.emit()
 
     def set_speed(self):
-        self.controller.set_speed(
+        self.controller.setSpeed.emit(
             float(self.speed_box.text()) / 60
         )
 
     def about_to_quit(self):
 
-        self.controller.stop()
+        self.controller.stop_thread()
     
 
 class ForceWidget(QWidget):
@@ -342,11 +352,17 @@ class MainWindow(QWidget):
 
         layout = QGridLayout()
         layout.addWidget(self.control_widget, 0, 0)
-        layout.addWidget(self.force_widget, 1, 0)
-        layout.addWidget(self.audio_widget, 1, 1, 2, 1)
+        layout.addWidget(self.force_widget, 0, 1)
+        layout.addWidget(self.audio_widget, 0, 2)
 
         self.setLayout(layout)
-    
+
+    def resizeEvent(self, event):
+        width = self.width() // 3
+        self.control_widget.setFixedWidth(width)
+        self.force_widget.setFixedWidth(width)
+        super().resizeEvent(event)
+
     def about_to_quit(self):
 
         self.control_widget.about_to_quit()

@@ -186,28 +186,44 @@ class DAQThread(QThread):
         self.wait()
 
 
-class Controller(QObject):
-    speedChanged = pyqtSignal(float)
+class ControllerThread(QThread):
+    setSpeed = pyqtSignal(float)
+    startMotor = pyqtSignal()
+    stopMotor = pyqtSignal()
     stateChanged = pyqtSignal(str)
     errorOccurred = pyqtSignal(str)
     newSample = pyqtSignal(np.ndarray)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, sample_rate = 200):
         super().__init__(parent)
-        self.watchdog_timer = QTimer(self)
-        self.watchdog_timer.timeout.connect(self.watchdog_loop)
-
-        self.aquisition_timer = QTimer(self)
-        self.aquisition_timer.timeout.connect(self.aquisition_loop)
+        
+        # timers removed as turned into an independent thread
+        #self.watchdog_timer = QTimer(self)
+        #self.watchdog_timer.timeout.connect(self.watchdog_loop)
+        #self.aquisition_timer = QTimer(self)
+        #self.aquisition_timer.timeout.connect(self.aquisition_loop)
 
         # velocity estimate, current control
+        self.sample_rate = sample_rate
         self.buffer_size = 60
         self.sample_idx = 0
         self.data_buffer = np.zeros((self.buffer_size, 2))
 
+        self.watchdog_dt = 0.1 # s
+        self.samples_per_watchdog = self.watchdog_dt * self.sample_rate
+
         self.odrv = None
         self.target_speed = 0.0
-        self.running = False
+        self.thread_running = True # thread running
+        self.motor_running = False
+
+        self.setSpeed.connect(self.set_speed)
+        self.startMotor.connect(self.start_motor)
+        self.stopMotor.connect(self.stop_motor)
+
+        #self.aquisition_timer.start(5) # 200Hz
+
+    def run(self):
 
         try:
             self.odrv = odrive.find_any()
@@ -221,50 +237,59 @@ class Controller(QObject):
         self.odrv.axis0.controller.config.vel_gain = 0.001
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
 
-        self.aquisition_timer.start(5) # 200Hz
-
-    def start(self):
-        if not self.odrv:
-            self.errorOccurred.emit("No ODrive connection. Cannot start control loop.")
-            return
-
-        self.running = True
-        self.odrv.axis0.config.watchdog_timeout = 0.5
+        self.odrv.axis0.config.watchdog_timeout = 5 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
-        self.watchdog_timer.start(100)
+        #self.watchdog_timer.start(100)
 
-        self.set_odrive_state(AxisState.CLOSED_LOOP_CONTROL)
-        self.odrv.axis0.controller.input_vel = self.target_speed
+        loop_idx = 0
 
+        while self.thread_running:
 
-    def stop(self):
-        self.running = False
-        self.odrv.axis0.config.enable_watchdog = False
-        self.watchdog_timer.stop()
-        self.odrv.axis0.controller.input_vel = 0.0
-        self.set_odrive_state(AxisState.IDLE)
+            self.aquisition_loop()
+            if loop_idx % self.samples_per_watchdog == 0:
+                self.watchdog_loop()
+
+            if self.motor_running:
+                pass # maybe do something
+
+            self.msleep(int(1000/self.sample_rate))
+            loop_idx += 1
+
+    def stop_thread(self):
+        self.stop_motor()
+        self.thread_running = False
+        self.exit()
+        self.wait()
 
     def watchdog_loop(self):
 
-        self.odrv.axis0.watchdog_feed()
-
         try:
             motor_error = self.odrv.axis0.error
+        except AttributeError:
+            pass # no error?
+        else:
+            print(motor_error)
+            self.stop()
+
+        try:
             encoder_error = self.odrv.axis0.encoder.error
         except AttributeError:
-            pass
+            pass # no error?
         else:
-            if motor_error or encoder_error:
-                print("hello world")
-                self.stop()
-
-        if not self.running or not self.odrv:
-            return
+            print(encoder_error)
+            self.stop()
+        
+        # feed the beast
+        self.odrv.axis0.watchdog_feed()
         
     def aquisition_loop(self):
 
         vel = self.odrv.axis0.vel_estimate
-        current = 0
+
+        try:
+            current = self.odrv.axis0.motor.current_control.Iq_measured
+        except AttributeError:
+            current = 0
 
         self.data_buffer[self.sample_idx] = [vel, current]
         self.sample_idx += 1
@@ -275,16 +300,15 @@ class Controller(QObject):
 
     def set_speed(self, speed):
         self.target_speed = float(speed)
-        self.speedChanged.emit(self.target_speed)
 
     def start_motor(self):
         if not self.odrv:
             self.errorOccurred.emit("No ODrive connection. Cannot start motor.")
             return
-
         try:
-            self.set_odrive_state(AxisState.AXIS_STATE_CLOSED_LOOP_CONTROL)
-            self.running = True
+            self.set_odrive_state(AxisState.CLOSED_LOOP_CONTROL)
+            self.odrv.axis0.controller.input_vel = self.target_speed
+            self.motor_running = True
         except Exception as e:
             self.errorOccurred.emit(f"Error starting motor: {e}")
 
@@ -292,12 +316,10 @@ class Controller(QObject):
         if not self.odrv:
             self.errorOccurred.emit("No ODrive connection. Cannot stop motor.")
             return
-
         try:
-            self.running = False
+            self.motor_running = False
             self.odrv.axis0.controller.input_vel = 0.0
-            self.set_odrive_state(AxisState.AXIS_STATE_IDLE)
-            print("Motor stopped.")
+            self.set_odrive_state(AxisState.IDLE)
         except Exception as e:
             print(f"Error stopping motor: {e}")
 
@@ -305,13 +327,11 @@ class Controller(QObject):
         if not self.odrv:
             self.errorOccurred.emit("No ODrive connection.")
             return
-
         try:
             self.odrv.axis0.requested_state = state
             self.stateChanged.emit(f"ODrive state changed to {state}")
         except Exception as e:
             self.errorOccurred.emit(f"Failed to set ODrive state: {e}")
-            self.running = False
 
     def reset_config(self):
         print("Erasing previous configuration")
