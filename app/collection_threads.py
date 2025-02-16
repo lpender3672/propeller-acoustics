@@ -2,7 +2,7 @@
 import nidaqmx.error_codes
 import nidaqmx.stream_readers
 import serial
-from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer
+from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer, QElapsedTimer
 from odrive.enums import *
 import odrive
 from odrive.utils import BulkCapture
@@ -26,12 +26,18 @@ import numpy as np
 import fibre
 
 class SerialReaderThread(QThread):
-    data_received = pyqtSignal(float, int, int)
+    data_received = pyqtSignal(np.ndarray)
+    start_sampling_signal = pyqtSignal(int)
+    sampling_finished = pyqtSignal(np.ndarray)
 
     def __init__(self, serial_port, baud_rate):
         super().__init__()
         self.serial = serial.Serial(serial_port, baud_rate, timeout=1)
         self.running = True
+
+        self.sampling = False
+
+        self.start_sampling_signal.connect(self.start_sampling)
 
     def run(self):
         if not self.serial.is_open:
@@ -45,37 +51,27 @@ class SerialReaderThread(QThread):
                     time_val = float(time_str.strip())
                     amp0_val = int(amp0_str.strip())
                     amp1_val = int(amp1_str.strip())
-                    self.data_received.emit(time_val, amp0_val, amp1_val)
+                    datapoint = np.array([time_val, amp0_val, amp1_val])
+
+                    if self.sampling:
+                        self.sample_data[self.sample_idx] = datapoint
+                        self.sample_idx += 1
+                        if self.sample_idx == self.sample_data.shape[0]:
+                            self.sampling = False
+                            self.sampling_finished.emit(self.sample_data)
+
+                    self.data_received.emit(datapoint)
             except Exception as e:
                 print(f"Error reading: pico be buggin {e}")
+        
+    def start_sampling(self, nsamples):
+        self.sampling = True
+        self.sample_idx = 0
+        self.sample_data = np.zeros((nsamples, 3))
 
     def stop(self):
         self.running = False
         self.serial.close()
-
-class SerialThreadWrapper(QObject):
-    # simply saves and parses the data from the serial thread
-    data_received = pyqtSignal(np.ndarray)
-    
-    def __init__(self, serial_port, baud_rate, samples):
-        super().__init__()
-        self.serial_thread = SerialReaderThread(serial_port, baud_rate)
-        
-        self.samples = samples
-        self.sample_idx = 0
-        self.data = np.zeros((samples, 3), dtype=np.float64)
-
-        self.serial_thread.data_received.connect(self.append_data)
-        self.serial_thread.start()
-        
-    def append_data(self, time, amp0, amp1):
-        self.data[self.sample_idx] = [time, amp0, amp1]
-        self.sample_idx += 1
-
-        if self.sample_idx == self.samples:
-            self.sample_idx = 0
-            self.serial_thread.stop()
-            self.data_received.emit(self.data)
 
 class DAQThread(QThread):
     newSample = pyqtSignal(np.ndarray)
@@ -205,12 +201,13 @@ class ControllerThread(QThread):
 
         # velocity estimate, current control
         self.sample_rate = sample_rate
-        self.buffer_size = 60
+        self.dt_us = 1000000 / self.sample_rate
+        self.buffer_size = 10
         self.sample_idx = 0
-        self.data_buffer = np.zeros((self.buffer_size, 2))
+        self.data_buffer = np.zeros((self.buffer_size, 4))
 
         self.watchdog_dt = 0.1 # s
-        self.samples_per_watchdog = self.watchdog_dt * self.sample_rate
+        self.samples_per_watchdog = int(self.watchdog_dt * self.sample_rate)
 
         self.odrv = None
         self.target_speed = 0.0
@@ -220,6 +217,8 @@ class ControllerThread(QThread):
         self.setSpeed.connect(self.set_speed)
         self.startMotor.connect(self.start_motor)
         self.stopMotor.connect(self.stop_motor)
+
+        self.timer = QElapsedTimer() # time cannot be obtained from Odrive
 
         #self.aquisition_timer.start(5) # 200Hz
 
@@ -234,16 +233,20 @@ class ControllerThread(QThread):
         # controller settings
         self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
-        self.odrv.axis0.controller.config.vel_gain = 0.001
+        self.odrv.axis0.controller.config.vel_gain = 0.002
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
 
-        self.odrv.axis0.config.watchdog_timeout = 5 * self.watchdog_dt
+        self.odrv.axis0.config.watchdog_timeout = 10 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
         #self.watchdog_timer.start(100)
+
+        self.timer.start()
 
         loop_idx = 0
 
         while self.thread_running:
+            
+            loop_start_time = self.timer.nsecsElapsed()
 
             self.aquisition_loop()
             if loop_idx % self.samples_per_watchdog == 0:
@@ -252,7 +255,15 @@ class ControllerThread(QThread):
             if self.motor_running:
                 pass # maybe do something
 
-            self.msleep(int(1000/self.sample_rate))
+            loop_dt_us = (self.timer.nsecsElapsed() - loop_start_time) / 1000
+
+            if loop_dt_us > self.dt_us:
+                ratio = loop_dt_us/self.dt_us
+                if ratio > 5:
+                    print(f"Warning slow odrive communication {ratio:.2f}")
+            else:
+                self.usleep(int(self.dt_us - loop_dt_us))
+
             loop_idx += 1
 
     def stop_thread(self):
@@ -287,11 +298,17 @@ class ControllerThread(QThread):
         vel = self.odrv.axis0.vel_estimate
 
         try:
-            current = self.odrv.axis0.motor.current_control.Iq_measured
+            current = self.odrv.axis0.motor.foc.Iq_measured
         except AttributeError:
             current = 0
+        
+        try:
+            temperature = self.odrv.axis0.motor.motor_thermistor.temperature
+        except AttributeError:
+            temperature = 0
 
-        self.data_buffer[self.sample_idx] = [vel, current]
+        thetime = self.timer.elapsed() / 1000
+        self.data_buffer[self.sample_idx] = [thetime, vel, current, temperature]
         self.sample_idx += 1
 
         if self.sample_idx >= self.buffer_size:

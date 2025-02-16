@@ -15,8 +15,7 @@ import pyqtgraph as pg
 from collection_threads import (
     SerialReaderThread,
     DAQThread,
-    ControllerThread,
-    SerialThreadWrapper
+    ControllerThread
 )
 
 gravity = 9.81 # m/s^2
@@ -76,17 +75,20 @@ class ControlWidget(QWidget):
 
         self.speed_plot = pg.PlotWidget()
         self.speed_curve = self.speed_plot.plot(pen=pg.mkPen(color="g", width=2))
-
         self.current_plot = pg.PlotWidget()
         self.current_curve = self.current_plot.plot(pen=pg.mkPen(color="g", width=2))
+        self.temperature_curve = self.current_plot.plot(pen=pg.mkPen(color="b", width=2))
         
-        self.motor_data = np.zeros((0,2))
+        self.sample_rate = 200
+        self.max_buffer_size = 10 * self.sample_rate # 10 seconds
+        self.motor_data = np.zeros((self.max_buffer_size, 4))
 
         layout.addWidget(self.speed_plot)
+        layout.addWidget(self.current_plot)
 
         self.setLayout(layout)
 
-        self.controller = ControllerThread(self)
+        self.controller = ControllerThread(self, self.sample_rate)
 
         self.controller.newSample.connect(self.update_graphs)
 
@@ -105,12 +107,15 @@ class ControlWidget(QWidget):
 
         self.controller.startMotor.emit()
 
-    def update_graphs(self, data):
+    def update_graphs(self, new_data):
 
-        self.motor_data = np.append(self.motor_data, data, axis=0)
+        self.motor_data = np.roll(self.motor_data, -new_data.shape[0], axis=0)
+        self.motor_data[-new_data.shape[0]:] = new_data
 
-        self.speed_curve.setData(self.motor_data[:,0])
-        self.current_curve.setData(self.motor_data[:,1])
+        self.speed_curve.setData(self.motor_data[:,0], self.motor_data[:,1])
+        self.current_curve.setData(self.motor_data[:,0], self.motor_data[:,2])
+        self.temperature_curve.setData(self.motor_data[:,0], self.motor_data[:,3])
+
 
 
     def stop_control(self):
@@ -137,8 +142,12 @@ class ForceWidget(QWidget):
         self.thrust_cal_plot = pg.PlotWidget()
         self.torque_cal_plot = pg.PlotWidget()
 
-        self.thrust_cal_curve = self.thrust_cal_plot.plot(pen=pg.mkPen(color="r", width=2))
-        self.torque_cal_curve = self.torque_cal_plot.plot(pen=pg.mkPen(color="b", width=2))
+        self.thrust_cal_points = self.thrust_cal_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.thrust_cal_fit = self.thrust_cal_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.thrust_cal_unc = self.thrust_cal_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.torque_cal_points = self.torque_cal_plot.plot(pen=pg.mkPen(color="b", width=2))
+        self.torque_cal_fit = self.torque_cal_plot.plot(pen=pg.mkPen(color="b", width=2))
+        self.torque_cal_unc = self.torque_cal_plot.plot(pen=pg.mkPen(color="b", width=2))
 
         self.thrust_plot = pg.PlotWidget()
         self.torque_plot = pg.PlotWidget()
@@ -147,7 +156,6 @@ class ForceWidget(QWidget):
         self.torque_plot_curve = self.torque_plot.plot(pen=pg.mkPen(color="b", width=2))
 
         self.serial_thread = None
-        self.cal_thread = None
 
         self.com_selector = QComboBox()
         self.selected_com = None
@@ -155,10 +163,10 @@ class ForceWidget(QWidget):
         self.add_calibration_point_button = QPushButton("Add Calibration Point")
 
         self.calibration_data = np.zeros((0, 2, 2))
-        self.time_buffer = []
-        self.amp0_buffer = []
-        self.amp1_buffer = []
         self.max_buffer_size = 160
+        self.force_data = np.zeros((self.max_buffer_size, 3))
+        self.force_data[:,1:] = np.nan
+        self.t0 = None
 
         layout = QGridLayout()
         layout.addWidget(self.com_selector, 0, 0)
@@ -194,45 +202,36 @@ class ForceWidget(QWidget):
         # maybe check data on this port to see if it's valid
         try:
             self.serial_thread = SerialReaderThread(self.selected_com, 115200)
-            self.serial_thread.data_received.connect(self.update_live_plots) # Maybe dont update every new datapoint
-            self.serial_thread.start()
             print("thread started")
-        except:
-            print("failed to start thread")
-            pass
+        except Exception as e:
+            print("failed to start thread:,", e)
+            return
 
-    def update_live_plots(self, time_val, amp0_val, amp1_val):
-        self.time_buffer.append(time_val)
-        self.amp0_buffer.append(amp0_val)
-        self.amp1_buffer.append(amp1_val)
+        self.serial_thread.data_received.connect(self.update_live_plots) # Maybe dont update every new datapoint
+        self.serial_thread.sampling_finished.connect(self.cal_plot_update)
+        self.serial_thread.start()
 
-        if len(self.time_buffer) > self.max_buffer_size:
-            self.time_buffer = self.time_buffer[-self.max_buffer_size:]
-            self.amp0_buffer = self.amp0_buffer[-self.max_buffer_size:]
-            self.amp1_buffer = self.amp1_buffer[-self.max_buffer_size:]
+    def update_live_plots(self, new_data):
+        time_val, amp0_val, amp1_val = new_data
+
+        if self.t0 is None:
+            self.t0 = time_val
+
+        newpoint = [time_val - self.t0, amp0_val, amp1_val]
+        self.force_data = np.roll(self.force_data, -1, axis=0)
+        self.force_data[-1] = newpoint
         
-        if len(self.time_buffer) == len(self.amp0_buffer):
-            self.thrust_plot_curve.setData(self.time_buffer, self.amp0_buffer)
-
-        if len(self.time_buffer) == len(self.amp1_buffer):
-            self.torque_plot_curve.setData(self.time_buffer, self.amp1_buffer)
+        self.thrust_plot_curve.setData(self.force_data[:,0], self.force_data[:,1])
+        self.torque_plot_curve.setData(self.force_data[:,0], self.force_data[:,2])
 
     def start_cal(self):
         # get mass of calibration weight from user
-        if not self.selected_com:
+        if not self.serial_thread.isRunning():
             return
+        self.serial_thread.start_sampling_signal.emit(40) # 40 samples
 
-        if self.serial_thread:
-            self.serial_thread.stop()
-
-        self.cal_thread = SerialThreadWrapper(self.selected_com, 115200, 40)
-        self.cal_thread.data_received.connect(self.cal_plot_update)
 
     def cal_plot_update(self, sample):
-
-        if not self.serial_thread.running:
-            self.serial_thread.running = True
-            self.serial_thread.start()
 
         _, raw_thrust, raw_torque = np.mean(sample, axis=0)
 
@@ -251,16 +250,23 @@ class ForceWidget(QWidget):
         self.calibration_data = np.concatenate((self.calibration_data, new_data))
 
         # add points to calibration plots
-        self.thrust_cal_curve.setData(self.calibration_data[:,:,0], pen='r')
-        self.torque_cal_curve.setData(self.calibration_data[:,:,1], pen='b')
+        self.thrust_cal_points.setData(self.calibration_data[:,:,0], pen=None, symbol='o', symbolBrush='r')
+        self.torque_cal_points.setData(self.calibration_data[:,:,1], pen=None, symbol='o', symbolBrush='b')
+
+        thrust_x = np.linspace(np.min(self.calibration_data[:,0,0]), np.max(self.calibration_data[:,0,0]), 50)
+        torque_x = np.linspace(np.min(self.calibration_data[:,0,1]), np.max(self.calibration_data[:,0,1]), 50)
+        thrust_y, torque_y = self.interpolate_calibration([thrust_x, torque_x])
+
+        self.thrust_cal_fit.setData(thrust_x, thrust_y)
+        self.torque_cal_fit.setData(torque_x, torque_y)
 
         # TODO: save calibration data
         print(self.calibration_data)
     
     def interpolate_calibration(self, raw_data):
         # curve fit to calibration data
-        thrustcoeffs = np.polyfit(self.calibration_data[:,0,0], self.calibration_data[:,0,1], 1)
-        torquecoeffs = np.polyfit(self.calibration_data[:,1,0], self.calibration_data[:,1,1], 1)
+        thrustcoeffs = np.polyfit(self.calibration_data[:,0,0], self.calibration_data[:,1,0], 1)
+        torquecoeffs = np.polyfit(self.calibration_data[:,0,1], self.calibration_data[:,1,1], 1)
 
         thrust = np.polyval(thrustcoeffs, raw_data[0])
         torque = np.polyval(torquecoeffs, raw_data[1])
@@ -321,8 +327,8 @@ class AudioWidget(QWidget):
     def update_signal_plot(self, data):
         if data.shape[0] > 0:
             channel_data = data[0]
-            self.data_buffer = np.roll(self.data_buffer, -len(channel_data))
-            self.data_buffer[-len(channel_data):] = channel_data
+            self.data_buffer = np.roll(self.data_buffer, -channel_data.shape[0], axis=0)
+            self.data_buffer[-channel_data.shape[0]:] = channel_data
             self.signal_curve.setData(self.data_buffer)
             self.update_spectrum_plot(self.data_buffer)
     
