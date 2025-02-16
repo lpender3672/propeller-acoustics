@@ -10,6 +10,7 @@ import serial.tools.list_ports
 import numpy as np
 from pathlib import Path
 
+import os
 import pyqtgraph as pg
 
 from collection_threads import (
@@ -139,6 +140,9 @@ class ForceWidget(QWidget):
     def __init__(self, parent = None):
         super().__init__(parent)
 
+        self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+        self.cal_file = self.app_dir / "calibration.npy"
+
         self.thrust_cal_plot = pg.PlotWidget()
         self.torque_cal_plot = pg.PlotWidget()
 
@@ -162,7 +166,6 @@ class ForceWidget(QWidget):
 
         self.add_calibration_point_button = QPushButton("Add Calibration Point")
 
-        self.calibration_data = np.zeros((0, 2, 2))
         self.max_buffer_size = 160
         self.force_data = np.zeros((self.max_buffer_size, 3))
         self.force_data[:,1:] = np.nan
@@ -180,6 +183,13 @@ class ForceWidget(QWidget):
 
         self.com_selector.currentIndexChanged.connect(self.com_selected)
         self.add_calibration_point_button.clicked.connect(self.start_cal)
+
+        try:
+            self.calibration_data = np.load(self.cal_file)
+        except (FileNotFoundError):
+            self.calibration_data = np.zeros((0, 2, 2))
+        else:
+            self.update_cal_graph()
 
         self.scan_com_ports()
 
@@ -230,7 +240,6 @@ class ForceWidget(QWidget):
             return
         self.serial_thread.start_sampling_signal.emit(40) # 40 samples
 
-
     def cal_plot_update(self, sample):
 
         _, raw_thrust, raw_torque = np.mean(sample, axis=0)
@@ -248,8 +257,10 @@ class ForceWidget(QWidget):
         new_data = np.array([[[raw_thrust, raw_torque],
                               [mes_thrust, mes_torque]]])
         self.calibration_data = np.concatenate((self.calibration_data, new_data))
-
-        # add points to calibration plots
+        np.save(self.cal_file, self.calibration_data)
+        self.update_cal_graph()
+    
+    def update_cal_graph(self):
         self.thrust_cal_points.setData(self.calibration_data[:,:,0], pen=None, symbol='o', symbolBrush='r')
         self.torque_cal_points.setData(self.calibration_data[:,:,1], pen=None, symbol='o', symbolBrush='b')
 
@@ -259,9 +270,6 @@ class ForceWidget(QWidget):
 
         self.thrust_cal_fit.setData(thrust_x, thrust_y)
         self.torque_cal_fit.setData(torque_x, torque_y)
-
-        # TODO: save calibration data
-        print(self.calibration_data)
     
     def interpolate_calibration(self, raw_data):
         # curve fit to calibration data
@@ -277,8 +285,8 @@ class ForceWidget(QWidget):
     def about_to_quit(self):
         if self.serial_thread:
             self.serial_thread.stop()
-        
         # maybe save calibration data
+
 
 class AudioWidget(QWidget):
     def __init__(self, parent = None):
