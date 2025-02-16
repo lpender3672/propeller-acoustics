@@ -19,7 +19,7 @@ from nidaqmx.constants import (
     LoggingMode,
     LoggingOperation,
 )
-
+from scipy.signal import butter, filtfilt
 
 
 import numpy as np
@@ -27,8 +27,9 @@ import fibre
 
 class SerialReaderThread(QThread):
     data_received = pyqtSignal(np.ndarray)
-    start_sampling_signal = pyqtSignal(int)
-    sampling_finished = pyqtSignal(np.ndarray)
+
+    startLogging = pyqtSignal(int) # finite log only
+    finishedLogging = pyqtSignal(np.ndarray) # is emitted when a finite log finishes
 
     def __init__(self, serial_port, baud_rate):
         super().__init__()
@@ -37,7 +38,7 @@ class SerialReaderThread(QThread):
 
         self.sampling = False
 
-        self.start_sampling_signal.connect(self.start_sampling)
+        self.startLogging.connect(self.start_logging)
 
     def run(self):
         if not self.serial.is_open:
@@ -58,13 +59,13 @@ class SerialReaderThread(QThread):
                         self.sample_idx += 1
                         if self.sample_idx == self.sample_data.shape[0]:
                             self.sampling = False
-                            self.sampling_finished.emit(self.sample_data)
+                            self.finishedLogging.emit(self.sample_data)
 
                     self.data_received.emit(datapoint)
             except Exception as e:
                 print(f"Error reading: pico be buggin {e}")
         
-    def start_sampling(self, nsamples):
+    def start_logging(self, nsamples):
         self.sampling = True
         self.sample_idx = 0
         self.sample_data = np.zeros((nsamples, 3))
@@ -96,6 +97,9 @@ class DAQThread(QThread):
         self.log_file = None
         self.max_buffers = None
         self.buffers_logged = 0
+
+        self.startLogging.connect(self.start_logging)
+        self.stopLogging.connect(self.stop_logging)
 
     def add_channel(self):
         self.total_channels += 1
@@ -161,14 +165,15 @@ class DAQThread(QThread):
                     self.stop_logging()
         return 0
 
-    def start_logging(self, file_name, max_buffers=None):
+    def start_logging(self, file_name, nbuffers=None):
         self.log_file = open(file_name, "ab")  # binary append mode
         self.is_logging = True
-        self.max_buffers = max_buffers
+        self.max_buffers = nbuffers
         self.buffers_logged = 0
 
     def stop_logging(self):
         self.is_logging = False
+        self.finishedLogging.emit()
         if self.log_file:
             self.log_file.close()
             self.log_file = None
@@ -190,7 +195,14 @@ class ControllerThread(QThread):
     errorOccurred = pyqtSignal(str)
     newSample = pyqtSignal(np.ndarray)
 
-    def __init__(self, parent=None, sample_rate = 200):
+    startLogging = pyqtSignal(int) # finite or continous
+    finishedLogging = pyqtSignal(np.ndarray) # is emitted when a finite log finishes
+
+    startCheckingSettled = pyqtSignal()
+    stopCheckingSettled = pyqtSignal()
+    speedSettled = pyqtSignal()
+
+    def __init__(self, parent=None, sample_rate = 200, buffer_size = 10):
         super().__init__(parent)
         
         # timers removed as turned into an independent thread
@@ -202,9 +214,14 @@ class ControllerThread(QThread):
         # velocity estimate, current control
         self.sample_rate = sample_rate
         self.dt_us = 1000000 / self.sample_rate
-        self.buffer_size = 10
+        self.buffer_size = buffer_size
         self.sample_idx = 0
         self.data_buffer = np.zeros((self.buffer_size, 4))
+
+        self.log_buffers = 0
+        self.logging = False
+
+        self.checking_settled = False
 
         self.watchdog_dt = 0.1 # s
         self.samples_per_watchdog = int(self.watchdog_dt * self.sample_rate)
@@ -220,7 +237,15 @@ class ControllerThread(QThread):
 
         self.timer = QElapsedTimer() # time cannot be obtained from Odrive
 
-        #self.aquisition_timer.start(5) # 200Hz
+        self.startLogging.connect(self.start_logging)
+        self.startCheckingSettled.connect(self.start_checking_settled)
+        self.stopCheckingSettled.connect(self.stop_checking_settled)
+
+        cutoff_freq = 10  # Hz
+        order = 3
+        nyquist = 0.5 * self.sample_rate  # Nyquist frequency
+        normal_cutoff = cutoff_freq / nyquist  # Normalize cutoff frequency
+        self.b, self.a = butter(order, normal_cutoff, btype='low', analog=False)
 
     def run(self):
 
@@ -235,6 +260,7 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
         self.odrv.axis0.controller.config.vel_gain = 0.002
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
+        self.odrv.axis0.controller.config.vel_limit = 200
 
         self.odrv.axis0.config.watchdog_timeout = 10 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
@@ -260,7 +286,8 @@ class ControllerThread(QThread):
             if loop_dt_us > self.dt_us:
                 ratio = loop_dt_us/self.dt_us
                 if ratio > 5:
-                    print(f"Warning slow odrive communication {ratio:.2f}")
+                    pass
+                    #print(f"Warning slow odrive communication {ratio:.2f}")
             else:
                 self.usleep(int(self.dt_us - loop_dt_us))
 
@@ -295,7 +322,7 @@ class ControllerThread(QThread):
         
     def aquisition_loop(self):
 
-        vel = self.odrv.axis0.vel_estimate
+        vel = 60 * self.odrv.axis0.vel_estimate
 
         try:
             current = self.odrv.axis0.motor.foc.Iq_measured
@@ -312,11 +339,47 @@ class ControllerThread(QThread):
         self.sample_idx += 1
 
         if self.sample_idx >= self.buffer_size:
-            self.newSample.emit(self.data_buffer.copy())
+            self.newSample.emit(self.data_buffer)
             self.sample_idx = 0
 
+            if self.checking_settled:
+                fltrd = filtfilt(self.b, self.a,self.log_buffer[:,1])
+                if np.isclose(fltrd, 60 * self.target_speed, atol=5, rtol=0.01).all():
+                    self.speedSettled.emit()
+                    self.checking_settled = False
+                    self.logging = False
+                else:
+                    pass
+                
+            if self.logging:
+                self.log_buffer = np.roll(self.log_buffer, -self.buffer_size, axis=0)
+                self.log_buffer[-self.buffer_size:] = self.data_buffer
+                self.log_idx += 1
+
+                if self.log_idx == self.log_buffers and not self.checking_settled:
+                    self.logging = False
+                    self.finishedLogging.emit(self.log_buffer)
+
+
+    def start_logging(self, log_buffers = 1):
+        self.logging = True
+        self.log_buffers = log_buffers
+        self.log_buffer = np.zeros((log_buffers * self.buffer_size, 4))
+        self.log_idx = 0
+
+    def start_checking_settled(self):
+        self.checking_settled = True
+        self.start_logging(2) # 2 buffers
+
+    def stop_checking_settled(self):
+        self.checking_settled = False
+        self.logging = False
+        
     def set_speed(self, speed):
         self.target_speed = float(speed)
+        # this originally wasnt here but in the pyramid test its better to not stop and start the motor
+        print(self.target_speed)
+        self.odrv.axis0.controller.input_vel = self.target_speed
 
     def start_motor(self):
         if not self.odrv:

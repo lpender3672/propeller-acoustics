@@ -1,8 +1,8 @@
 # Handles Odrive, Serial, and NI-DAQ communication
 
 
-from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QComboBox, QPushButton, QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QComboBox, QPushButton, QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QFileDialog
+from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QDoubleValidator
 
 import serial.tools.list_ports
@@ -81,15 +81,17 @@ class ControlWidget(QWidget):
         self.temperature_curve = self.current_plot.plot(pen=pg.mkPen(color="b", width=2))
         
         self.sample_rate = 200
-        self.max_buffer_size = 10 * self.sample_rate # 10 seconds
-        self.motor_data = np.zeros((self.max_buffer_size, 4))
+        self.sample_buffer_size = 10
+        self.graph_buffer_size = 10 * self.sample_rate # 10 seconds
+        self.motor_data = np.zeros((self.graph_buffer_size, 4))
+        self.motor_data[:,1:] = np.nan
 
         layout.addWidget(self.speed_plot)
         layout.addWidget(self.current_plot)
 
         self.setLayout(layout)
 
-        self.controller = ControllerThread(self, self.sample_rate)
+        self.controller = ControllerThread(self, self.sample_rate, self.sample_buffer_size)
 
         self.controller.newSample.connect(self.update_graphs)
 
@@ -100,7 +102,6 @@ class ControlWidget(QWidget):
         self.controller.start()
 
     def start_control(self):
-        setpoint = self.speed_box.text().strip()
 
         self.speed_box.setEnabled(False)
         self.start_button.setEnabled(False)
@@ -116,7 +117,6 @@ class ControlWidget(QWidget):
         self.speed_curve.setData(self.motor_data[:,0], self.motor_data[:,1])
         self.current_curve.setData(self.motor_data[:,0], self.motor_data[:,2])
         self.temperature_curve.setData(self.motor_data[:,0], self.motor_data[:,3])
-
 
 
     def stop_control(self):
@@ -166,20 +166,21 @@ class ForceWidget(QWidget):
 
         self.add_calibration_point_button = QPushButton("Add Calibration Point")
 
+        self.sample_rate = 80
         self.max_buffer_size = 160
         self.force_data = np.zeros((self.max_buffer_size, 3))
         self.force_data[:,1:] = np.nan
         self.t0 = None
 
-        layout = QGridLayout()
-        layout.addWidget(self.com_selector, 0, 0)
-        layout.addWidget(self.add_calibration_point_button, 1, 0)
-        layout.addWidget(self.thrust_plot, 2, 0)
-        layout.addWidget(self.torque_plot, 2, 1)
-        layout.addWidget(self.thrust_cal_plot, 3, 0)
-        layout.addWidget(self.torque_cal_plot, 3, 1)
+        self.layout = QGridLayout()
+        self.layout.addWidget(self.com_selector, 0, 0)
+        self.layout.addWidget(self.add_calibration_point_button, 1, 0)
+        self.layout.addWidget(self.thrust_plot, 2, 0)
+        self.layout.addWidget(self.torque_plot, 2, 1)
+        self.layout.addWidget(self.thrust_cal_plot, 3, 0)
+        self.layout.addWidget(self.torque_cal_plot, 3, 1)
 
-        self.setLayout(layout)
+        self.setLayout(self.layout)
 
         self.com_selector.currentIndexChanged.connect(self.com_selected)
         self.add_calibration_point_button.clicked.connect(self.start_cal)
@@ -214,11 +215,11 @@ class ForceWidget(QWidget):
             self.serial_thread = SerialReaderThread(self.selected_com, 115200)
             print("thread started")
         except Exception as e:
+            self.serial_thread = None
             print("failed to start thread:,", e)
             return
 
         self.serial_thread.data_received.connect(self.update_live_plots) # Maybe dont update every new datapoint
-        self.serial_thread.sampling_finished.connect(self.cal_plot_update)
         self.serial_thread.start()
 
     def update_live_plots(self, new_data):
@@ -236,12 +237,14 @@ class ForceWidget(QWidget):
 
     def start_cal(self):
         # get mass of calibration weight from user
-        if not self.serial_thread.isRunning():
+        if self.serial_thread is None:
             return
-        self.serial_thread.start_sampling_signal.emit(40) # 40 samples
+        self.serial_thread.finishedLogging.connect(self.cal_plot_update)
+        self.serial_thread.startLogging.emit(40) # 40 samples
 
     def cal_plot_update(self, sample):
-
+        self.serial_thread.finishedLogging.disconnect(self.cal_plot_update)
+        self.serial_thread 
         _, raw_thrust, raw_torque = np.mean(sample, axis=0)
 
         mcal_dialog = FloatInputDialog("Enter Calibration Mass", "Enter the mass of the calibration weight in kg:")
@@ -264,6 +267,9 @@ class ForceWidget(QWidget):
         self.thrust_cal_points.setData(self.calibration_data[:,:,0], pen=None, symbol='o', symbolBrush='r')
         self.torque_cal_points.setData(self.calibration_data[:,:,1], pen=None, symbol='o', symbolBrush='b')
 
+        if self.calibration_data.shape[0] < 2:
+            return
+
         thrust_x = np.linspace(np.min(self.calibration_data[:,0,0]), np.max(self.calibration_data[:,0,0]), 50)
         torque_x = np.linspace(np.min(self.calibration_data[:,0,1]), np.max(self.calibration_data[:,0,1]), 50)
         thrust_y, torque_y = self.interpolate_calibration([thrust_x, torque_x])
@@ -280,8 +286,19 @@ class ForceWidget(QWidget):
         torque = np.polyval(torquecoeffs, raw_data[1])
 
         return np.array([thrust, torque])
+    
+    def resizeEvent(self, event):
+        total_width = self.width()  # Get the full width of the widget
+        half_width = total_width // 2  # Split equally
 
-        
+        # Enforce 50/50 width distribution
+        self.thrust_plot.setFixedWidth(half_width)
+        self.torque_plot.setFixedWidth(half_width)
+        self.thrust_cal_plot.setFixedWidth(half_width)
+        self.torque_cal_plot.setFixedWidth(half_width)
+
+        super().resizeEvent(event)
+
     def about_to_quit(self):
         if self.serial_thread:
             self.serial_thread.stop()
@@ -316,8 +333,6 @@ class AudioWidget(QWidget):
 
         self.start_daq()
 
-        
-        
     def start_daq(self):
         
         self.daq_thread = DAQThread(
@@ -354,20 +369,182 @@ class AudioWidget(QWidget):
     def about_to_quit(self):
         self.daq_thread.stop()
 
+class TestWidget(QWidget):
+    def __init__(self, parent = None):
+        super().__init__(parent)
+
+        self.layout = QGridLayout()
+
+        self.load_prop_button = QPushButton("Load prop")        
+        self.results_directory_path = QLineEdit()
+        self.results_directory_path.setReadOnly(True)
+        self.select_results_directory_button = QPushButton("...")
+
+        self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+        self.results_dir = self.app_dir / "results"
+
+        self.pyramid_test_start_button = QPushButton("Pyramid")
+
+        self.layout.addWidget(self.load_prop_button, 0, 0)
+        self.layout.addWidget(self.results_directory_path, 1, 0)
+        self.layout.addWidget(self.select_results_directory_button, 1, 1)
+        self.layout.addWidget(self.pyramid_test_start_button, 2, 0, 1, 2)
+
+        self.load_prop_button.clicked.connect(self.on_load_prop_clicked)
+        self.select_results_directory_button.clicked.connect(self.on_select_results_directory)
+        self.pyramid_test_start_button.clicked.connect(self.on_pyramid_test_started)
+
+        self.setLayout(self.layout)
+
+        self.step_timer = QTimer()
+        self.step_timer.timeout.connect(self.pyramid_step)
+
+        self.pyramid_steps = 20
+        self.pyramid = list(range(self.pyramid_steps)) + list(range(0, self.pyramid_steps - 1)[::-1])
+        self.idx = 0
+    
+    def on_load_prop_clicked(self):
+        print("Load Prop button clicked")
+
+    def on_select_results_directory(self):
+        dir_path = QFileDialog.getExistingDirectory(self, "Select Results Directory", str(self.results_dir))
+        if dir_path:
+            self.results_directory_path.setText(dir_path)
+
+    def get_fnames(self):
+        audio_file = str(self.results_dir / "audio.bin")
+        aero_file = str(self.results_dir / "aero.npz")
+
+        return audio_file, aero_file
+
+    def on_pyramid_test_started(self):
+
+        audio_file, _ = self.get_fnames()
+
+        self.nspbufs = 10
+        self.nfcsmps = 40
+        self.naubufs = 5 * self.parent().audio_widget.buffer_freq # 5s
+
+        speed_buffer_size = self.parent().control_widget.sample_buffer_size
+
+        ntests = self.pyramid_steps * 2 - 1
+        self.motor_data = np.zeros((ntests, self.nspbufs * speed_buffer_size, 4))
+        self.force_data = np.zeros((ntests, self.nfcsmps, 3))
+        # audio data is too fast the seperate thead writes it to a file
+
+        # threads and their appropriate signals
+        if self.parent().force_widget.serial_thread is None:
+            return
+        
+        print("Pyramid Test Started")
+        self.pyramid_test_start_button.setEnabled(False)
+
+        self.parent().control_widget.stop_button.clicked.connect(self.stop_pyramid)
+
+        self.parent().control_widget.controller.finishedLogging.connect(self.speed_callback)
+        self.parent().control_widget.controller.finishedLogging.connect(self.check_data_points)
+        self.parent().force_widget.serial_thread.finishedLogging.connect(self.force_callback)
+        self.parent().force_widget.serial_thread.finishedLogging.connect(self.check_data_points)
+        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.audio_callback) # pyqtSignal()
+        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_data_points)
+
+        self.data_types_recieved = 0
+
+        #self.parent().control_widget.controller.startLogging.emit(self.nspbufs) # pyqtSignal(nbuffers)
+        #self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
+        #self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, self.naubufs) # pyqtSignal(file_name, nbuffers=None)
+
+        self.parent().control_widget.start_control()
+
+        self.pyramid_step()
+        # measure 10s acoustic and force
+        # start speed pyramid
+        # each point measure speed, force
+        # measure acoustic halfway up and at top of pyramid
+
+    def stop_pyramid(self):
+        self.parent().control_widget.controller.stopCheckingSettled.emit()
+        self.on_pyramid_test_finished()
+
+    def speed_callback(self, data):
+        print(f"Speed Callback, {data.shape}")
+        self.motor_data[self.idx] = data
+    def force_callback(self, data):
+        print(f"Force Callback, {data.shape}")
+        self.force_data[self.idx] = data
+    def audio_callback(self, data):
+        print(f"Audio Callback, {data.shape}")
+    
+    def check_data_points(self, _):
+        self.data_types_recieved += 1
+
+        if self.data_types_recieved == self.data_types_expected:
+            self.data_types_recieved = 0
+            self.pyramid_step()
+        
+    def aerodynamic_collect(self):
+        self.parent().control_widget.controller.startLogging.emit(self.nspbufs) # pyqtSignal(nbuffers)
+        self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
+        self.data_types_expected = 2
+
+    def pyramid_step(self):
+        # sets speed to next point in pyramid
+
+        if self.idx == 0:
+            # first step
+            pass 
+        elif self.idx == len(self.pyramid) - 1:
+            # last step
+            self.step_timer.stop()
+            self.on_pyramid_test_finished()
+            return
+
+        max_speed = 10000
+        speed = max_speed * self.pyramid[self.idx] / self.pyramid_steps
+        self.parent().control_widget.speed_box.setText(str(speed))
+        self.parent().control_widget.controller.setSpeed.emit(speed / 60)
+        self.parent().control_widget.controller.speedSettled.connect(self.aerodynamic_collect)
+        self.parent().control_widget.controller.startCheckingSettled.emit()
+        
+        self.idx += 1
+
+    def on_pyramid_test_finished(self):
+        print("Pyramid Test Finished")
+        self.parent().control_widget.stop_control()
+        self.pyramid_test_start_button.setEnabled(True)
+
+        if self.idx == len(self.pyramid) - 1:
+            # save everything
+            _, aero_file = self.get_fnames()
+            np.savez(aero_file, force_data=self.force_data, motor_data=self.motor_data)
+        
+        self.idx = 0
+
+        self.parent().control_widget.stop_button.clicked.disconnect(self.stop_pyramid)
+
+        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.force_callback)
+        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.check_data_points)
+        self.parent().control_widget.controller.finishedLogging.disconnect(self.speed_callback)
+        self.parent().control_widget.controller.finishedLogging.disconnect(self.check_data_points)
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.audio_callback)
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.check_data_points)
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.control_widget = ControlWidget()
-        self.force_widget = ForceWidget()
-        self.audio_widget = AudioWidget()
+        self.control_widget = ControlWidget(self)
+        self.force_widget = ForceWidget(self)
+        self.audio_widget = AudioWidget(self)
+        self.test_widget = TestWidget(self)
 
         QApplication.instance().aboutToQuit.connect(self.about_to_quit)
 
         layout = QGridLayout()
-        layout.addWidget(self.control_widget, 0, 0)
-        layout.addWidget(self.force_widget, 0, 1)
-        layout.addWidget(self.audio_widget, 0, 2)
+        layout.addWidget(self.control_widget, 0, 0, 2, 1)
+        layout.addWidget(self.test_widget, 0, 1, 1, 1)
+        layout.addWidget(self.force_widget, 1, 1, 1, 1)
+        layout.addWidget(self.audio_widget, 0, 2, 2, 1)
 
         self.setLayout(layout)
 
