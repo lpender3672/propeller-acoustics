@@ -10,6 +10,12 @@ motor_data = data['motor_data']
 print(force_data.shape)
 print(motor_data.shape)
 
+cal_data = np.load('app/calibration.npy')
+
+fig, ax = plt.subplots()
+ax.plot(cal_data[:,0], cal_data[:,1], '-o')
+ax.grid()
+
 avg_speed = np.mean(motor_data[:,:,1], axis=1)
 avg_forces = np.mean(force_data[:,:,1:], axis=1)
 

@@ -164,9 +164,11 @@ class ForceWidget(QWidget):
         self.com_selector = QComboBox()
         self.selected_com = None
 
+        self.clear_calibration_button = QPushButton("Clear Calibration Data")
+
         self.add_calibration_point_button = QPushButton("Add Calibration Point")
 
-        self.sample_rate = 80
+        self.sample_rate = 10 # Load cell amp is stuck at 10Hz
         self.max_buffer_size = 160
         self.force_data = np.zeros((self.max_buffer_size, 3))
         self.force_data[:,1:] = np.nan
@@ -175,6 +177,7 @@ class ForceWidget(QWidget):
         self.layout = QGridLayout()
         self.layout.addWidget(self.com_selector, 0, 0)
         self.layout.addWidget(self.add_calibration_point_button, 1, 0)
+        self.layout.addWidget(self.clear_calibration_button, 1, 1)
         self.layout.addWidget(self.thrust_plot, 2, 0)
         self.layout.addWidget(self.torque_plot, 2, 1)
         self.layout.addWidget(self.thrust_cal_plot, 3, 0)
@@ -184,6 +187,7 @@ class ForceWidget(QWidget):
 
         self.com_selector.currentIndexChanged.connect(self.com_selected)
         self.add_calibration_point_button.clicked.connect(self.start_cal)
+        self.clear_calibration_button.clicked.connect(self.clear_calibration)
 
         try:
             self.calibration_data = np.load(self.cal_file)
@@ -194,6 +198,10 @@ class ForceWidget(QWidget):
 
         self.scan_com_ports()
 
+    def clear_calibration(self):
+        self.calibration_data = np.zeros((0, 2, 2))
+        np.save(self.cal_file, self.calibration_data)
+        self.update_cal_graph()
 
     def scan_com_ports(self):
         ports = serial.tools.list_ports.comports()
@@ -344,12 +352,13 @@ class AudioWidget(QWidget):
         self.daq_thread.errorOccurred.connect(self.error_occurred)
         self.data_buffer = np.zeros(self.buffer_freq)
 
-        self.daq_thread.add_channel()
+        for _ in range(8):
+            self.daq_thread.add_channel()
         self.daq_thread.start()
 
     def update_signal_plot(self, data):
         if data.shape[0] > 0:
-            channel_data = data[0]
+            channel_data = data[6]
             self.data_buffer = np.roll(self.data_buffer, -channel_data.shape[0], axis=0)
             self.data_buffer[-channel_data.shape[0]:] = channel_data
             self.signal_curve.setData(self.data_buffer)
@@ -472,8 +481,8 @@ class TestWidget(QWidget):
     def force_callback(self, data):
         print(f"Force Callback, {data.shape}")
         self.force_data[self.idx] = data
-    def audio_callback(self, data):
-        print(f"Audio Callback, {data.shape}")
+    def audio_callback(self):
+        print(f"Audio Callback")
     
     def check_data_points(self, _):
         self.data_types_recieved += 1
@@ -483,6 +492,7 @@ class TestWidget(QWidget):
             self.pyramid_step()
         
     def aerodynamic_collect(self):
+        self.parent().control_widget.controller.speedSettled.disconnect(self.aerodynamic_collect)
         self.parent().control_widget.controller.startLogging.emit(self.nspbufs) # pyqtSignal(nbuffers)
         self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
         self.data_types_expected = 2
@@ -499,7 +509,7 @@ class TestWidget(QWidget):
             self.on_pyramid_test_finished()
             return
 
-        max_speed = 10000
+        max_speed = 12000
         speed = max_speed * self.pyramid[self.idx] / self.pyramid_steps
         self.parent().control_widget.speed_box.setText(str(speed))
         self.parent().control_widget.controller.setSpeed.emit(speed / 60)

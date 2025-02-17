@@ -260,7 +260,7 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
         self.odrv.axis0.controller.config.vel_gain = 0.002
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
-        self.odrv.axis0.controller.config.vel_limit = 200
+        self.odrv.axis0.controller.config.vel_limit = 250
 
         self.odrv.axis0.config.watchdog_timeout = 10 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
@@ -339,18 +339,18 @@ class ControllerThread(QThread):
         self.sample_idx += 1
 
         if self.sample_idx >= self.buffer_size:
-            self.newSample.emit(self.data_buffer)
+            self.newSample.emit(self.data_buffer.copy())
             self.sample_idx = 0
 
             if self.checking_settled:
                 fltrd = filtfilt(self.b, self.a,self.log_buffer[:,1])
-                if np.isclose(fltrd, 60 * self.target_speed, atol=5, rtol=0.01).all():
+                if np.isclose(fltrd, 60 * self.target_speed, atol=5, rtol=0.025).all():
                     self.speedSettled.emit()
                     self.checking_settled = False
                     self.logging = False
                 else:
                     pass
-                
+
             if self.logging:
                 self.log_buffer = np.roll(self.log_buffer, -self.buffer_size, axis=0)
                 self.log_buffer[-self.buffer_size:] = self.data_buffer
@@ -378,7 +378,6 @@ class ControllerThread(QThread):
     def set_speed(self, speed):
         self.target_speed = float(speed)
         # this originally wasnt here but in the pyramid test its better to not stop and start the motor
-        print(self.target_speed)
         self.odrv.axis0.controller.input_vel = self.target_speed
 
     def start_motor(self):
