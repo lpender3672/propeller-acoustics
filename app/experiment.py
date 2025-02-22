@@ -1,7 +1,7 @@
 # Handles Odrive, Serial, and NI-DAQ communication
 
 
-from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QComboBox, QPushButton, QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QFileDialog
+from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout, QComboBox, QPushButton, QLineEdit, QDialog, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QFileDialog, QMessageBox
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QDoubleValidator
 
@@ -17,6 +17,10 @@ from collection_threads import (
     SerialReaderThread,
     DAQThread,
     ControllerThread
+)
+
+from routines import (
+    load_prop_from_file,
 )
 
 gravity = 9.81 # m/s^2
@@ -228,7 +232,17 @@ class ForceWidget(QWidget):
             return
 
         self.serial_thread.data_received.connect(self.update_live_plots) # Maybe dont update every new datapoint
+        self.serial_thread.error_occurred.connect(self.error_occurred)
         self.serial_thread.start()
+
+    def error_occurred(self, error):
+        if self.serial_thread is None:
+            return
+        
+        self.serial_thread.stop()
+        self.serial_thread.wait()
+        self.serial_thread = None
+        print(error)
 
     def update_live_plots(self, new_data):
         time_val, amp0_val, amp1_val = new_data
@@ -384,6 +398,7 @@ class TestWidget(QWidget):
 
         self.layout = QGridLayout()
 
+        self.prop_path = QLineEdit()
         self.load_prop_button = QPushButton("Load prop")        
         self.results_directory_path = QLineEdit()
         self.results_directory_path.setReadOnly(True)
@@ -394,7 +409,8 @@ class TestWidget(QWidget):
 
         self.pyramid_test_start_button = QPushButton("Pyramid")
 
-        self.layout.addWidget(self.load_prop_button, 0, 0)
+        #self.layout.addWidget()
+        self.layout.addWidget(self.load_prop_button, 1, 1)
         self.layout.addWidget(self.results_directory_path, 1, 0)
         self.layout.addWidget(self.select_results_directory_button, 1, 1)
         self.layout.addWidget(self.pyramid_test_start_button, 2, 0, 1, 2)
@@ -414,6 +430,18 @@ class TestWidget(QWidget):
     
     def on_load_prop_clicked(self):
         print("Load Prop button clicked")
+
+        path = QFileDialog.getOpenFileName(self, "Select propeller file", "app/props", filter="Propeller files (*.prop)")[0]
+        if path:
+            self.prop_path.setText(path)
+        else:
+            return
+        
+        try:
+            self.prop = load_prop_from_file(path)
+        except:
+            QMessageBox.critical(self, "Error", "Failed to load propeller data from file.")
+            return
 
     def on_select_results_directory(self):
         dir_path = QFileDialog.getExistingDirectory(self, "Select Results Directory", str(self.results_dir))
@@ -484,7 +512,7 @@ class TestWidget(QWidget):
     def audio_callback(self):
         print(f"Audio Callback")
     
-    def check_data_points(self, _):
+    def check_data_points(self, _=None):
         self.data_types_recieved += 1
 
         if self.data_types_recieved == self.data_types_expected:

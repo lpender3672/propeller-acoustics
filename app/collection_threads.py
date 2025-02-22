@@ -27,6 +27,7 @@ import fibre
 
 class SerialReaderThread(QThread):
     data_received = pyqtSignal(np.ndarray)
+    error_occurred = pyqtSignal(Exception)
 
     startLogging = pyqtSignal(int) # finite log only
     finishedLogging = pyqtSignal(np.ndarray) # is emitted when a finite log finishes
@@ -63,7 +64,8 @@ class SerialReaderThread(QThread):
 
                     self.data_received.emit(datapoint)
             except Exception as e:
-                print(f"Error reading: pico be buggin {e}")
+                self.error_occurred.emit(e)
+                #print(f"Error reading: pico be buggin {e}")
         
     def start_logging(self, nsamples):
         self.sampling = True
