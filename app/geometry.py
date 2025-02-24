@@ -30,12 +30,167 @@ def rotate3p(X,Y,Z, theta, axis, P):
     out = rotated + P[:, np.newaxis]
     return out
 
+def normalize(vec):
+    return vec / np.linalg.norm(vec)
+
+def hermite_curve_and_tangents(P0, P1, T0, T1, num_points=50):
+    # cubic Hermite curve
+
+    t_values = np.linspace(0, 1, num_points)
+    
+    P0 = np.array(P0, dtype=float)
+    P1 = np.array(P1, dtype=float)
+    T0 = np.array(T0, dtype=float)
+    T1 = np.array(T1, dtype=float)
+    
+    points = []
+    tangents = []
+    
+    for t in t_values:
+
+        h00 =  2*t**3 - 3*t**2 + 1
+        h10 =      t**3 - 2*t**2 + t
+        h01 = -2*t**3 + 3*t**2
+        h11 =      t**3 -    t**2
+        
+        C_t = h00*P0 + h10*T0 + h01*P1 + h11*T1
+        
+        # derivative of h00 =  6t^2 - 6t
+        # derivative of h10 =  3t^2 - 4t + 1
+        # derivative of h01 = -6t^2 + 6t
+        # derivative of h11 =  3t^2 - 2t
+        h00d =  6*t**2 - 6*t
+        h10d =  3*t**2 - 4*t + 1
+        h01d = -6*t**2 + 6*t
+        h11d =  3*t**2 - 2*t
+        # tangent
+        Ct_prime = h00d*P0 + h10d*T0 + h01d*P1 + h11d*T1
+        
+        points.append(C_t)
+        tangents.append(normalize(Ct_prime) if np.linalg.norm(Ct_prime) > 1e-12 else Ct_prime)
+    
+    return np.array(points), np.array(tangents)
+
+def compute_local_frames(points, tangents):
+
+    up = np.array([0, 0, 1], dtype=float)
+    
+    N_array = []
+    B_array = []
+    
+    for i in range(len(points)):
+        T = tangents[i]
+        
+        # 1) B = T x up
+        B = np.cross(T, up)
+        normB = np.linalg.norm(B)
+        if normB < 1e-12:
+            # try x
+            B = np.cross(T, [1,0,0])
+            normB = np.linalg.norm(B)
+            if normB < 1e-12:
+                # try y
+                B = np.cross(T, [0,1,0])
+                normB = np.linalg.norm(B)
+        
+        B = B / normB
+        
+        N = np.cross(B, T)
+        N = N / np.linalg.norm(N)
+        
+        N_array.append(N)
+        B_array.append(B)
+    
+    return np.array(tangents), np.array(N_array), np.array(B_array)
+
+def place_airfoil_3D(airfoil_2D, center_point, N, B):
+
+    M = airfoil_2D.shape[0]
+    points_3D = np.zeros((M, 3))
+    for j in range(M):
+        x2d, z2d   = airfoil_2D[j]
+        points_3D[j] = center_point + x2d*N + z2d*B
+    return points_3D
+
+def segment_segment_intersection_3d(p1, p2, p3, p4, eps=1e-9):
+
+    p1 = np.array(p1, dtype=float)
+    p2 = np.array(p2, dtype=float)
+    p3 = np.array(p3, dtype=float)
+    p4 = np.array(p4, dtype=float)
+    
+    d1 = p2 - p1
+    d2 = p4 - p3
+    cross_d1_d2 = np.cross(d1, d2)
+    denom = np.dot(cross_d1_d2, cross_d1_d2)
+
+    if denom < eps:
+        return None
+
+    r = p3 - p1
+    cross_r_d2 = np.cross(r, d2)
+    u = np.dot(cross_r_d2, cross_d1_d2) / denom
+    
+    cross_r_d1 = np.cross(r, d1)
+    v = np.dot(cross_r_d1, cross_d1_d2) / denom
+    
+    if 0.0 - eps <= u <= 1.0 + eps and 0.0 - eps <= v <= 1.0 + eps:
+        # Intersection point:
+        intersection = p1 + u*d1
+        return intersection
+    else:
+        return None
+
+def bounding_box_3d(points):
+
+    pts = np.array(points, dtype=float)
+    min_x, min_y, min_z = np.min(pts, axis=0)
+    max_x, max_y, max_z = np.max(pts, axis=0)
+    return (min_x, max_x, min_y, max_y, min_z, max_z)
+
+def boxes_intersect_3d(boxA, boxB):
+
+    return not (
+        (boxA[1] < boxB[0]) or (boxA[0] > boxB[1]) or  # x-range
+        (boxA[3] < boxB[2]) or (boxA[2] > boxB[3]) or  # y-range
+        (boxA[5] < boxB[4]) or (boxA[4] > boxB[5])     # z-range
+    )
+
+def intersect_3D_profiles(profileA, profileB, eps=1e-12):
+
+    boxA = bounding_box_3d(profileA)
+    boxB = bounding_box_3d(profileB)
+    if not boxes_intersect_3d(boxA, boxB):
+        return []
+
+    intersections = []
+
+    A = np.array(profileA, dtype=float)
+    B = np.array(profileB, dtype=float)
+
+    nA = len(A)
+    nB = len(B)
+
+    for i in range(nA):
+        p1 = A[i]
+        p2 = A[(i+1) % nA]
+
+        for j in range(nB):
+            p3 = B[j]
+            p4 = B[(j+1) % nB]
+
+            inter_pt = segment_segment_intersection_3d(p1, p2, p3, p4, eps=eps)
+            if inter_pt is not None:
+                intersections.append(inter_pt)
+
+    return np.array(intersections)
+
 
 def airfoil_to_ellipse(x, y, x_factor, y_factor):
 
     x_centered = x - 0.5
 
-    x_ellipse = 0.5 + x_centered * (1 - np.abs(x_factor))
+    x_ellipse = x_centered * (1 - np.abs(x_factor))
     y_ellipse = np.sqrt(1 - (x_centered**2)) * np.abs(y_factor)
 
     y_transformed = (1 - y_factor) * y + y_ellipse * np.sign(y)
@@ -449,5 +604,115 @@ def main():
     viewer.show()
     sys.exit(app.exec())
 
+def main2():
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+
+
+    P0 = (0, 0, 0)
+    P1 = (0, 0, 2)
+    T0 = (0, 1, 0.3)
+    T1 = (0, -1, 0.3)
+
+    points, tangs = hermite_curve_and_tangents(P0, P1, T0, T1, num_points=12)
+
+    ax.plot(points[:,0], points[:,1], points[:,2], '-o')
+
+    Ts, Ns, Bs = compute_local_frames(points, tangs)
+
+    airfoil_2D = np.loadtxt('app/foils/naca0012.surf')
+
+    transformed_airfoil = np.zeros(airfoil_2D.shape)
+
+    swept_sections = []
+    for i in range(len(points)):
+        center_pt = points[i]
+        N_i = Ns[i]
+        B_i = Bs[i]
+
+        fx = i / len(points)
+        fx = 3 * fx * (fx - 1)
+        transformed_airfoil[:,0],transformed_airfoil[:,1] = airfoil_to_ellipse(
+            airfoil_2D[:,0], airfoil_2D[:,1], fx, 0
+        )
+        
+        section_3D = place_airfoil_3D(transformed_airfoil, center_pt, N_i, B_i)
+        swept_sections.append(section_3D)
+
+    # handle intersections
+    corrected_sections = swept_sections.copy()
+
+    for i in range(len(swept_sections)):
+        center_pt = points[i]
+        N_i = Ns[i]
+        B_i = Bs[i]
+        fx = i / len(points)
+        fx = 3 * fx * (fx - 1)
+        transformed_airfoil[:,0],transformed_airfoil[:,1] = airfoil_to_ellipse(
+            airfoil_2D[:,0], airfoil_2D[:,1], fx, 0
+        )
+        T_0 = np.cross(Ns[0], Bs[0])
+        section_tomap = swept_sections[0] + 0.01 * i * T_0
+        bottom_intersections = intersect_3D_profiles(section_tomap, swept_sections[i])
+        if i > 0 and len(bottom_intersections) > 0:
+
+            inter = np.array(bottom_intersections[-1])
+
+            ax.scatter(*inter, c='r')
+
+            v = inter - center_pt
+            tfx_2D = np.dot(v, N_i)
+            #tfz_2D = np.dot(v, B_i)
+
+            mask = transformed_airfoil[:, 0] > tfx_2D
+            indices = np.where(mask)[0]
+
+            T_i = np.cross(N_i, B_i)
+            
+            A = np.array([Ns[0], Bs[0], -T_i]).T
+
+            for idx in indices:
+                # build matrix to solve projection
+                b = swept_sections[i][idx] - points[0]
+                coeffs = np.linalg.solve(A, b)
+                k = coeffs[2]
+                corrected_sections[i][idx] +=  k * T_i + 0.01 * i * T_0
+
+        T_0 = np.cross(Ns[-1], Bs[-1])
+        section_tomap = swept_sections[-1] - 0.01 * (len(swept_sections) - i - 1) * T_0
+        top_intersections = intersect_3D_profiles(swept_sections[i], section_tomap)
+        if i < len(points) - 1 and len(top_intersections) > 0:
+            inter = np.array(top_intersections[-1])
+
+            ax.scatter(*inter, c='r')
+
+            v = inter - center_pt
+            tfx_2D = np.dot(v, N_i)
+            #tfz_2D = np.dot(v, B_i)
+
+            mask = transformed_airfoil[:, 0] < tfx_2D
+            indices = np.where(mask)[0]
+
+            T_i = np.cross(N_i, B_i)
+            T_0 = np.cross(Ns[-1], Bs[-1])
+            A = np.array([Ns[-1], Bs[-1], -T_i]).T
+
+            for idx in indices:
+                # build matrix to solve projection
+                b = swept_sections[i][idx] - points[-1]
+                coeffs = np.linalg.solve(A, b)
+                corrected_sections[i][idx] += coeffs[2] * T_i - 0.01 * T_0
+        
+    for section in corrected_sections:
+        ax.plot(section[:,0], section[:,1], section[:,2], '-o')        
+
+    ax.set_aspect('equal')
+    plt.show()
+
+
 if __name__ == "__main__":
-    main()
+    main2()
+    #main()
