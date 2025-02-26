@@ -1,6 +1,9 @@
 
+import nidaqmx.constants
 import nidaqmx.error_codes
 import nidaqmx.stream_readers
+import nidaqmx.system
+import nidaqmx.system.device
 import serial
 from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer, QElapsedTimer
 from odrive.enums import *
@@ -110,11 +113,13 @@ class DAQThread(QThread):
         nmod = self.total_channels // channels_per_module
         nch = self.total_channels % channels_per_module
         chstr = f"cDAQ1Mod{nmod+1}/ai{nch}"
+        terminal_cfg = nidaqmx.constants.TerminalConfiguration.PSEUDO_DIFF
 
         try:
-            self.task.ai_channels.add_ai_voltage_chan(chstr)
+            self.task.ai_channels.add_ai_microphone_chan(chstr, terminal_config=terminal_cfg)
         except nidaqmx.DaqError as e:
             #if e.error_type == nidaqmx.error_codes.DAQmxErrors.DEV_CANNOT_BE_ACCESSED:
+            print(e)
             return False
 
         self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
@@ -143,7 +148,7 @@ class DAQThread(QThread):
             sample_mode=AcquisitionType.CONTINUOUS,
             samps_per_chan=self.group_samples
         )
-        self.task.register_every_n_samples_acquired_into_buffer_event(100, self.callback)
+        self.task.register_every_n_samples_acquired_into_buffer_event(self.group_samples, self.callback)
         self.reader = AnalogMultiChannelReader(self.task.in_stream)
 
         self.task.start()

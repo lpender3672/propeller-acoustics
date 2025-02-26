@@ -10,6 +10,7 @@ import serial.tools.list_ports
 import numpy as np
 from pathlib import Path
 
+import time
 import os
 import pyqtgraph as pg
 
@@ -24,7 +25,7 @@ from routines import (
 )
 
 gravity = 9.81 # m/s^2
-offset = 0.1 # m
+offset = 0.04 # 4 cm
 
 class FloatInputDialog(QDialog):
     def __init__(self, title="Float Input", prompt="Enter a float value:", parent=None):
@@ -276,8 +277,8 @@ class ForceWidget(QWidget):
         if mcal is None:
             return
         
-        mes_thrust = mcal * gravity * np.sqrt(2)/2
-        mes_torque = mcal * offset * gravity * np.sqrt(2)/2
+        mes_thrust = mcal * gravity * 1 #* np.sqrt(2)/2
+        mes_torque = mcal * offset * gravity * 0 #* np.sqrt(2)/2
 
         new_data = np.array([[[raw_thrust, raw_torque],
                               [mes_thrust, mes_torque]]])
@@ -341,10 +342,11 @@ class AudioWidget(QWidget):
 
         self.bpf = 167
         self.max_harmonic = 10
-        self.nyquist_factor = 2
+        self.nyquist_factor = 2.2
 
-        self.sample_freq = self.nyquist_factor * self.max_harmonic * self.bpf
-        self.buffer_freq = self.nyquist_factor * self.bpf
+        #self.sample_freq = self.nyquist_factor * self.max_harmonic * self.bpf
+        self.sample_freq = self.nyquist_factor * 20000
+        self.buffer_freq = 4000 # self.nyquist_factor * self.bpf
 
         layout = QGridLayout()
 
@@ -366,13 +368,13 @@ class AudioWidget(QWidget):
         self.daq_thread.errorOccurred.connect(self.error_occurred)
         self.data_buffer = np.zeros(self.buffer_freq)
 
-        for _ in range(8):
+        for _ in range(1):
             self.daq_thread.add_channel()
         self.daq_thread.start()
 
     def update_signal_plot(self, data):
         if data.shape[0] > 0:
-            channel_data = data[6]
+            channel_data = data[0]
             self.data_buffer = np.roll(self.data_buffer, -channel_data.shape[0], axis=0)
             self.data_buffer[-channel_data.shape[0]:] = channel_data
             self.signal_curve.setData(self.data_buffer)
@@ -409,15 +411,20 @@ class TestWidget(QWidget):
 
         self.pyramid_test_start_button = QPushButton("Pyramid")
 
+        self.record_ten_seconds_button = QPushButton("Record 10s audio")
+
         #self.layout.addWidget()
         self.layout.addWidget(self.load_prop_button, 1, 1)
         self.layout.addWidget(self.results_directory_path, 1, 0)
         self.layout.addWidget(self.select_results_directory_button, 1, 1)
         self.layout.addWidget(self.pyramid_test_start_button, 2, 0, 1, 2)
+        self.layout.addWidget(self.record_ten_seconds_button, 3, 0, 1, 2)
 
         self.load_prop_button.clicked.connect(self.on_load_prop_clicked)
         self.select_results_directory_button.clicked.connect(self.on_select_results_directory)
         self.pyramid_test_start_button.clicked.connect(self.on_pyramid_test_started)
+
+        self.record_ten_seconds_button.clicked.connect(self.record_ten_seconds)
 
         self.setLayout(self.layout)
 
@@ -427,6 +434,25 @@ class TestWidget(QWidget):
         self.pyramid_steps = 20
         self.pyramid = list(range(self.pyramid_steps)) + list(range(0, self.pyramid_steps - 1)[::-1])
         self.idx = 0
+
+    def record_ten_seconds(self):
+        audio_file = str(self.results_dir / "audio.bin")
+        buffer_freq = self.parent().audio_widget.buffer_freq 
+        sample_freq = self.parent().audio_widget.sample_freq
+        duration = 1
+        naubufs = np.ceil(duration * sample_freq / buffer_freq).astype(int)
+        self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, naubufs)
+        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.finished_recording)
+
+        self.audio_start_time = time.time()
+
+    def finished_recording(self):
+        dt = time.time() - self.audio_start_time
+        finished_dialog = QMessageBox()
+        finished_dialog.setText(f"Finished recording audio in f{dt}")
+        finished_dialog.exec()
+
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.finished_recording)
     
     def on_load_prop_clicked(self):
         print("Load Prop button clicked")
