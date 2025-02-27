@@ -99,12 +99,17 @@ class ControlWidget(QWidget):
         self.controller = ControllerThread(self, self.sample_rate, self.sample_buffer_size)
 
         self.controller.newSample.connect(self.update_graphs)
+        self.controller.errorOccurred.connect(self.error_occurred)
 
         self.start_button.clicked.connect(self.start_control)
         self.stop_button.clicked.connect(self.stop_control)
         self.speed_box.editingFinished.connect(self.set_speed)
 
         self.controller.start()
+
+    
+    def error_occurred(self, error):
+        print(error)
 
     def start_control(self):
 
@@ -209,6 +214,7 @@ class ForceWidget(QWidget):
         self.update_cal_graph()
 
     def scan_com_ports(self):
+        print("Scanning COM ports")
         ports = serial.tools.list_ports.comports()
         self.com_selector.currentIndexChanged.disconnect()
         self.com_selector.clear()
@@ -219,14 +225,20 @@ class ForceWidget(QWidget):
             self.selected_com = None
         else:
             self.com_selector.currentIndexChanged.connect(self.com_selected)
-            self.com_selected(0)
+            i = 0
+            while (i < len(ports) and 
+                   self.serial_thread is not None and 
+                   self.serial_thread.running):
+                self.com_selector.setCurrentIndex(i)
+                i += 1
 
     def com_selected(self, idx):
         self.selected_com = self.com_selector.currentText().split(" ")[0]     
         # maybe check data on this port to see if it's valid
         try:
             self.serial_thread = SerialReaderThread(self.selected_com, 115200)
-            print("thread started")
+            assert self.serial_thread is not None
+            assert self.serial_thread.running
         except Exception as e:
             self.serial_thread = None
             print("failed to start thread:,", e)
@@ -338,24 +350,33 @@ class AudioWidget(QWidget):
         self.signal_curve = self.signal_plot.plot(pen=pg.mkPen(color="r", width=2))
         self.spectrum_curve = self.spectrum_plot.plot(pen=pg.mkPen(color="r", width=2))
 
+        self.channel_selector = QComboBox()
+        self.channel_selector.currentIndexChanged.connect(self.channel_selected)
+
         self.daq_thread = None
 
         self.bpf = 167
         self.max_harmonic = 10
         self.nyquist_factor = 2.2
 
+        self.nchannels=6
+
         #self.sample_freq = self.nyquist_factor * self.max_harmonic * self.bpf
-        self.sample_freq = self.nyquist_factor * 20000
+        self.sample_freq = 51200.0
         self.buffer_freq = 4000 # self.nyquist_factor * self.bpf
 
         layout = QGridLayout()
 
-        layout.addWidget(self.signal_plot, 0, 0)
-        layout.addWidget(self.spectrum_plot, 1, 0)
+        layout.addWidget(self.channel_selector, 0, 0)
+        layout.addWidget(self.signal_plot, 1, 0)
+        layout.addWidget(self.spectrum_plot, 2, 0)
 
         self.setLayout(layout)
 
         self.start_daq()
+
+    def channel_selected(self, idx):
+        pass
 
     def start_daq(self):
         
@@ -368,13 +389,20 @@ class AudioWidget(QWidget):
         self.daq_thread.errorOccurred.connect(self.error_occurred)
         self.data_buffer = np.zeros(self.buffer_freq)
 
-        for _ in range(1):
-            self.daq_thread.add_channel()
+        for i in range(self.nchannels):
+            if not self.daq_thread.add_channel():
+                print("Failed to add channel")
+                return
+            else:
+                self.channel_selector.addItem(self.daq_thread.channel_names[-1])
+
+            
         self.daq_thread.start()
 
     def update_signal_plot(self, data):
         if data.shape[0] > 0:
-            channel_data = data[0]
+            idx = self.channel_selector.currentIndex()
+            channel_data = data[idx]
             self.data_buffer = np.roll(self.data_buffer, -channel_data.shape[0], axis=0)
             self.data_buffer[-channel_data.shape[0]:] = channel_data
             self.signal_curve.setData(self.data_buffer)
@@ -385,11 +413,12 @@ class AudioWidget(QWidget):
 
     def update_spectrum_plot(self, sample):
 
-        dtft = np.fft.fft(sample)
-        dt = 1 / (self.nyquist_factor * self.max_harmonic * self.bpf)
-        freqs = np.fft.fftfreq(len(sample), d=dt)
+        dtft = np.fft.rfft(sample)
+        dt = 1 / self.sample_freq
+        freqs = np.fft.rfftfreq(len(sample), d=dt)
 
-        self.spectrum_curve.setData(freqs, np.abs(dtft))
+        dBmag = 20 * np.log10(np.maximum(np.abs(dtft), 1e-10))
+        self.spectrum_curve.setData(freqs, dBmag)
 
     def about_to_quit(self):
         self.daq_thread.stop()
@@ -434,6 +463,19 @@ class TestWidget(QWidget):
         self.pyramid_steps = 20
         self.pyramid = list(range(self.pyramid_steps)) + list(range(0, self.pyramid_steps - 1)[::-1])
         self.idx = 0
+
+        self.prop = None
+
+    def get_audio_file(self):
+
+        if self.prop is None:
+            formatted_time = time.strftime("%Y-%m-%d-%H-%M-%S")
+            audio_file = self.results_dir / f"audio_{formatted_time}.bin"
+
+        else:
+            
+            pass
+
 
     def record_ten_seconds(self):
         audio_file = str(self.results_dir / "audio.bin")

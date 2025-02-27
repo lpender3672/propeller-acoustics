@@ -37,11 +37,24 @@ class SerialReaderThread(QThread):
 
     def __init__(self, serial_port, baud_rate):
         super().__init__()
-        self.serial = serial.Serial(serial_port, baud_rate, timeout=1)
+        self.running = False
+        self.serial = None
+        try:
+            self.serial = serial.Serial(serial_port, baud_rate, timeout=1)
+            line = self.serial.readline().decode('utf-8').strip().split(",") # current format in practical/pico/main.c
+            assert len(line) == 3
+        except serial.SerialException as e:
+            self.error_occurred.emit(e)
+            self.serial = None
+            return
+        except (AssertionError, ValueError) as e:
+            self.error_occurred.emit(e)
+            self.serial.close()
+            self.serial = None
+            return
+        
         self.running = True
-
         self.sampling = False
-
         self.startLogging.connect(self.start_logging)
 
     def run(self):
@@ -92,6 +105,7 @@ class DAQThread(QThread):
 
         self.task = nidaqmx.Task()
         self.total_channels = 0
+        self.channel_names = []
 
         self.sample_rate = sample_rate
         self.group_samples = group_samples # samples per rotation of the motor
@@ -106,8 +120,9 @@ class DAQThread(QThread):
         self.startLogging.connect(self.start_logging)
         self.stopLogging.connect(self.stop_logging)
 
+        self.timer = QElapsedTimer()
+
     def add_channel(self):
-        self.total_channels += 1
 
         channels_per_module = 4
         nmod = self.total_channels // channels_per_module
@@ -122,6 +137,8 @@ class DAQThread(QThread):
             print(e)
             return False
 
+        self.channel_names.append(chstr)
+        self.total_channels += 1
         self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
         return True
 
@@ -142,6 +159,7 @@ class DAQThread(QThread):
         # check if device attached
         if not self.task.devices:
             return
+        
 
         self.task.timing.cfg_samp_clk_timing(
             self.sample_rate,
@@ -151,7 +169,13 @@ class DAQThread(QThread):
         self.task.register_every_n_samples_acquired_into_buffer_event(self.group_samples, self.callback)
         self.reader = AnalogMultiChannelReader(self.task.in_stream)
 
+        if not np.isclose(self.task.timing.samp_clk_rate, self.sample_rate, atol=0.1):
+            self.errorOccurred.emit(
+                f"Error setting sample rate: ensure requested rate is supported ({self.task.timing.samp_clk_rate})")
+            return
+
         self.task.start()
+        self.timer.start()
 
         if self.runtime > 0:
             self.msleep(self.runtime * 1000)
@@ -166,10 +190,12 @@ class DAQThread(QThread):
         self.newSample.emit(self.sample_buffer)
 
         if self.is_logging and self.log_file:
+                                
                 self.sample_buffer.T.tofile(self.log_file)
                 self.buffers_logged += 1
-                if self.max_buffers is not None and self.buffers_logged >= self.max_buffers:
+                if self.max_buffers is not None and self.buffers_logged > self.max_buffers:
                     self.stop_logging()
+
         return 0
 
     def start_logging(self, file_name, nbuffers=None):
@@ -257,10 +283,11 @@ class ControllerThread(QThread):
     def run(self):
 
         try:
-            self.odrv = odrive.find_any()
+            self.odrv = odrive.find_any(timeout=5)
             assert self.odrv
         except Exception as e:
             self.errorOccurred.emit(f"Error connecting to ODrive: {e}")
+            return
 
         # controller settings
         self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
@@ -304,7 +331,6 @@ class ControllerThread(QThread):
         self.stop_motor()
         self.thread_running = False
         self.exit()
-        self.wait()
 
     def watchdog_loop(self):
 
