@@ -481,18 +481,21 @@ class TestWidget(QWidget):
             audio_file = self.results_dir / f"audio_{formatted_time}.bin"
             meta_file = self.results_dir / f"aero_{formatted_time}.npz"
         else:
-            audio_file = self.results_dir / self.prop['name'] / "audio_{formatted_time}.bin"
-            meta_file = self.results_dir / self.prop['name'] / "meta_data.npz"
+            directory = self.results_dir / self.prop['name']
+            if not directory.exists():
+                directory.mkdir()
+            audio_file = directory / f"audio_{formatted_time}.bin"
+            meta_file = directory / "meta_data.npz"
 
         return audio_file, meta_file
 
     def record_ten_seconds(self):
-        audio_file = str(self.results_dir / "audio.bin")
+        audio_file, _ = self.get_files()
         buffer_freq = self.parent().audio_widget.buffer_freq 
         sample_freq = self.parent().audio_widget.sample_freq
         duration = 1
         naubufs = np.ceil(duration * sample_freq / buffer_freq).astype(int)
-        self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, naubufs)
+        self.parent().audio_widget.daq_thread.startLogging.emit(str(audio_file), naubufs)
         self.parent().audio_widget.daq_thread.finishedLogging.connect(self.finished_recording)
 
         self.audio_start_time = time.time()

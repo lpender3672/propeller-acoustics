@@ -14,6 +14,26 @@ from routines import (
 )
 from scipy.optimize import root, brentq
 
+def static_bem(av):
+
+    nr = av.prop['nr']
+
+
+    for i in range(nr):
+
+        a = 0
+        tol = 1e-6
+        da = 1
+        beta = av.prop['twist'][i]
+
+        while da > tol:
+
+            phi = np.arctan(a)
+            alpha = beta - phi
+            
+
+        
+
 def betz_design(av):
 
     #print(av.prop)
@@ -246,7 +266,6 @@ def betz_off_design(av):
     #print(f"CP: {CP}, CT: {CT}, FM: {FM}")
 
     return av
-
 
 def firstbracket(f, xmin, xmax, n, backwardsearch=False):
 
@@ -530,7 +549,6 @@ def guaranteed_convergence_BEM(av):
     
     av.res = res
     return av  # Return None if no bracket is found
-
 
 def operating_range(av, Js):
 
