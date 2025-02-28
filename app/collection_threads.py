@@ -97,7 +97,7 @@ class DAQThread(QThread):
     errorOccurred = pyqtSignal(str)
 
     startLogging = pyqtSignal(str, int) # finite or continous
-    finishedLogging = pyqtSignal() # is emitted when a finite log finishes
+    finishedLogging = pyqtSignal(str) # is emitted when a finite log finishes
     stopLogging = pyqtSignal() # finite or continous
 
     def __init__(self, parent=None, sample_rate=44000, group_samples=167, runtime=0):
@@ -194,6 +194,7 @@ class DAQThread(QThread):
                 self.sample_buffer.T.tofile(self.log_file)
                 self.buffers_logged += 1
                 if self.max_buffers is not None and self.buffers_logged > self.max_buffers:
+                    self.finishedLogging.emit(self.log_file.name)
                     self.stop_logging()
 
         return 0
@@ -206,7 +207,6 @@ class DAQThread(QThread):
 
     def stop_logging(self):
         self.is_logging = False
-        self.finishedLogging.emit()
         if self.log_file:
             self.log_file.close()
             self.log_file = None
@@ -214,7 +214,8 @@ class DAQThread(QThread):
 
     def stop(self):
         self.is_running = False
-        self.stop_logging()
+        if self.is_logging:
+            self.stop_logging()
         if self.task:
             self.task.stop()
         self.wait()
@@ -287,6 +288,7 @@ class ControllerThread(QThread):
             assert self.odrv
         except Exception as e:
             self.errorOccurred.emit(f"Error connecting to ODrive: {e}")
+            self.thread_running = False
             return
 
         # controller settings
@@ -321,7 +323,7 @@ class ControllerThread(QThread):
                 ratio = loop_dt_us/self.dt_us
                 if ratio > 5:
                     pass
-                    #print(f"Warning slow odrive communication {ratio:.2f}")
+                    #self.errorOccurred.emit(f"Warning slow odrive communication {ratio:.2f}")
             else:
                 self.usleep(int(self.dt_us - loop_dt_us))
 
@@ -339,7 +341,7 @@ class ControllerThread(QThread):
         except AttributeError:
             pass # no error?
         else:
-            print(motor_error)
+            self.errorOccurred.emit(motor_error)
             self.stop()
 
         try:
@@ -347,7 +349,7 @@ class ControllerThread(QThread):
         except AttributeError:
             pass # no error?
         else:
-            print(encoder_error)
+            self.errorOccurred.emit(encoder_error)
             self.stop()
         
         # feed the beast
@@ -409,8 +411,10 @@ class ControllerThread(QThread):
         self.logging = False
         
     def set_speed(self, speed):
+        if not self.odrv:
+            self.errorOccurred.emit("No ODrive connection. Cannot set speed.")
+            return
         self.target_speed = float(speed)
-        # this originally wasnt here but in the pyramid test its better to not stop and start the motor
         self.odrv.axis0.controller.input_vel = self.target_speed
 
     def start_motor(self):
@@ -433,7 +437,7 @@ class ControllerThread(QThread):
             self.odrv.axis0.controller.input_vel = 0.0
             self.set_odrive_state(AxisState.IDLE)
         except Exception as e:
-            print(f"Error stopping motor: {e}")
+            self.errorOccurred.emit(f"Error stopping motor: {e}")
 
     def set_odrive_state(self, state):
         if not self.odrv:

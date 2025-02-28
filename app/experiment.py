@@ -22,6 +22,7 @@ from collection_threads import (
 
 from routines import (
     load_prop_from_file,
+    append_audiof_to_metaf
 )
 
 gravity = 9.81 # m/s^2
@@ -112,6 +113,9 @@ class ControlWidget(QWidget):
         print(error)
 
     def start_control(self):
+
+        if not self.controller.thread_running:
+            return
 
         self.speed_box.setEnabled(False)
         self.start_button.setEnabled(False)
@@ -429,8 +433,10 @@ class TestWidget(QWidget):
 
         self.layout = QGridLayout()
 
+        self.prop_label = QLabel("Propeller")
         self.prop_path = QLineEdit()
-        self.load_prop_button = QPushButton("Load prop")        
+        self.load_prop_button = QPushButton("...")      
+        self.results_label = QLabel("Results")  
         self.results_directory_path = QLineEdit()
         self.results_directory_path.setReadOnly(True)
         self.select_results_directory_button = QPushButton("...")
@@ -442,10 +448,12 @@ class TestWidget(QWidget):
 
         self.record_ten_seconds_button = QPushButton("Record 10s audio")
 
-        #self.layout.addWidget()
-        self.layout.addWidget(self.load_prop_button, 1, 1)
-        self.layout.addWidget(self.results_directory_path, 1, 0)
-        self.layout.addWidget(self.select_results_directory_button, 1, 1)
+        self.layout.addWidget(self.prop_label, 0, 0)
+        self.layout.addWidget(self.prop_path, 0, 1)
+        self.layout.addWidget(self.load_prop_button, 0, 2)
+        self.layout.addWidget(self.results_label, 1, 0)
+        self.layout.addWidget(self.results_directory_path, 1, 1)
+        self.layout.addWidget(self.select_results_directory_button, 1, 2)
         self.layout.addWidget(self.pyramid_test_start_button, 2, 0, 1, 2)
         self.layout.addWidget(self.record_ten_seconds_button, 3, 0, 1, 2)
 
@@ -466,16 +474,17 @@ class TestWidget(QWidget):
 
         self.prop = None
 
-    def get_audio_file(self):
+    def get_files(self):
+        formatted_time = time.strftime("%Y-%m-%d-%H-%M-%S")
 
         if self.prop is None:
-            formatted_time = time.strftime("%Y-%m-%d-%H-%M-%S")
             audio_file = self.results_dir / f"audio_{formatted_time}.bin"
-
+            meta_file = self.results_dir / f"aero_{formatted_time}.npz"
         else:
-            
-            pass
+            audio_file = self.results_dir / self.prop['name'] / "audio_{formatted_time}.bin"
+            meta_file = self.results_dir / self.prop['name'] / "meta_data.npz"
 
+        return audio_file, meta_file
 
     def record_ten_seconds(self):
         audio_file = str(self.results_dir / "audio.bin")
@@ -488,11 +497,15 @@ class TestWidget(QWidget):
 
         self.audio_start_time = time.time()
 
-    def finished_recording(self):
+    def finished_recording(self, fname):
         dt = time.time() - self.audio_start_time
         finished_dialog = QMessageBox()
         finished_dialog.setText(f"Finished recording audio in f{dt}")
         finished_dialog.exec()
+
+        _, metaf = self.get_files()
+        # append audio result to aero file
+        append_audiof_to_metaf(fname, metaf)
 
         self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.finished_recording)
     
@@ -500,16 +513,20 @@ class TestWidget(QWidget):
         print("Load Prop button clicked")
 
         path = QFileDialog.getOpenFileName(self, "Select propeller file", "app/props", filter="Propeller files (*.prop)")[0]
-        if path:
-            self.prop_path.setText(path)
-        else:
+        if not path:
             return
         
         try:
-            self.prop = load_prop_from_file(path)
+            prop = load_prop_from_file(path)
         except:
             QMessageBox.critical(self, "Error", "Failed to load propeller data from file.")
             return
+        
+        self.prop_path.setText(path)
+        self.prop = prop
+
+        self.prop['name'] = Path(path).name
+
 
     def on_select_results_directory(self):
         dir_path = QFileDialog.getExistingDirectory(self, "Select Results Directory", str(self.results_dir))

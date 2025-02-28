@@ -283,6 +283,16 @@ def load_oper_from_file(file_path):
 
     return oper
 
+def append_audiof_to_metaf(audiof, metaf, speed):
+
+    try:
+        metadata = np.load(metaf)
+    except FileNotFoundError:
+        metadata = np.zeros((0, 2))
+
+    newrow = np.array([speed, audiof])
+    metadata = np.vstack((metadata, newrow))
+    np.save(metaf, metadata)
 
 def _separate(arr): # NODES
     npts = arr.shape[0] // 2
