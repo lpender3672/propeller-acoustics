@@ -13,7 +13,12 @@ from scipy.spatial.transform import Rotation as R
 
 def rotate2(X,Z,theta):
     # function to rotate coordinates in the X-Z plane
-    return (X[:]*np.cos(theta) - Z[:]*np.sin(theta)), (X[:]*np.sin(theta) + Z[:]*np.cos(theta)) 
+    return (X*np.cos(theta) - Z*np.sin(theta)), (X*np.sin(theta) + Z*np.cos(theta))
+
+def rotate_airfoil(airfoil, theta):
+    # rotate airfoil about the x-axis
+    x, z = airfoil[:,0], airfoil[:,1]
+    return np.column_stack(rotate2(x, z, theta))
 
 def rotate3(X,Y,Z,theta, axis):
     axis = axis / np.linalg.norm(axis)
@@ -245,7 +250,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
         Z = np.zeros((Nsect+2,nf))
         Y= np.zeros((Nsect+2,nf))
     else:
-        Ntip = 20 # number of tip sections
+        Ntip = 100 # number of tip sections
         Rtip = av.prop['rt'] / np.cos(sweep_angle[-1])
         coords = np.zeros((nf*(2*Nsect+2+Ntip),3))
         triangles = np.zeros((2*nf*(2*Nsect+1+Ntip)+2*(nf-2),3),dtype = np.int64)
@@ -258,9 +263,8 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
         # sections tangent to the radius
         # at 0 only rotate about radial
         sx, Z[0,:] = rotate2(xf*chord[0], zf*chord[0], -twist[0])
-        sy = radius[0] * np.ones(nf)
-        X[0,:], _ = rotate2(sx, sy, -sweep_angle[0])
-        Y[0,:] = av.prop['dthread'] / 2
+        sy = av.prop['dthread'] / 2 * np.ones(nf)
+        X[0,:], Y[0,:] = rotate2(sx, sy, -sweep_angle[0])
         start = 0
         end = Nsect+1
         for i in range(1,end):
@@ -271,14 +275,27 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             # second blade loops back through span
             start = Nsect+Ntip+1
             end = 2*Nsect+Ntip+1
-            for i in range(Nsect+Ntip+1, end+1):
+            for i in range(Nsect+Ntip+1, end):
                 sx, Z[i,:] = rotate2(xf*chord[end-i-1], zf*chord[end - i-1], -twist[end - i-1])
                 sy = radius[end - i-1] * np.ones(nf)
                 X[i,:], Y[i,:] = rotate2(sx, sy, +sweep_angle[end - i-1])
 
-        sx, Z[end,:] = rotate2(xf*chord[Nsect-1], zf*chord[Nsect-1], -twist[Nsect-1])
-        sy = radius[Nsect-1] * np.ones(nf)
-        X[end,:], Y[end,:] = rotate2(sx, sy, -sweep_angle[Nsect-1])
+            # add another hub
+            sx, Z[end,:] = rotate2(xf*chord[0], zf*chord[0], -twist[0])
+            sy = av.prop['dthread'] / 2 * np.ones(nf)
+            X[end,:], Y[end,:] = rotate2(sx, sy, sweep_angle[0])
+            
+            P0 = np.array([*rotate2(0.0, radius[Nsect-1], -sweep_angle[Nsect-1]), 0])
+            P1 = np.array([*rotate2(0.0, radius[Nsect-1], sweep_angle[Nsect-1]), 0])
+
+            Pm0 = np.array([*rotate2(0.0, radius[Nsect-2], -sweep_angle[Nsect-1]), 0])
+            Pm1 = np.array([*rotate2(0.0, radius[Nsect-2], sweep_angle[Nsect-1]), 0])
+
+        else:
+
+            sx, Z[end,:] = rotate2(xf*chord[Nsect-1], zf*chord[Nsect-1], -twist[Nsect-1])
+            sy = radius[Nsect-1] * np.ones(nf)
+            X[end,:], Y[end,:] = rotate2(sx, sy, -sweep_angle[Nsect-1])
 
     else:
         # sections wrap around the radius
@@ -316,18 +333,41 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     tipfactor = np.hstack([tipfactorhalf, -tipfactorhalf[::-1]])
     tiptwist = -twist[-1] * tipfactor
     ellipsivity = 0.5 * midfactor
+
+    #P0 = np.array([X[Nsect,:], Y[Nsect,:], Z[Nsect,:]])
+    #P1 = np.array([X[Nsect+Ntip+1,:], Y[Nsect+Ntip+1,:], Z[Nsect+Ntip+1,:]])
+    # T0 is normal to section and so is just cos and sin of sweep
+    #T0 = 0.1 * np.array([np.sin(sweep_angle[-1]), np.cos(sweep_angle[-1]), 0])
+    #T1 = -0.1 * np.array([np.sin(-sweep_angle[-1]), np.cos(-sweep_angle[-1]), 0])
+
+    T0 = 50*(P0 - Pm0)
+    T1 = -50*(P1 - Pm1)
+
+    #print(P0, P1, T0, T1)
+
+    corrected_sections = generate_tip_verticies(
+        P0, P1, T0, T1, 
+        av.airfoil_data, 
+        chord[-1], twist[-1], 
+        num_points=Ntip)
     
-    for i, theta in zip(range(Nsect+1, Nsect+Ntip+1), thetas):
-        j = i-(Nsect+1)
-        if j > Ntip//2:
-            xfs, zfs = airfoil_to_ellipse(-xf, zf, ellipsivity[j], 0)
-        else:
-            xfs, zfs = airfoil_to_ellipse(xf, zf, ellipsivity[j], 0)
-            
-        sx, sz = rotate2(xfs*chord[-1], zfs*chord[-1], tiptwist[j])
-        sy = radius[-1] * np.ones(nf)
-        sx, sy = rotate2(sx, sy, -sweep_angle[-1])
-        X[i,:], Y[i,:], Z[i,:] = rotate3p(sx, sy, sz, theta, unitz, rotcenter)
+    #for i, theta in zip(range(Nsect+1, Nsect+Ntip+1), thetas):
+    #    j = i-(Nsect+1)
+    #    if j > Ntip//2:
+    #        xfs, zfs = airfoil_to_ellipse(-xf, zf, ellipsivity[j], 0)
+    #    else:
+    #        xfs, zfs = airfoil_to_ellipse(xf, zf, ellipsivity[j], 0)
+    #        
+    #    sx, sz = rotate2(xfs*chord[-1], zfs*chord[-1], tiptwist[j])
+    #    sy = radius[-1] * np.ones(nf)
+    #    sx, sy = rotate2(sx, sy, -sweep_angle[-1])
+    #    X[i,:], Y[i,:], Z[i,:] = rotate3p(sx, sy, sz, theta, unitz, rotcenter)
+
+    for i in range(Ntip):
+        for j in range(nf):
+            X[Nsect+1+i, j] = corrected_sections[i][j][0]
+            Y[Nsect+1+i, j] = corrected_sections[i][j][1]
+            Z[Nsect+1+i, j] = corrected_sections[i][j][2]
 
     for i in range(end+1):
         # loop over nf in airfoil
@@ -340,7 +380,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     # loop over blade elements
     # not including end faces
     k = 0
-    for i in range(1,end):
+    for i in range(1,end+1):
         # loop over nf in airfoil
         for j in range(nf):
             if i == (Nsect + Ntip//2 + 2):
@@ -604,28 +644,21 @@ def main():
     viewer.show()
     sys.exit(app.exec())
 
-def main2():
 
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
+def generate_tip_verticies(P0, P1, T0, T1, airfoil_2D, chord_factor=1, twist_offset=0, num_points=10, correct_intersections=False):
 
-    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+    #P0 = (0, 0, 0)
+    #P1 = (0, 0, 2)
+    #T0 = (0, 1, 0.3)
+    #T1 = (0, -1, 0.3)
 
-
-    P0 = (0, 0, 0)
-    P1 = (0, 0, 2)
-    T0 = (0, 1, 0.3)
-    T1 = (0, -1, 0.3)
-
-    points, tangs = hermite_curve_and_tangents(P0, P1, T0, T1, num_points=12)
-
-    ax.plot(points[:,0], points[:,1], points[:,2], '-o')
+    points, tangs = hermite_curve_and_tangents(P0, P1, T0, T1, num_points)
 
     Ts, Ns, Bs = compute_local_frames(points, tangs)
 
-    airfoil_2D = np.loadtxt('app/foils/naca0012.surf')
-
     transformed_airfoil = np.zeros(airfoil_2D.shape)
+
+    twist_values = np.pi/2 + np.linspace(twist_offset, -twist_offset, num_points)
 
     swept_sections = []
     for i in range(len(points)):
@@ -638,9 +671,14 @@ def main2():
         transformed_airfoil[:,0],transformed_airfoil[:,1] = airfoil_to_ellipse(
             airfoil_2D[:,0], airfoil_2D[:,1], fx, 0
         )
-        
-        section_3D = place_airfoil_3D(transformed_airfoil, center_pt, N_i, B_i)
+        if i > len(points) // 2:
+            transformed_airfoil[:,0] = -transformed_airfoil[:,0]
+        sized_airfoil = chord_factor * rotate_airfoil(transformed_airfoil, twist_values[i])
+        section_3D = place_airfoil_3D(sized_airfoil, center_pt, N_i, B_i)
         swept_sections.append(section_3D)
+
+    if not correct_intersections:
+        return swept_sections
 
     # handle intersections
     corrected_sections = swept_sections.copy()
@@ -660,9 +698,6 @@ def main2():
         if i > 0 and len(bottom_intersections) > 0:
 
             inter = np.array(bottom_intersections[-1])
-
-            ax.scatter(*inter, c='r')
-
             v = inter - center_pt
             tfx_2D = np.dot(v, N_i)
             #tfz_2D = np.dot(v, B_i)
@@ -687,11 +722,8 @@ def main2():
         if i < len(points) - 1 and len(top_intersections) > 0:
             inter = np.array(top_intersections[-1])
 
-            ax.scatter(*inter, c='r')
-
             v = inter - center_pt
             tfx_2D = np.dot(v, N_i)
-            #tfz_2D = np.dot(v, B_i)
 
             mask = transformed_airfoil[:, 0] < tfx_2D
             indices = np.where(mask)[0]
@@ -705,7 +737,29 @@ def main2():
                 b = swept_sections[i][idx] - points[-1]
                 coeffs = np.linalg.solve(A, b)
                 corrected_sections[i][idx] += coeffs[2] * T_i - 0.01 * T_0
-        
+
+    return corrected_sections
+
+def main2():
+
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+
+    P0 = [0.00634396, 0.04945627, 0.0        ]   
+    P1 = [-0.00634396,  0.04945627,  0.0        ]
+    T0 = [0,         0.1, 0]
+    T1 = [ 0,         -0.1, 0]
+    Np = 12
+
+    points, tangs = hermite_curve_and_tangents(P0, P1, T0, T1, Np)
+
+    print(points)
+    ax.plot(points[:,0], points[:,1], points[:,2], '-o')
+    airfoil_data = np.loadtxt('app/foils/naca0012.surf')
+
+    corrected_sections = generate_tip_verticies(P0, P1, T0, T1, airfoil_data, 0.1, np.pi/2, Np)
     for section in corrected_sections:
         ax.plot(section[:,0], section[:,1], section[:,2], '-o')        
 
@@ -714,5 +768,6 @@ def main2():
 
 
 if __name__ == "__main__":
-    main2()
-    #main()
+    #
+    #main2()
+    main()
