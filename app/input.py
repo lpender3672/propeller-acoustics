@@ -1,6 +1,6 @@
 
 from PyQt6.QtWidgets import QTableWidgetItem, QWidget, QVBoxLayout, QLineEdit, QPushButton, QFileDialog, QDialog, QDialogButtonBox, QMessageBox, QComboBox
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6 import QtGui
 
 import pyqtgraph as pg
@@ -129,9 +129,10 @@ class OperInputTable(InputTable):
 
 
 class AirfoilPlotDialog(QDialog):
-    def __init__(self, parent=None, airfoil_data=None):
+    def __init__(self, parent=None, airfoil_data=None, xfoil_data=None):
         super().__init__(parent)
         self.setWindowTitle("Airfoil Plot")
+        self.xfoil_data = xfoil_data
         self.airfoil_data = airfoil_data
 
         layout = QVBoxLayout()
@@ -166,18 +167,19 @@ class AirfoilPlotDialog(QDialog):
     
     def plot_polar(self):
 
-        if self.airfoil_data.shape[1] < 4:
+        if self.xfoil_data.shape[1] < 4:
             return
         
         self.swap_plot_btn.clicked.disconnect(self.plot_polar)
         self.swap_plot_btn.clicked.connect(self.plot_airfoil)
         
-        alpha = self.airfoil_data[:, 2]
-        Cl = self.airfoil_data[:, 3]
-        Cd = self.airfoil_data[:, 4]
+        alpha = self.xfoil_data[:, 0]
+        Re = self.xfoil_data[:, 1]
+        Cl = self.xfoil_data[:, 2]
+        Cd = self.xfoil_data[:, 3]
 
         x = np.linspace(np.min(alpha) * np.pi / 180, np.pi/2, 100)
-        y1, y2 = interpolate_clcd(self.airfoil_data, x, 5e5)
+        y1, y2 = interpolate_clcd(self.xfoil_data, x, 5e5)
 
         self.plot_widget.clear()
         self.plot_widget.plot(x * 180/np.pi, y1, pen=pg.mkPen(color='b', width=2), name="Cl")
@@ -188,6 +190,19 @@ class AirfoilPlotDialog(QDialog):
         self.plot_widget.setAspectLocked(False)
         self.plot_widget.showGrid(x=True, y=True)
         self.plot_widget.addLegend()
+
+class XFoilThread(QThread):
+
+    finished = pyqtSignal(np.ndarray)
+
+    def __init__(self, airfoil_data):
+        super().__init__()
+        self.airfoil_data = airfoil_data
+        
+    def run(self):
+        xfoil_data = run_xfoil(self.airfoil_data)
+        self.finished.emit(xfoil_data)
+
 
 class InputWidget(QWidget):
     new_prop = pyqtSignal()
@@ -294,8 +309,7 @@ class InputWidget(QWidget):
 
         
         self.foil_path.setText(filepath)
-        self.airfoil_data = run_xfoil(airfoil_data)
-        
+        self.airfoil_data = airfoil_data
         self.prop = indata['prop']
         for key, item in self.prop.items():
             if isinstance(item, list):
@@ -304,6 +318,12 @@ class InputWidget(QWidget):
         for key, item in self.dist.items():
             if isinstance(item, list):
                 self.dist[key] = np.array(item)
+                
+        self.xfoil_thread = XFoilThread(airfoil_data)
+        self.xfoil_thread.finished.connect(self.xfoil_thread_finished_after_load_prop_clicked)
+        self.xfoil_thread.start()
+
+    def xfoil_thread_finished_after_load_prop_clicked(self, xfoil_data):
         
         self.prop_defined = True
         self.prop_table.set_values(self.prop)
@@ -322,14 +342,22 @@ class InputWidget(QWidget):
             QMessageBox.critical(self, "Error", "Failed to load airfoil data from file.")
             return
         
-        airfoil_data = run_xfoil(airfoil_data)
-        dialog = AirfoilPlotDialog(self, airfoil_data)
+        self.foil_path.setText(path)
+        self.prop['foil_path'] = path
+        self.airfoil_data = airfoil_data
+    
+        self.xfoil_thread = XFoilThread(airfoil_data)
+        self.xfoil_thread.finished.connect(self.xfoil_thread_finished_after_load_foil_clicked)
+        self.xfoil_thread.start()
+
+    def xfoil_thread_finished_after_load_foil_clicked(self, xfoil_data):
+
+        self.xfoil_data = xfoil_data
+        
+        dialog = AirfoilPlotDialog(self, self.airfoil_data, self.xfoil_data)
         dialog.exec()
 
         if dialog.result():
-            self.foil_path.setText(path)
-            self.airfoil_data = airfoil_data
-            self.prop['foil_path'] = path
             self.on_new_prop()
 
     def save_prop_to_file(self, avs):

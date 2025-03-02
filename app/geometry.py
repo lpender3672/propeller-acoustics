@@ -222,6 +222,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     xnf, znf = av.airfoil_data[:,0], av.airfoil_data[:,1]
     xf = np.interp(np.linspace(0, 1, 2*av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
     zf = np.interp(np.linspace(0, 1, 2*av.prop['nx']), np.linspace(0, 1, znf.shape[0]), znf)
+    upscaled_airfoil = np.column_stack([xf, zf])
     if apply_min_thickness:
         tf = zf[:av.prop['nx']] - zf[av.prop['nx']:]
         zmean = (zf[:av.prop['nx']] + zf[av.prop['nx']:]) / 2
@@ -323,32 +324,21 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
         Y[Nsect+1,:] = Y[Nsect,:]
 
     # create tip verticies
-    thetas = np.linspace(0, np.pi + 2 * sweep_angle[-1], Ntip, endpoint=True)
-    unitz = np.array([0,0,1])
-    rotcenter = np.array([0, Rtip, 0])
-    midfactorhalf = np.linspace(0, 1, Ntip // 2)
-    midfactor = np.hstack([midfactorhalf, -midfactorhalf[::-1]])
-    tipfactorhalf = np.linspace(1, 0, Ntip // 2)
-    tipfactor = np.hstack([tipfactorhalf, -tipfactorhalf[::-1]])
-    tiptwist = -twist[-1] * tipfactor
-    ellipsivity = 0.5 * midfactor
+    #thetas = np.linspace(0, np.pi + 2 * sweep_angle[-1], Ntip, endpoint=True)
+    #unitz = np.array([0,0,1])
+    #rotcenter = np.array([0, Rtip, 0])
+    #midfactorhalf = np.linspace(0, 1, Ntip // 2)
+    #midfactor = np.hstack([midfactorhalf, -midfactorhalf[::-1]])
+    #tipfactorhalf = np.linspace(1, 0, Ntip // 2)
+    #tipfactor = np.hstack([tipfactorhalf, -tipfactorhalf[::-1]])
+    #tiptwist = -twist[-1] * tipfactor
+    #ellipsivity = 0.5 * midfactor
 
     #P0 = np.array([X[Nsect,:], Y[Nsect,:], Z[Nsect,:]])
     #P1 = np.array([X[Nsect+Ntip+1,:], Y[Nsect+Ntip+1,:], Z[Nsect+Ntip+1,:]])
     # T0 is normal to section and so is just cos and sin of sweep
     #T0 = 0.1 * np.array([np.sin(sweep_angle[-1]), np.cos(sweep_angle[-1]), 0])
     #T1 = -0.1 * np.array([np.sin(-sweep_angle[-1]), np.cos(-sweep_angle[-1]), 0])
-
-    T0 = 50*(P0 - Pm0)
-    T1 = -50*(P1 - Pm1)
-
-    #print(P0, P1, T0, T1)
-
-    corrected_sections = generate_tip_verticies(
-        P0, P1, T0, T1, 
-        av.airfoil_data, 
-        chord[-1], twist[-1], 
-        num_points=Ntip)
     
     #for i, theta in zip(range(Nsect+1, Nsect+Ntip+1), thetas):
     #    j = i-(Nsect+1)
@@ -361,20 +351,33 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     #    sy = radius[-1] * np.ones(nf)
     #    sx, sy = rotate2(sx, sy, -sweep_angle[-1])
     #    X[i,:], Y[i,:], Z[i,:] = rotate3p(sx, sy, sz, theta, unitz, rotcenter)
+    
 
-    for i in range(Ntip):
-        for j in range(nf):
-            X[Nsect+1+i, j] = corrected_sections[i][j][0]
-            Y[Nsect+1+i, j] = corrected_sections[i][j][1]
-            Z[Nsect+1+i, j] = corrected_sections[i][j][2]
+    if Ntip > 0:
 
-    for i in range(end+1):
-        # loop over nf in airfoil
-        for j in range(nf):
-            k = i*nf + j
-            coords[k,0] = X[i,j]
-            coords[k,1] = Y[i,j]
-            coords[k,2] = Z[i,j]
+        T0 = 50*(P0 - Pm0)
+        T1 = -50*(P1 - Pm1)
+
+        #print(P0, P1, T0, T1)
+
+        corrected_sections = generate_tip_verticies(
+            P0, P1, T0, T1, 
+            upscaled_airfoil, 
+            chord[-1], twist[-1], 
+            num_points=Ntip)
+        for i in range(Ntip):
+            for j in range(nf):
+                X[Nsect+1+i, j] = corrected_sections[i][j,0]
+                Y[Nsect+1+i, j] = corrected_sections[i][j,1]
+                Z[Nsect+1+i, j] = corrected_sections[i][j,2]
+
+        for i in range(end+1):
+            # loop over nf in airfoil
+            for j in range(nf):
+                k = i*nf + j
+                coords[k,0] = X[i,j]
+                coords[k,1] = Y[i,j]
+                coords[k,2] = Z[i,j]
     
     # loop over blade elements
     # not including end faces

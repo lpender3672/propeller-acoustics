@@ -3,6 +3,9 @@ import json
 from pathlib import Path
 import numpy as np
 
+import os
+import contextlib
+
 XFOIL_INSTALLED = True
 try: 
     from xfoil import XFoil
@@ -18,20 +21,20 @@ from scipy.interpolate import CubicSpline, interp1d
 class AppVars():
     def __init__(self):
         self.oper = {
-
         }
 
         self.prop = {
-
         }
 
         self.dist = {
-
         }
 
         self.res = {
-            
         }
+
+        self.airfoil_data = np.zeros((0, 2)) # geometry
+
+        self.xfoil_data = np.zeros((0, 5)) # alpha, Re, cl, cd, *section_cp_profile
 
     def copy(self):
         av = AppVars()
@@ -40,6 +43,7 @@ class AppVars():
         av.dist = self.dist.copy()
         av.res = self.res.copy()
         av.airfoil_data = self.airfoil_data.copy()
+        av.xfoil_data = self.xfoil_data.copy()
         return av
 
 def foil_data(airfoil_data, alpha, Re, collect_cp=False):
@@ -49,11 +53,9 @@ def foil_data(airfoil_data, alpha, Re, collect_cp=False):
         airfoil_data[:,0],
         airfoil_data[:,1]
         )
-    xf.Re = Re
     #xf.M = 0.0
     xf.max_iter = 100
     xf.verbose = False
-
 
     if isinstance(alpha, (int, float)):
         cls = np.zeros(1)
@@ -63,10 +65,19 @@ def foil_data(airfoil_data, alpha, Re, collect_cp=False):
         cls = np.zeros(len(alpha))
         cds = np.zeros(len(alpha))
 
+    if isinstance(Re, (int, float)):
+        Re = Re * np.ones(len(alpha))
+
     cps = np.zeros((alpha.shape[0], airfoil_data.shape[0]))
 
     for i, alf in enumerate(alpha):
-        out = xf.a(alf)
+        xf.Re = Re[i]
+
+        with open(os.devnull, "w") as fnull:
+            with contextlib.redirect_stdout(fnull), contextlib.redirect_stderr(fnull):
+                # this isnt working
+                out = xf.a(alf)
+
         cl, cd, _, _ = out
         cls[i] = cl
         cds[i] = cd
@@ -88,24 +99,24 @@ def load_foil(fpath):
     return np.column_stack([fx, fy])
 
 
-def run_xfoil(airfoil_data, collect_cp=True):
-    Re = 5e5
+def run_xfoil(airfoil_data, Np = 10, collect_cp=True):
+    Re = 5e5 * np.ones(Np)
 
-    alphas = np.linspace(-20, 20, airfoil_data.shape[0])
+    alphas = np.linspace(-20, 20, Np)
     if collect_cp:
         cls, cds, cps = foil_data(airfoil_data, alphas, Re, collect_cp)
-        return np.column_stack((airfoil_data, alphas, cls, cds, *cps))
+        return np.column_stack((alphas, Re, cls, cds, *cps.T))
 
     cls, cds = foil_data(airfoil_data, alphas, Re)
-    return np.column_stack((airfoil_data, alphas, cls, cds))
+    return np.column_stack((alphas, Re, cls, cds))
 
 def correct_clcd_sweep(cl, cd, sweep):
     return cl * np.cos(sweep) ** 2, cd * np.cos(sweep) ** 2
 
-def Viterna_extrapolation(airfoil_data, alpha, Re):
-    alpha_data = airfoil_data[:, 2]
-    Cl_data = airfoil_data[:, 3]
-    Cd_data = airfoil_data[:, 4]
+def Viterna_extrapolation(xfoil_data, alpha, Re):
+    alpha_data = xfoil_data[:, 0]
+    Cl_data = xfoil_data[:, 2]
+    Cd_data = xfoil_data[:, 3]
     Cl_valid = ~np.isnan(Cl_data)
 
     alpha_stall = alpha_data[Cl_valid][-1] * np.pi / 180
@@ -124,12 +135,12 @@ def Viterna_extrapolation(airfoil_data, alpha, Re):
 
     return cl, cd
 
-def interpolate_clcd(airfoil_data, alpha, Re):
-    if XFOIL_INSTALLED and airfoil_data.shape[1] >= 5:
+def interpolate_clcd(xfoil_data, alpha, Re):
+    if XFOIL_INSTALLED and xfoil_data.shape[1] >= 4:
             
-        alpha_data = airfoil_data[:, 2]
-        Cl_data = airfoil_data[:, 3]
-        Cd_data = airfoil_data[:, 4]
+        alpha_data = xfoil_data[:, 0]
+        Cl_data = xfoil_data[:, 2]
+        Cd_data = xfoil_data[:, 3]
         Cl_valid = ~np.isnan(Cl_data)
         Cd_valid = ~np.isnan(Cd_data)
 
@@ -137,7 +148,7 @@ def interpolate_clcd(airfoil_data, alpha, Re):
 
 
             if alpha > np.max(alpha_data[Cl_valid]):
-                Cl, Cd = Viterna_extrapolation(airfoil_data, alpha, Re)
+                Cl, Cd = Viterna_extrapolation(xfoil_data, alpha, Re)
             else:
                 Cl = np.interp(alpha * 180/np.pi, alpha_data[Cl_valid], Cl_data[Cl_valid])
                 Cd = np.interp(alpha * 180/np.pi, alpha_data[Cd_valid], Cd_data[Cd_valid])
@@ -147,7 +158,7 @@ def interpolate_clcd(airfoil_data, alpha, Re):
             mask = alpha*180/np.pi > alpha_data[Cl_valid][-1]
             Cl = np.interp(alpha * 180/np.pi, alpha_data[Cl_valid], Cl_data[Cl_valid])
             Cd = np.interp(alpha * 180/np.pi, alpha_data[Cd_valid], Cd_data[Cd_valid])
-            Cl[mask], Cd[mask] = Viterna_extrapolation(airfoil_data, alpha[mask], Re)
+            Cl[mask], Cd[mask] = Viterna_extrapolation(xfoil_data, alpha[mask], Re)
 
     else:
         Cl = 2 * np.pi * alpha
