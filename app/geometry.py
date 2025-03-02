@@ -1,6 +1,5 @@
 from stl import mesh
 import numpy as np
-import vis
 
 from PyQt6.QtWidgets import QApplication
 
@@ -625,27 +624,7 @@ def generate_propeller_mesh(av, apply_min_thickness=True):
     return combined
 
 
-def main():
-    import sys
-    prop = load_prop_from_file('app/props/first_loop.prop')
-    airfoil_data = np.loadtxt(prop['foil_path'])
-
-    av = AppVars()
-    av.prop = prop
-    av.airfoil_data = airfoil_data
-
-    app = QApplication(sys.argv)
-    viewer = vis.STLViewerWidget()
-
-    viewer.set_mesh(
-        generate_propeller_mesh(av)
-    )
-    viewer.resize(800, 600)
-    viewer.show()
-    sys.exit(app.exec())
-
-
-def generate_tip_verticies(P0, P1, T0, T1, airfoil_2D, chord_factor=1, twist_offset=0, num_points=10, correct_intersections=False):
+def generate_tip_verticies(P0, P1, T0, T1, airfoil_2D, chord_factor=1, twist_offset=0, num_points=10, correct_intersections=True):
 
     #P0 = (0, 0, 0)
     #P1 = (0, 0, 2)
@@ -766,6 +745,25 @@ def main2():
     ax.set_aspect('equal')
     plt.show()
 
+def main():
+    import vis
+    import sys
+    prop = load_prop_from_file('app/props/first_loop.prop')
+    airfoil_data = np.loadtxt(prop['foil_path'])
+
+    av = AppVars()
+    av.prop = prop
+    av.airfoil_data = airfoil_data
+
+    app = QApplication(sys.argv)
+    viewer = vis.STLViewerWidget()
+
+    viewer.set_mesh(
+        generate_propeller_mesh(av)
+    )
+    viewer.resize(800, 600)
+    viewer.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     #
