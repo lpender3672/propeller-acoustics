@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 
 thrust_cal_data = np.load('app/results/thrust_cal.npy')
 torque_cal_data = np.load('app/results/torque_cal.npy')
+mixed_cal_data = np.load('app/results/mixed_cal.npy')
 
-combined = np.concatenate((thrust_cal_data, torque_cal_data), axis=0)
+combined = np.concatenate((thrust_cal_data, torque_cal_data, mixed_cal_data), axis=0)
 
 torque_cal_data = np.delete(torque_cal_data, np.where(np.isclose(torque_cal_data[:,1,1], 0.07, atol=0.01)), axis=0)
 
@@ -169,6 +170,31 @@ def plot_non_dimensional(aero_data, ax1, ax2, label=None):
 
     return ax1, ax2
 
+def plot_FM(aero_data, ax, label=None):
+
+    force_data = aero_data['force_data']
+    motor_data = aero_data['motor_data']
+
+    avg_speed = np.mean(motor_data[:,:,1], axis=1) * 2 * np.pi / 60
+    avg_raw_forces = np.mean(force_data[:,:,1:], axis=1)
+
+    T, N = calculate_point(avg_raw_forces[:,0], avg_raw_forces[:,1], *calcoefs)
+    N *= D
+
+    rho = 1.225
+    A = np.pi * (D/2)**2
+
+    thrust_coefficient = T / (rho * A * avg_speed**2)
+    torque_coefficient = N / (rho * A * avg_speed**2 * D / 2)
+
+    FM = thrust_coefficient ** (3/2) / torque_coefficient
+
+
+    ax.plot(avg_speed, FM, '-o', label = label)
+    ax.grid(which='both')
+
+    return ax
+
 fig, axes = plt.subplots(2, 1)
 
 plot_raw(axes)
@@ -182,7 +208,16 @@ dalprop_2blade = np.load(folder + '/dalprop5045.npz')
 dalprop_3blade = np.load(folder + '/dalprop5045bnr.npz')
 
 plot_non_dimensional(toroidal_data, *axes, label='Toroidal')
-plot_non_dimensional(dalprop_2blade, *axes, label='Toroidal')
-plot_non_dimensional(dalprop_3blade, *axes, label='Toroidal')
+plot_non_dimensional(dalprop_2blade, *axes, label='2blade')
+plot_non_dimensional(dalprop_3blade, *axes, label='3blade')
+axes[-1].legend()
+
+fig, ax = plt.subplots()
+
+plot_FM(toroidal_data, ax, label='Toroidal')
+plot_FM(dalprop_2blade, ax, label='2blade')
+plot_FM(dalprop_3blade, ax, label='3blade')
+ax.legend()
+ax.set_ylim([0, 0.002])
 
 plt.show()

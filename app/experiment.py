@@ -293,8 +293,8 @@ class ForceWidget(QWidget):
         if mcal is None:
             return
         
-        mes_thrust = mcal * gravity * 1 #* np.sqrt(2)/2
-        mes_torque = mcal * offset * gravity * 0 #* np.sqrt(2)/2
+        mes_thrust = mcal * gravity * np.sqrt(2)/2
+        mes_torque = mcal * offset * gravity * np.sqrt(2)/2
 
         new_data = np.array([[[raw_thrust, raw_torque],
                               [mes_thrust, mes_torque]]])
