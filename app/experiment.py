@@ -363,7 +363,7 @@ class AudioWidget(QWidget):
         self.max_harmonic = 10
         self.nyquist_factor = 2.2
 
-        self.nchannels=6
+        self.nchannels=7
 
         #self.sample_freq = self.nyquist_factor * self.max_harmonic * self.bpf
         self.sample_freq = 51200.0
