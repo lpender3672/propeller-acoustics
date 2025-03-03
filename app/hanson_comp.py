@@ -14,7 +14,10 @@ from hanson import (
 )
 from PyQt6.QtWidgets import QApplication
 import vis
-from geometry import generate_propeller_mesh
+from geometry import (
+    generate_propeller_mesh,
+    generate_and_save_propeller_mesh
+)
 
 from routines import (
     load_oper_from_file,
@@ -375,7 +378,7 @@ def chord_locus_alpha(av : AppVars, alpha, m, ax = None):
         dpsiLKx = prop['dCl_dxc'] * np.exp(1j * kx * xc)
         dpsiDKx = prop['dCd_dxc'] * np.exp(1j * kx * xc)
 
-        cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data)
+        cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data, av.xfoil_data)
         xf_u, _ = _separate(av.airfoil_data[:, 0])
 
         #lax.plot(prop['xc'], prop['dCl_dxc'][rindex, :], color=clrs[i], linewidth=1)
@@ -537,14 +540,14 @@ def plot_raw_airfoil_loading(airfoil_data):
     ax[0].plot(xs_u, cls)
     ax[1].plot(xs_u, cds)
 
-def plot_raw_airfoil_cps(airfoil_data):
+def plot_raw_airfoil_cps(airfoil_data, xfoil_data):
     import matplotlib.pyplot as plt
     import matplotlib.cm as cm
     import numpy as np
 
     fig, ax = plt.subplots()
 
-    alphas = airfoil_data[:, 2]
+    alphas = xfoil_data[:, 0]
     xs = airfoil_data[:, 0]
 
     norm = plt.Normalize(np.min(alphas), np.max(alphas))
@@ -553,7 +556,7 @@ def plot_raw_airfoil_cps(airfoil_data):
     arg0 = np.argmin(alphas**2)
 
     for i in [arg0-5,arg0, arg0+5]:
-        cps = airfoil_data[:, 5:][:, i]
+        cps = xfoil_data[i, 4:]
         # Get the corresponding AoA and its color
         alpha = alphas[i]
         color = cmap(norm(alpha))
@@ -697,19 +700,20 @@ def plot_simple_optimised_harmonic(av, m):
     fig.savefig('deliverables/tms/figures/radial_locus.png', dpi=300)
 
 def main():
-    
+
+    av = AppVars()
+
+
     prop, dist = load_prop_from_file('app/props/constant_chord_swept.prop', True)
     oper = load_oper_from_file('app/app_vars.json')
     #airfoil_data = load_foil(prop['foil_path'])
-    airfoil_data = load_foil("app/foils/naca0012.surf")
+    av.airfoil_data = load_foil("app/foils/naca0018.surf")
     
-    av = AppVars()
     av.oper = oper
     av.prop = prop
     av.dist = dist
 
-    airfoil_data = run_xfoil(airfoil_data)
-    av.airfoil_data = airfoil_data
+    av.xfoil_data = run_xfoil(av.airfoil_data)
 
     av = guaranteed_convergence_BEM(av)
 
@@ -722,14 +726,16 @@ def main():
     oper, prop, _ = hanson_secondary_variables(av)
 
     #plot_optimised_harmonics(av)
-    plot_raw_airfoil_cps(av.airfoil_data)
+    #plot_raw_airfoil_cps(av.airfoil_data, av.xfoil_data)
 
     #operating_range(av)
-    #optimise_lift_harmonic_ratio(av, 2, 1)
+    optimise_lift_harmonic_ratio(av, 2, 1)
+    generate_and_save_propeller_mesh(av, 'app/props/twin_opt.stl')
     plot_simple_optimised_harmonic(av, 4)
+    generate_and_save_propeller_mesh(av, 'app/props/twin_conopt.stl')
     
-    #chord_locus_alpha(av, np.arange(0,10,2), 3)
-    #hanson_sweep(av)
+    chord_locus_alpha(av, np.arange(0,10,2), 3)
+    hanson_sweep(av)
 
     plt.show()
 

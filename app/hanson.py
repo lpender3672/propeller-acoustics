@@ -263,11 +263,11 @@ def hanson_secondary_variables(av, compact_chord = False):
         _, prop['HX'] = np.meshgrid(prop['c'], tf, indexing='ij')
         _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
-        cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data)
+        cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data, av.xfoil_data)
         xcdata, _ = _separate(av.airfoil_data[:, 0])
         xcdata = xcdata - 0.5 # center the data#
-        interp_clx = RectBivariateSpline(xcdata, av.airfoil_data[:, 2], cl_x_alpha)
-        interp_cdx = RectBivariateSpline(xcdata, av.airfoil_data[:, 2], cd_x_alpha)
+        interp_clx = RectBivariateSpline(xcdata, av.xfoil_data[:, 0], cl_x_alpha)
+        interp_cdx = RectBivariateSpline(xcdata, av.xfoil_data[:, 0], cd_x_alpha)
         # some reason RectBivariateSpline requires eval data to be in increasing order
         argsort_resalp = np.argsort(res['alpha'])
         prop['dCl_dxc'] = np.zeros((prop['nr'],prop['nx']))

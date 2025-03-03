@@ -352,10 +352,10 @@ def guaranteed_convergence_BEM(av):
     epsilon = 1e-6
     max_iters = 100
 
-    if XFOIL_INSTALLED:
-        falphas = av.airfoil_data[:, 2]
-        Cl0 = av.airfoil_data[:, 3]
-        Cd0 = av.airfoil_data[:, 4]
+    if XFOIL_INSTALLED and av.xfoil_data.shape[0] > 0:
+        falphas = av.xfoil_data[:, 0]
+        Cl0 = av.xfoil_data[:, 2]
+        Cd0 = av.xfoil_data[:, 3]
         Cl_valid = ~np.isnan(Cl0)
         Cd_valid = ~np.isnan(Cd0)
 

@@ -242,16 +242,16 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
 
     if av.prop['twinB'] == 'Single':
         Ntip = 0
-        Rtip = 0
         coords = np.zeros((nf*(Nsect+2),3))
         triangles = np.zeros((2*nf*(Nsect+1)+2*(nf-2),3),dtype = np.int64)
 
         X = np.zeros((Nsect+2,nf))
         Z = np.zeros((Nsect+2,nf))
         Y= np.zeros((Nsect+2,nf))
+
     else:
-        Ntip = 100 # number of tip sections
-        Rtip = av.prop['rt'] / np.cos(sweep_angle[-1])
+        Ntip = 20 # number of tip sections
+        #Rtip = av.prop['rt'] / np.cos(sweep_angle[-1])
         coords = np.zeros((nf*(2*Nsect+2+Ntip),3))
         triangles = np.zeros((2*nf*(2*Nsect+1+Ntip)+2*(nf-2),3),dtype = np.int64)
 
@@ -271,6 +271,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             sx, Z[i,:] = rotate2(xf*chord[i-1], zf*chord[i-1], -twist[i-1])
             sy = radius[i-1] * np.ones(nf)
             X[i,:], Y[i,:] = rotate2(sx, sy, -sweep_angle[i-1])
+
         if Ntip > 0:
             # second blade loops back through span
             start = Nsect+Ntip+1
@@ -371,13 +372,13 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
                 Y[Nsect+1+i, j] = corrected_sections[i][j,1]
                 Z[Nsect+1+i, j] = corrected_sections[i][j,2]
 
-        for i in range(end+1):
-            # loop over nf in airfoil
-            for j in range(nf):
-                k = i*nf + j
-                coords[k,0] = X[i,j]
-                coords[k,1] = Y[i,j]
-                coords[k,2] = Z[i,j]
+    for i in range(end+1):
+        # loop over nf in airfoil
+        for j in range(nf):
+            k = i*nf + j
+            coords[k,0] = X[i,j]
+            coords[k,1] = Y[i,j]
+            coords[k,2] = Z[i,j]
     
     # loop over blade elements
     # not including end faces
@@ -385,7 +386,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     for i in range(1,end+1):
         # loop over nf in airfoil
         for j in range(nf):
-            if i == (Nsect + Ntip//2 + 2):
+            if Ntip > 0 and i == (Nsect + Ntip//2 + 2):
                 l = nf//2 - j
                 if j > nf//2:
                     l += nf
@@ -623,9 +624,13 @@ def generate_propeller_mesh(av, apply_min_thickness=True):
     blade_meshes.append(hub.data)
     
     combined = mesh.Mesh(np.concatenate(blade_meshes))
-    
     return combined
 
+def generate_and_save_propeller_mesh(av, filename):
+    # scale up 1000x then save
+    prop_mesh = generate_propeller_mesh(av)
+    prop_mesh.vectors *= 1000
+    prop_mesh.save(filename)
 
 def generate_tip_verticies(P0, P1, T0, T1, airfoil_2D, chord_factor=1, twist_offset=0, num_points=10, correct_intersections=True):
 
@@ -751,7 +756,7 @@ def main2():
 def main():
     import vis
     import sys
-    prop = load_prop_from_file('app/props/first_loop.prop')
+    prop = load_prop_from_file('app/props/constant_chord_swept.prop')
     airfoil_data = np.loadtxt(prop['foil_path'])
 
     av = AppVars()

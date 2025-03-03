@@ -350,22 +350,12 @@ def sample_airfoil(airfoil_data, nxnodes = None):
 
     return xs_resampled, ys_resampled
 
-def calc_chordwise_loading(airfoil_data):
-
-    # airfoil_data[:,n]
-    # n = 0 -> x
-    # n = 1 -> z
-    # n = 2 -> alpha
-    # n = 3 -> cl
-    # n = 4 -> cd
-    # n = 5 -> cp at alpha[0]
-    # n = 6 -> cp at alpha[1]
-    # etc
+def calc_chordwise_loading(airfoil_data, xfoil_data):
 
     xs = airfoil_data[:, 0]  # x-coordinates of the panels
     ys = airfoil_data[:, 1]  # y-coordinates of the panels
-    alphas = airfoil_data[:, 2] * np.pi / 180  # AoA in radians
-    cps = airfoil_data[:, 5:]  # Pressure coefficient data for each AoA case
+    alphas = xfoil_data[:, 0] * np.pi / 180  # AoA in radians
+    cps = xfoil_data[:, 4:]  # Pressure coefficient data for each AoA case
 
     # Compute panel properties
     dx = np.diff(xs)  # x-component of panel vectors
@@ -382,8 +372,8 @@ def calc_chordwise_loading(airfoil_data):
     cd_x_alpha = np.zeros((npx, len(alphas)))  # Chordwise drag loading
 
     # Loop over AoA cases
-    for i in range(cps.shape[1]):
-        cp = cps[:, i]  # Pressure coefficients for this AoA
+    for i in range(cps.shape[0]):
+        cp = cps[i, :]  # Pressure coefficients for this AoA
         cp_mid = 0.5 * (cp[:-1] + cp[1:])  # Panel midpoint pressures (average)
 
         # Compute force components in the airfoil frame
