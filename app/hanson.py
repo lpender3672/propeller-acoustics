@@ -215,7 +215,7 @@ def calc_noise_components(arr, pref):
     return V, L, D, total
 
 
-def hanson_secondary_variables(av, compact_chord = False):
+def hanson_secondary_variables(av, compact_chord = True):
 
     oper = av.oper.copy()
     prop = av.prop.copy()
