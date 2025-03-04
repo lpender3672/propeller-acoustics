@@ -731,7 +731,7 @@ def main():
     #operating_range(av)
     optimise_lift_harmonic_ratio(av, 2, 1)
     generate_and_save_propeller_mesh(av, 'app/props/twin_opt.stl')
-    plot_simple_optimised_harmonic(av, 4)
+    plot_simple_optimised_harmonic(av, 10)
     generate_and_save_propeller_mesh(av, 'app/props/twin_conopt.stl')
     
     chord_locus_alpha(av, np.arange(0,10,2), 3)

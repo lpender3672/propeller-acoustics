@@ -163,7 +163,8 @@
         "rdist": "Cosine",
         "c75": 0.01,
         "twinB": "Single",
-        "dthread": 0.005
+        "dthread": 0.005,
+        "bdir" : "CW"
     },
     "dist": {
         "CTL_c": [

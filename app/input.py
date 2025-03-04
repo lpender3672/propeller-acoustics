@@ -42,9 +42,10 @@ class PropInputTable(InputTable):
             TableBox(["Linear", "Cosine"], "rdist", "Radial distribution"),
             TableVar(r"$c_{75}$", "[m]", "75% Chord", float),
             TableBox(['Single', 'Symmetric', 'Asymmetric'], "twinB", "Twin blade type"),
-            TableVar(r"$D_th$", "[m]", "Thead diameter", float)
+            TableVar(r"$D_{th}$", "[m]", "Thead diameter", float),
+            TableBox(['CW', 'CCW'], "bdir", "Blade direction"),
         ]
-        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75", "twinB", "dthread"]
+        self.keys = ["B", "rt", "rh", "nr", "nx", "rdist", "c75", "twinB", "dthread", "bdir"]
         super().__init__(vars, parent)
     
     def on_cell_changed(self, row, col):

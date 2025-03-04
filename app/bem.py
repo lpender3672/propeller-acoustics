@@ -32,6 +32,7 @@ def static_bem(av):
 
         a = 0
         tol = 1e-6
+        rf = 0.1 # relaxation factor
         da = 1
         beta = av.prop['twist'][i]
         r = av.prop['r0_rt'][i] * av.prop['rt']
@@ -47,7 +48,7 @@ def static_bem(av):
             new_a = 0.5 * np.sqrt(Cl * sigma * np.cos(phi) * (1 + a**2))
             da = np.abs(new_a - a)
             
-            a = new_a
+            a = rf * new_a + (1-rf) * a
 
         res['alpha'][i] = alpha
         res['Cl'][i] = Cl

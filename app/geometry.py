@@ -240,6 +240,15 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     nf = xf.shape[0]
     Nsect = radius.shape[0]
 
+    if av.prop['bdir'] == 'CW':
+        bdir = 1
+    else:
+        bdir = -1
+
+    xf *= bdir
+    sweep_angle *= bdir
+    twist *= bdir
+
     if av.prop['twinB'] == 'Single':
         Ntip = 0
         coords = np.zeros((nf*(Nsect+2),3))
