@@ -8,7 +8,12 @@ import numpy as np
 from table import OutputTable, TableVar
 
 from hanson import hanson_av
-from bem import betz_off_design, operating_range, guaranteed_convergence_BEM
+from bem import (
+    betz_off_design,
+    operating_range,
+    guaranteed_convergence_BEM,
+    static_bem
+    )
 
 class PlotCanvas(FigureCanvas, QWidget):
     def __init__(self, parent=None, xlabel = "", ylabel = "", title = "", hideaxes = False):
@@ -360,7 +365,7 @@ class AerodynamicResultsWidget(QWidget):
         
         #avs = betz_off_design(avs)
         #avs = bem(avs)
-        avs = guaranteed_convergence_BEM(avs)
+        avs = static_bem(avs)
             # plot Cx and Cz against r0_rt
         
         if avs.res['converged']:
@@ -398,13 +403,13 @@ class AerodynamicResultsWidget(QWidget):
 
             self.CTprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCT'] / sigma],
+                avs.res['dCT']],
                 linestyle=['--']
             )
             
             self.CPprofile.add_lines(
                 [avs.prop['r0_rt'],
-                avs.res['dCP']],
+                avs.res['dCQ']],
                 linestyle=['--']
             )
 

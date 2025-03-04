@@ -17,7 +17,16 @@ from scipy.optimize import root, brentq
 def static_bem(av):
 
     nr = av.prop['nr']
+    omega = av.oper['Omega']
 
+    res = {}
+    res['dCT'] = np.zeros(av.prop['nr'])
+    res['dCQ'] = np.zeros(av.prop['nr'])
+    res['dFM'] = np.zeros(av.prop['nr'])
+    res['Cl'] = np.zeros(av.prop['nr'])
+    res['Cd'] = np.zeros(av.prop['nr'])
+    res['alpha'] = np.zeros(av.prop['nr'])
+    res['invalids'] = np.zeros(0)
 
     for i in range(nr):
 
@@ -25,14 +34,44 @@ def static_bem(av):
         tol = 1e-6
         da = 1
         beta = av.prop['twist'][i]
+        r = av.prop['r0_rt'][i] * av.prop['rt']
+        sigma = av.prop['B'] * av.prop['c'][i] / (2 * np.pi * r)
 
         while da > tol:
 
             phi = np.arctan(a)
             alpha = beta - phi
-            
 
-        
+            Cl, Cd = interpolate_clcd(av.xfoil_data, alpha, 5e5)
+
+            new_a = 0.5 * np.sqrt(Cl * sigma * np.cos(phi) * (1 + a**2))
+            da = np.abs(new_a - a)
+            
+            a = new_a
+
+        res['alpha'][i] = alpha
+        res['Cl'][i] = Cl
+        res['Cd'][i] = Cd
+
+
+        cphi = np.cos(phi)
+        sphi = np.sin(phi)
+        cn = Cl * cphi - Cd * sphi
+        ct = Cl * sphi + Cd * cphi
+
+        v = omega * r
+        res['dCT'][i] = 0.5 * av.oper['rho'] * v**2 * av.prop['c'][i] * cn
+        res['dCQ'][i] = r * 0.5 * av.oper['rho'] * v**2 * av.prop['c'][i] * ct
+        # calc force coefficients
+
+        res['dFM'][i] = np.sign(res['dCT'][i]) * np.abs(res['dCT'][i]) ** (2/3) / (np.sqrt(2) * np.abs(res['dCQ'][i]))
+
+    print(res['Cl'])
+    res['converged'] = True
+    av.res = res
+    
+    return av
+
 
 def betz_design(av):
 

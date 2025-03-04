@@ -75,12 +75,15 @@ class MainWindow(QWidget):
         print("Updating prop")
         
         self.av.prop.update(self.input_widget.prop)
+        
+        if not self.input_widget.prop_defined:
+            return
+        
         self.av.airfoil_data = self.input_widget.airfoil_data
+        self.av.xfoil_data = self.input_widget.xfoil_data
 
         self.dists_widget.update_avs(self.av)
 
-        if not self.input_widget.prop_defined:
-            return
         # update mesh
 
         self.stl_viewer.set_mesh(

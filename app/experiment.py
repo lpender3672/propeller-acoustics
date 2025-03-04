@@ -508,7 +508,8 @@ class TestWidget(QWidget):
 
         _, metaf = self.get_files()
         # append audio result to aero file
-        append_audiof_to_metaf(fname, metaf)
+        speed = float(self.parent().control_widget.controller.target_speed) # TODO: measure this
+        append_audiof_to_metaf(fname, metaf, speed)
 
         self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.finished_recording)
     
