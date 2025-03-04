@@ -137,7 +137,9 @@ class STLViewerWidget(QWidget):
             return
         
         try:
-            self.stl_mesh.save(path)
+            meshtoscale = self.stl_mesh.copy()
+            meshtoscale.vectors *= 1000 * 100 / 2.54 # I think Tony's software is in like 10 thousandths of an inch?
+            meshtoscale.save(path)
         except FileNotFoundError:
             QMessageBox.critical(self, "Error", "Failed to save stl file")
             return

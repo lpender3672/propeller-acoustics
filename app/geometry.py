@@ -638,7 +638,7 @@ def generate_propeller_mesh(av, apply_min_thickness=True):
 def generate_and_save_propeller_mesh(av, filename):
     # scale up 1000x then save
     prop_mesh = generate_propeller_mesh(av)
-    prop_mesh.vectors *= 1000
+    prop_mesh.vectors *= 1000 * 100 / 2.54 # I think Tony's software is in like 10 thousandths of an inch?
     prop_mesh.save(filename)
 
 def generate_tip_verticies(P0, P1, T0, T1, airfoil_2D, chord_factor=1, twist_offset=0, num_points=10, correct_intersections=True):
