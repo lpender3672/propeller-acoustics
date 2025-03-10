@@ -141,69 +141,49 @@ def hanson(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = F
     return out
 
 
-def radial_noise_contributions(oper: dict, prop: dict, obs: dict, ms: np.ndarray, obsmove : bool = False) -> np.ndarray:
-    """
-    Hansons Helicoidal Surface Theory for Harmonic Noise of Propellers in the Far Field
+def get_radial_magnitudes(oper: dict, prop: dict, obs: dict, m: int):
+    # secondary variables required
 
-    oper: dict - Gas properties and operating conditions
-    prop: dict - Propeller geometry
-    obs: dict - Observer locations
-    ms: np.ndarray - Harmonic numbers to calculate noise for
-    """
+    theta = obs['theta'][0]
+    r = obs['r'][0]
+
+    dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
+    y = r * np.sin(theta)
+    omegaDop_o = oper['Omega'] / dopfac_o
 
     _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
+    fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
+    yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
 
-    theta = obs['theta']
-    r = obs['r']
-    y = r * np.sin(theta)
-    dopfac_o = 1 - oper['Mfl'] * np.cos(theta)
-    omegaDop_o = oper['Omega'] / dopfac_o
+    kx = fac * prop['Bd'] * oper['Mt']
+    ky = fac * yofac * prop['Bd'] / prop['r0_rt']
+    phi0 = fac * yofac * prop['FA'] / (prop['r0_rt'] * 2 * prop['rt'])
+    phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
 
-    I1plt_sum = np.zeros((prop['r0_rt'].shape), dtype=complex)
-    I2plt_sum = np.zeros((prop['r0_rt'].shape), dtype=complex)
-    I3plt_sum = np.zeros((prop['r0_rt'].shape), dtype=complex)
+    # large term top of p5
+    term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o))
 
-    for i, m in enumerate(ms):
-        fac = 2 * m * prop['B'] / (oper['Mr'] * dopfac_o)
-        yofac = oper['Mr'] ** 2 * np.cos(theta) - oper['Mx']
+    bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
+    
+    term2 = oper['Mr']**2 * np.exp(1j * (phi0 + phis)) * bess
+    terms1and2 = term1 * term2
 
-        kx = fac * prop['Bd'] * oper['Mt']
-        ky = fac * yofac * prop['Bd'] / prop['r0_rt']
-        phi0 = fac * yofac * prop['FA'] / (prop['r0_rt'] * 2 * prop['rt'])
-        phis = fac * oper['Mt'] * prop['MCA'] / (2 * prop['rt'])
+    psiVKx = Psi(kx, xc, prop['HX'])
+    psiLKx = Psi(kx, xc, prop['dCl_dxc'])
+    psiDKx = Psi(kx, xc, prop['dCd_dxc'])
 
-        # large term top of p5
-        term1 = - (oper['rho'] * oper['c0']**2 * prop['B'] * np.sin(theta) * np.exp(1j * m * prop['B'] * (omegaDop_o * r / oper['c0'] - np.pi / 2))) / ((8 * np.pi * y / (2 * prop['rt']) * dopfac_o) + 1e-10)
+    I1 = terms1and2 * kx**2 * prop['tb'] * psiVKx
+    I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
+    I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
 
-        bess = besselj(m * prop['B'], m * prop['B'] * prop['r0_rt'] * oper['Mt'] * np.sin(theta) / dopfac_o)
-        
+    PVm = cumulative_trapezoid(I1, prop['r0_rt'], initial=0)
+    PDm = cumulative_trapezoid(I2, prop['r0_rt'], initial=0)
+    PLm = cumulative_trapezoid(I3, prop['r0_rt'], initial=0)
 
-        term2 = oper['Mr']**2 * np.exp(1j * (phi0 + phis)) * bess
+    return PVm, PLm, PDm
 
-        terms1and2 = term1 * term2
-
-        psiVKx = Psi(kx, xc, prop['HX'])
-        psiLKx = Psi(kx, xc, prop['dCl_dxc'])
-        psiDKx = Psi(kx, xc, prop['dCd_dxc'])
-
-        I1 = terms1and2 * kx**2 * prop['tb'] * psiVKx
-        I2 = terms1and2 * 1j * kx * prop['Cd_r'] / 2 * psiDKx
-        I3 = terms1and2 * -1j * ky * prop['Cl_r'] / 2 * psiLKx
-
-        I1plt_sum += cumulative_trapezoid(I1, prop['r0_rt'], initial=0)
-        I2plt_sum += cumulative_trapezoid(I2, prop['r0_rt'], initial=0)
-        I3plt_sum += cumulative_trapezoid(I3, prop['r0_rt'], initial=0)
-
-    out = np.array([I1plt_sum, I2plt_sum, I3plt_sum], dtype=complex)
-
-    return out
-
-def calc_noise_components(arr, pref):
-
-    Vm = arr[0]
-    Dm = arr[1]
-    Lm = arr[2]
+def sum_harmonics(Vm, Dm, Lm, pref):
 
     V = 20*np.log10(np.sqrt(np.sum(2*Vm*np.conj(Vm), axis=1))/pref)
     L = 20*np.log10(np.sqrt(np.sum(2*Lm*np.conj(Lm), axis=1))/pref)
@@ -254,14 +234,15 @@ def hanson_secondary_variables(av, compact_chord = True):
     prop['FA'] = dx * np.sin(phi)
     prop['MCA'] = dx * np.cos(phi)
 
+    _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
+
     if compact_chord:
-        prop['HX'] = np.ones((prop['nx'], prop['nr']))
-        prop['dCl_dxc'] = np.ones((prop['nx'], prop['nr']))
-        prop['dCd_dxc'] = np.ones((prop['nx'], prop['nr']))
+        prop['HX'] = np.ones((prop['nr'], prop['nx']))
+        prop['dCl_dxc'] = np.ones((prop['nr'], prop['nx']))
+        prop['dCd_dxc'] = np.ones((prop['nr'], prop['nx']))
     else:
 
         _, prop['HX'] = np.meshgrid(prop['c'], tf, indexing='ij')
-        _, xc = np.meshgrid(prop['r0_rt'], prop['xc'], indexing='ij')
 
         cl_x_alpha, cd_x_alpha = calc_chordwise_loading(av.airfoil_data, av.xfoil_data)
         xcdata, _ = _separate(av.airfoil_data[:, 0])
@@ -280,7 +261,6 @@ def hanson_secondary_variables(av, compact_chord = True):
             ).T
 
     # ensure that the integrals of the chordwise loading are equal to 1
-    prop['dCd_dxc'] = np.ones((prop['nx'], prop['nr']))
 
     prop['HX'] /= simpson(prop['HX'], xc, axis=1)[:, np.newaxis]
     prop['dCl_dxc'] /= simpson(prop['dCl_dxc'], xc, axis=1)[:, np.newaxis]
@@ -293,10 +273,10 @@ def hanson_av(av):
 
     oper, prop, obs = hanson_secondary_variables(av)
 
-    ms = np.arange(1, 5)
+    ms = np.arange(1, 20)
     out = hanson(oper, prop, obs, ms, False)
 
-    V, L, D, total = calc_noise_components(out, av.oper['pref'])
+    V, L, D, total = sum_harmonics(out, av.oper['pref'])
     peak_observer = {
         'r': av.oper['r_obs'] * av.prop['rt'],
         'theta': av.oper['theta_obs']
@@ -305,20 +285,10 @@ def hanson_av(av):
 
     return obs['theta'], V, L, D, peak_observer['theta'], vector_contributions
 
-def harmonics(av):
-
-    oper, prop, _ = hanson_secondary_variables(av)
-    peak_observer = {
-        'r': [av.oper['r_obs'] * av.prop['rt']],
-        'theta': [av.oper['theta_obs']]
-    }
-
-    ms = np.arange(1, 30)
-    PVm, PDm, PLm = hanson(oper, prop, peak_observer, ms, False)
+def calc_harmonics(PVm, PDm, PLm, pref):
 
     total = PVm[0] + PDm[0] + PLm[0]
-    pref = oper['pref']
-    av.res['harmonics'] = 20*np.log10(np.sqrt(2*total*np.conj(total))/pref)
+    return 20*np.log10(np.sqrt(2*total*np.conj(total))/pref)
 
 def validate():
 
@@ -384,7 +354,7 @@ def validate():
 
     out = hanson(oper, prop, obs, ms)
 
-    V, D, L, _ = calc_noise_components(out, oper['pref'])
+    V, D, L, _ = sum_harmonics(out, oper['pref'])
 
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
 

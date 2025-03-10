@@ -498,6 +498,14 @@ class TestWidget(QWidget):
         self.parent().audio_widget.daq_thread.startLogging.emit(str(audio_file), naubufs)
         self.parent().audio_widget.daq_thread.finishedLogging.connect(self.finished_recording)
 
+        # start recording speed as well:
+        self.nspbufs = 10
+        self.idx = 0
+        speed_buffer_size = self.parent().control_widget.sample_buffer_size
+        self.motor_data = np.zeros((1, self.nspbufs * speed_buffer_size, 4))
+        self.parent().control_widget.controller.finishedLogging.connect(self.speed_callback)
+        self.parent().control_widget.controller.startLogging.emit(self.nspbufs) 
+
         self.audio_start_time = time.time()
 
     def finished_recording(self, fname):
@@ -508,8 +516,9 @@ class TestWidget(QWidget):
 
         _, metaf = self.get_files()
         # append audio result to aero file
-        speed = float(self.parent().control_widget.controller.target_speed) # TODO: measure this
-        append_audiof_to_metaf(fname, metaf, speed)
+        _, speed, current, temp = np.mean(self.motor_data[0, :, 1], axis=0) # [thetime, vel, current, temperature]
+
+        append_audiof_to_metaf(fname, metaf, [speed, current, temp])
 
         self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.finished_recording)
     

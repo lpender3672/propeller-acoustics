@@ -7,7 +7,14 @@ import numpy as np
 
 from table import OutputTable, TableVar
 
-from hanson import hanson_av
+from hanson import (
+    hanson_av,
+    hanson,
+    hanson_secondary_variables,
+    sum_harmonics,
+    get_radial_magnitudes,
+    calc_harmonics
+)
 from bem import (
     betz_off_design,
     operating_range,
@@ -239,7 +246,9 @@ class ResultsTable(OutputTable):
     
 
     def set_values(self, res):
-        for i, key in enumerate(self.keys):
+        keys_to_set = [key for key in self.keys if key in res]
+
+        for i, key in enumerate(keys_to_set):
             self.vars[i].value = res[key]
         super().set_values()
     
@@ -257,7 +266,7 @@ class ResultsTable(OutputTable):
 
 class NoiseResultsWidget(QWidget):
     def __init__(self, parent, *args):
-        super().__init__(parent,  *args)
+        super().__init__(parent, *args)
 
         self.layout = QGridLayout(self)
         self.setLayout(self.layout)
@@ -265,23 +274,38 @@ class NoiseResultsWidget(QWidget):
         self.directivity = PolarPlotCanvas(self)
         self.directivity_toolbar = NavigationToolbar(self.directivity, self)
 
-        self.thickness_interference = PlotCanvas(self, hideaxes=True)
-        self.lift_interference = PlotCanvas(self, hideaxes=True)
-        self.drag_interference = PlotCanvas(self, hideaxes=True)
-        self.total_interference = PlotCanvas(self, hideaxes=True)
+
+        self.hmonic_plot = PlotCanvas(self, hideaxes=True)
 
         self.layout.addWidget(self.directivity, 0, 0, 2, 2)
         self.layout.addWidget(self.directivity_toolbar)
 
-        self.layout.addWidget(self.thickness_interference, 2, 0, 1, 1)
-        self.layout.addWidget(self.lift_interference, 2, 1, 1, 1)
-        self.layout.addWidget(self.drag_interference, 3, 0, 1, 1)
-        self.layout.addWidget(self.total_interference, 3, 1, 1, 1)
+        self.interference_tab = QTabWidget(self)
+        interference_tab_widget = QWidget(self)
+        interference_tab_layout = QGridLayout()
+
+        self.thickness_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
+        self.lift_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
+        self.drag_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
+        self.total_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
 
         self.thickness_interference.line_colors = ['blue']
         self.lift_interference.line_colors = ['red']
         self.drag_interference.line_colors = ['green']
         self.total_interference.line_colors = ['black']
+        self.hmonic_plot.line_colors = ['blue', 'red']
+        self.directivity.line_colors = ['blue', 'red']
+
+        interference_tab_layout.addWidget(self.thickness_interference, 0, 0)
+        interference_tab_layout.addWidget(self.lift_interference, 0, 1)
+        interference_tab_layout.addWidget(self.drag_interference, 1, 0)
+        interference_tab_layout.addWidget(self.total_interference, 1, 1)
+
+        interference_tab_widget.setLayout(interference_tab_layout)
+        self.interference_tab.addTab(interference_tab_widget, "Interference")
+        self.interference_tab.addTab(self.hmonic_plot, "Harmonics")
+
+        self.layout.addWidget(self.interference_tab, 2, 0, 2, 2)
 
         self.directivity.setMinimumHeight(400)
 
@@ -290,9 +314,23 @@ class NoiseResultsWidget(QWidget):
         if not avs.res['converged']:
             return # no loading data if BEM not converged
         
-        theta, V, L, D, theta_max, vector_contributions = hanson_av(avs)
-        self.directivity.line_colors = ['blue', 'red']
 
+        oper, prop, obs = hanson_secondary_variables(avs)
+        theta = obs['theta']
+
+        ms = np.arange(1, 30)
+        PVm, PDm, PLm = hanson(oper, prop, obs, ms, False)
+        V, L, D, total = sum_harmonics(PVm, PDm, PLm, avs.oper['pref'])
+        
+        peak_observer = {
+            'r': [avs.oper['r_obs'] * avs.prop['rt']],
+            'theta': [avs.oper['theta_obs']]
+        }
+        vector_contributions = get_radial_magnitudes(oper, prop, peak_observer, 1) # TODO select m
+
+        HVm, HDm, HLm = hanson(oper, prop, peak_observer, ms, False)
+        hmonics = calc_harmonics(HVm, HDm, HLm, avs.oper['pref'])
+        
         self.directivity.clear_plot()
 
         self.directivity.add_lines(np.array([theta, V, L, D]),
@@ -303,6 +341,7 @@ class NoiseResultsWidget(QWidget):
         self.lift_interference.clear_plot()
         self.drag_interference.clear_plot()
         self.total_interference.clear_plot()
+        self.hmonic_plot.clear_plot()
         
         self.thickness_interference.add_lines(
             np.array([vector_contributions[0].real, vector_contributions[0].imag]),
@@ -324,6 +363,12 @@ class NoiseResultsWidget(QWidget):
             np.array([total.real, total.imag]),
             linestyle=['-'],
             label=['Total']
+        )
+
+        self.hmonic_plot.add_lines(
+            [ms, hmonics],
+            linestyle=['-'],
+            label=['Harmonics']
         )
 
         avs.res['OASPL'] = 10 * np.log10(total[-1] * np.conj(total[-1])).real
