@@ -26,7 +26,7 @@ from routines import (
 )
 
 gravity = 9.81 # m/s^2
-offset = 0.04 # 4 cm
+offset = 0.03 # 3 cm
 
 class FloatInputDialog(QDialog):
     def __init__(self, title="Float Input", prompt="Enter a float value:", parent=None):
@@ -293,8 +293,8 @@ class ForceWidget(QWidget):
         if mcal is None:
             return
         
-        mes_thrust = mcal * gravity * np.sqrt(2)/2
-        mes_torque = mcal * offset * gravity * np.sqrt(2)/2
+        mes_thrust = mcal * gravity * 0 #np.sqrt(2)/2
+        mes_torque = mcal * offset * gravity #* np.sqrt(2)/2
 
         new_data = np.array([[[raw_thrust, raw_torque],
                               [mes_thrust, mes_torque]]])
