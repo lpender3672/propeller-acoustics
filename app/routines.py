@@ -299,9 +299,9 @@ def append_audiof_to_metaf(audiof, metaf, row):
     try:
         metadata = np.load(metaf)
     except FileNotFoundError:
-        metadata = np.zeros((0, 2))
+        metadata = np.zeros((0, len(row) + 1), dtype=object)
 
-    newrow = np.array([audiof, row])
+    newrow = np.array([audiof, *row], dtype=object)
     metadata = np.vstack((metadata, newrow))
     np.save(metaf, metadata)
 

@@ -480,14 +480,14 @@ class TestWidget(QWidget):
 
         if self.prop is None:
             audio_file = self.results_dir / f"audio_{formatted_time}.bin"
-            meta_file = self.results_dir / f"meta_{formatted_time}.npz"
+            meta_file = self.results_dir / f"meta_{formatted_time}.npy"
             aero_file = self.results_dir / f"aero_{formatted_time}.npz"
         else:
             directory = self.results_dir / self.prop['name']
             if not directory.exists():
                 directory.mkdir()
             audio_file = directory / f"audio_{formatted_time}.bin"
-            meta_file = directory / "meta_data.npz"
+            meta_file = directory / "meta_data.npy"
             aero_file = directory / f"aero_{formatted_time}.npz"
 
         return audio_file, meta_file, aero_file
@@ -523,8 +523,7 @@ class TestWidget(QWidget):
 
         _, metaf,_ = self.get_files()
         # append audio result to aero file
-        print(self.motor_data[0, :, 1].shape)
-        _, speed, current, temp = np.mean(self.motor_data[0, :, 1], axis=0) # [thetime, vel, current, temperature]
+        _, speed, current, temp = np.mean(self.motor_data[0, :, :], axis=0) # [thetime, vel, current, temperature]
 
         append_audiof_to_metaf(fname, metaf, [speed, current, temp])
 

@@ -282,7 +282,7 @@ class ControllerThread(QThread):
         # controller settings
         self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
-        self.odrv.axis0.controller.config.vel_gain = 0.002
+        self.odrv.axis0.controller.config.vel_gain = 0.01
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
         self.odrv.axis0.controller.config.vel_limit = 250
         self.odrv.axis0.config.motor.current_soft_max = 20
