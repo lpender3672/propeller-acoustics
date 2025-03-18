@@ -379,7 +379,7 @@ class ControllerThread(QThread):
 
             if self.checking_settled:
                 fltrd = filtfilt(self.b, self.a,self.log_buffer[:,1])
-                if np.isclose(fltrd, 60 * self.target_speed, atol=5, rtol=0.025).all():
+                if np.isclose(fltrd, -60 * self.target_speed, atol=5, rtol=0.025).all():
                     self.speedSettled.emit()
                     self.checking_settled = False
                     self.logging = False
@@ -415,7 +415,7 @@ class ControllerThread(QThread):
             self.errorOccurred.emit("No ODrive connection. Cannot set speed.")
             return
         self.target_speed = float(speed)
-        self.odrv.axis0.controller.input_vel = self.target_speed
+        self.odrv.axis0.controller.input_vel = -self.target_speed
 
     def start_motor(self):
         if not self.odrv:
@@ -423,7 +423,7 @@ class ControllerThread(QThread):
             return
         try:
             self.set_odrive_state(AxisState.CLOSED_LOOP_CONTROL)
-            self.odrv.axis0.controller.input_vel = self.target_speed
+            self.odrv.axis0.controller.input_vel = -self.target_speed
             self.motor_running = True
         except Exception as e:
             self.errorOccurred.emit(f"Error starting motor: {e}")

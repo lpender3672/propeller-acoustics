@@ -293,8 +293,8 @@ class ForceWidget(QWidget):
         if mcal is None:
             return
         
-        mes_thrust = mcal * gravity * 0 #np.sqrt(2)/2
-        mes_torque = mcal * offset * gravity #* np.sqrt(2)/2
+        mes_thrust = mcal * gravity #np.sqrt(2)/2
+        mes_torque = mcal * offset * gravity * 0 #* np.sqrt(2)/2
 
         new_data = np.array([[[raw_thrust, raw_torque],
                               [mes_thrust, mes_torque]]])
@@ -395,6 +395,7 @@ class AudioWidget(QWidget):
 
         for i in range(self.nchannels):
             if not self.daq_thread.add_channel():
+                self.daq_thread = None
                 print("Failed to add channel")
                 return
             else:
@@ -479,18 +480,24 @@ class TestWidget(QWidget):
 
         if self.prop is None:
             audio_file = self.results_dir / f"audio_{formatted_time}.bin"
-            meta_file = self.results_dir / f"aero_{formatted_time}.npz"
+            meta_file = self.results_dir / f"meta_{formatted_time}.npz"
+            aero_file = self.results_dir / f"aero_{formatted_time}.npz"
         else:
             directory = self.results_dir / self.prop['name']
             if not directory.exists():
                 directory.mkdir()
             audio_file = directory / f"audio_{formatted_time}.bin"
             meta_file = directory / "meta_data.npz"
+            aero_file = directory / f"aero_{formatted_time}.npz"
 
-        return audio_file, meta_file
+        return audio_file, meta_file, aero_file
 
     def record_ten_seconds(self):
-        audio_file, _ = self.get_files()
+
+        if self.parent().audio_widget.daq_thread is None:
+            return
+
+        audio_file, _, _ = self.get_files()
         buffer_freq = self.parent().audio_widget.buffer_freq 
         sample_freq = self.parent().audio_widget.sample_freq
         duration = 1
@@ -514,7 +521,7 @@ class TestWidget(QWidget):
         finished_dialog.setText(f"Finished recording audio in f{dt}")
         finished_dialog.exec()
 
-        _, metaf = self.get_files()
+        _, metaf,_ = self.get_files()
         # append audio result to aero file
         _, speed, current, temp = np.mean(self.motor_data[0, :, 1], axis=0) # [thetime, vel, current, temperature]
 
@@ -546,15 +553,10 @@ class TestWidget(QWidget):
         if dir_path:
             self.results_directory_path.setText(dir_path)
 
-    def get_fnames(self):
-        audio_file = str(self.results_dir / "audio.bin")
-        aero_file = str(self.results_dir / "aero.npz")
-
-        return audio_file, aero_file
 
     def on_pyramid_test_started(self):
 
-        audio_file, _ = self.get_fnames()
+        audio_file, _, _ = self.get_files()
 
         self.nspbufs = 10
         self.nfcsmps = 40
@@ -651,7 +653,7 @@ class TestWidget(QWidget):
 
         if self.idx == len(self.pyramid) - 1:
             # save everything
-            _, aero_file = self.get_fnames()
+            _, _, aero_file = self.get_files()
             np.savez(aero_file, force_data=self.force_data, motor_data=self.motor_data)
         
         self.idx = 0
@@ -696,7 +698,6 @@ class MainWindow(QWidget):
         self.force_widget.about_to_quit()
         self.audio_widget.about_to_quit()
 
-    
 
 if __name__ == "__main__":
     app = QApplication([])
