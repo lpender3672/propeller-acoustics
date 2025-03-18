@@ -523,6 +523,7 @@ class TestWidget(QWidget):
 
         _, metaf,_ = self.get_files()
         # append audio result to aero file
+        print(self.motor_data[0, :, 1].shape)
         _, speed, current, temp = np.mean(self.motor_data[0, :, 1], axis=0) # [thetime, vel, current, temperature]
 
         append_audiof_to_metaf(fname, metaf, [speed, current, temp])

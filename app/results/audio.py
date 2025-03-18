@@ -33,7 +33,7 @@ def plot_prop_sound(data, ax, **kwargs):
         ax[i].set_xlim(0, 1000)
 
 twin_data = np.fromfile('app/results/NF_twin.bin', dtype=np.float64).reshape(-1, total_channels)
-tri_data = np.fromfile('app/results/NF_tri.bin', dtype=np.float64).reshape(-1, 6)
+tri_data = np.fromfile('app/results/NF_tri.bin', dtype=np.float64).reshape(-1, total_channels)
 loop_data = np.fromfile('app/results/NF_loop.bin', dtype=np.float64).reshape(-1, total_channels)
 naca0024_data = np.fromfile('app/results/NF_0024.bin', dtype=np.float64).reshape(-1, total_channels)
 
@@ -41,6 +41,9 @@ tri12 = np.fromfile('app/results/NF_tri12.bin', dtype=np.float64).reshape(-1, to
 tri12_shrouded = np.fromfile('app/results/NF_tri12_shrouded.bin', dtype=np.float64).reshape(-1, total_channels)
 motor = np.fromfile('app/results/NF_motor12.bin', dtype=np.float64).reshape(-1, total_channels)
 motor_shrouded = np.fromfile('app/results/NF_motor12_shrouded.bin', dtype=np.float64).reshape(-1, total_channels)
+
+tri12_av = np.fromfile('app/results/NF_AV_tri12.bin', dtype=np.float64).reshape(-1, total_channels)
+tri12_v = np.fromfile('app/results/NF_V_tri12.bin', dtype=np.float64).reshape(-1, total_channels)
 
 fig, ax = plt.subplots(len(view_channels), 1, figsize=(10, 12))
 if not isinstance(ax, np.ndarray):
@@ -51,9 +54,10 @@ if not isinstance(ax, np.ndarray):
 #plot_prop_sound(loop_data, ax, label='Loop', alpha=0.9, linestyle='-.')
 #plot_prop_sound(naca0024_data, ax, label='NACA 0024', alpha=0.9)
 
-plot_prop_sound(tri_data, ax, label='Tri 6000 RPM', alpha=0.9, linestyle='--')
-plot_prop_sound(tri12, ax, label='Tri 12000 RPM', alpha=0.9, linestyle='-')
+#plot_prop_sound(tri_data, ax, label='Tri 6000 RPM', alpha=0.9, linestyle='--')
 
+plot_prop_sound(tri12_v, ax, label='Tri 12kRPM', alpha=0.9, linestyle='-')
+plot_prop_sound(tri12_av, ax, label='Tri 12kRPM antivibration', alpha=0.9, linestyle='-')
 
 #plot_prop_sound(tri12, ax, label='Tri 12000 RPM', alpha=0.9, linestyle='-')
 #plot_prop_sound(tri12_shrouded, ax, label='Tri 12000 RPM shrouded', alpha=0.9, linestyle='--')

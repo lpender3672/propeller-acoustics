@@ -142,30 +142,18 @@ class DAQThread(QThread):
         self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
         return True
 
-    def remove_channel(self):
-        if self.total_channels > 0:
-            self.total_channels -= 1
-
-            channels_per_module = 4
-            nmod = self.total_channels // channels_per_module
-            nch = self.total_channels % channels_per_module
-            chstr = f"cDAQ1Mod{nmod+1}/ai{nch}"
-
-            self.task.ai_channels.remove_ai_voltage_chan(chstr)
-            self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
-
     def run(self):
         
         # check if device attached
         if not self.task.devices:
             return
         
-
         self.task.timing.cfg_samp_clk_timing(
             self.sample_rate,
             sample_mode=AcquisitionType.CONTINUOUS,
             samps_per_chan=self.group_samples
         )
+        print(f"ACTUAL FREQUENCY: {self.task.timing.samp_clk_rate}")
         self.task.register_every_n_samples_acquired_into_buffer_event(self.group_samples, self.callback)
         self.reader = AnalogMultiChannelReader(self.task.in_stream)
 
@@ -284,7 +272,7 @@ class ControllerThread(QThread):
     def run(self):
 
         try:
-            self.odrv = odrive.find_any(timeout=5)
+            self.odrv = odrive.find_any(timeout=10)
             assert self.odrv
         except Exception as e:
             self.errorOccurred.emit(f"Error connecting to ODrive: {e}")
@@ -297,8 +285,10 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.vel_gain = 0.002
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
         self.odrv.axis0.controller.config.vel_limit = 250
+        self.odrv.axis0.config.motor.current_soft_max = 20
+        self.odrv.axis0.config.motor.current_hard_max = 36
 
-        self.odrv.axis0.config.watchdog_timeout = 10 * self.watchdog_dt
+        self.odrv.axis0.config.watchdog_timeout = 15 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
         #self.watchdog_timer.start(100)
 
