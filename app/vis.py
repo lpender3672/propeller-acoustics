@@ -137,7 +137,7 @@ class STLViewerWidget(QWidget):
             return
         
         try:
-            meshtoscale = self.stl_mesh.copy()
+            meshtoscale = mesh.Mesh(np.copy(self.stl_mesh.data))
             meshtoscale.vectors *= 1000 * 100 / 2.54 # I think Tony's software is in like 10 thousandths of an inch?
             meshtoscale.save(path)
         except FileNotFoundError:

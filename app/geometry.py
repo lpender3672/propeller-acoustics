@@ -298,8 +298,8 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             P0 = np.array([*rotate2(0.0, radius[Nsect-1], -sweep_angle[Nsect-1]), 0])
             P1 = np.array([*rotate2(0.0, radius[Nsect-1], sweep_angle[Nsect-1]), 0])
 
-            Pm0 = np.array([*rotate2(0.0, radius[Nsect-2], -sweep_angle[Nsect-1]), 0])
-            Pm1 = np.array([*rotate2(0.0, radius[Nsect-2], sweep_angle[Nsect-1]), 0])
+            T0 = -(np.array([X[start+1,0], Y[start+1,0], Z[start+1,0]]) - np.array([X[start,0], Y[start,0], Z[start,0]]))
+            T1 = (np.array([X[Nsect+1,Nsect//2], Y[Nsect+1,Nsect//2], Z[Nsect+1,Nsect//2]]) - np.array([X[Nsect,Nsect//2], Y[Nsect,Nsect//2], Z[Nsect,Nsect//2]]))
 
         else:
 
@@ -364,10 +364,6 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     
 
     if Ntip > 0:
-
-        T0 = 50*(P0 - Pm0)
-        T1 = -50*(P1 - Pm1)
-
         #print(P0, P1, T0, T1)
 
         corrected_sections = generate_tip_verticies(
@@ -379,7 +375,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
             for j in range(nf):
                 X[Nsect+1+i, j] = corrected_sections[i][j,0]
                 Y[Nsect+1+i, j] = corrected_sections[i][j,1]
-                Z[Nsect+1+i, j] = corrected_sections[i][j,2]
+                Z[Nsect+1+i, j] = corrected_sections[i][j,2] + 0.0001
 
     for i in range(end+1):
         # loop over nf in airfoil
