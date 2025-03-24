@@ -446,8 +446,8 @@ class TestWidget(QWidget):
         self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
         self.results_dir = self.app_dir / "results"
 
-        self.aero_pyramid_test_start_button = QPushButton("aero_pyramid")
-        self.audio_pyramid_test_start_button = QPushButton("audio_pyramid")
+        self.aero_pyramid_test_start_button = QPushButton("Start Aero Pyramid")
+        self.audio_pyramid_test_start_button = QPushButton("Start Audio Pyramid")
 
         self.record_ten_seconds_button = QPushButton("Record 1s audio")
 
@@ -472,9 +472,22 @@ class TestWidget(QWidget):
         self.step_timer = QTimer()
         self.step_timer.timeout.connect(self.aero_pyramid_step)
 
-        self.aero_pyramid_steps = 20
+        self.pyramid_steps = 20
+        self.min_pyramid_speed = 100
         self.max_pyramid_speed = 12000
-        self.aero_pyramid = list(range(self.aero_pyramid_steps)) + list(range(0, self.aero_pyramid_steps - 1)[::-1])
+        #self.pyramid_type = 'linear'
+        self.pyramid_type = 'logarithmic'
+
+        if self.pyramid_type == 'logarithmic':
+            self.speed_pyramid = np.logspace(np.log10(self.min_pyramid_speed), np.log10(self.max_pyramid_speed), self.pyramid_steps // 2)
+            self.speed_pyramid = np.concatenate((self.speed_pyramid[:-1], self.speed_pyramid[::-1]))
+
+        else:
+            self.speed_pyramid = np.linspace(self.min_pyramid_speed, self.max_pyramid_speed, self.pyramid_steps // 2)
+            self.speed_pyramid = np.concatenate((self.speed_pyramid[:-1], self.speed_pyramid[::-1]))
+
+        print(self.speed_pyramid)
+
         self.idx = 0
 
         self.prop = None
@@ -642,7 +655,7 @@ class TestWidget(QWidget):
             self.on_aero_pyramid_test_finished()
             return
 
-        speed = self.max_pyramid_speed * self.aero_pyramid[self.idx] / self.aero_pyramid_steps
+        speed = self.speed_pyramid[self.idx]
         self.parent().control_widget.speed_box.setText(str(speed))
         self.parent().control_widget.controller.setSpeed.emit(speed / 60)
         self.parent().control_widget.controller.speedSettled.connect(self.aerodynamic_collect)
@@ -730,7 +743,7 @@ class TestWidget(QWidget):
             self.on_audio_pyramid_test_finished()
             return
 
-        speed = self.max_pyramid_speed * self.aero_pyramid[self.idx] / self.aero_pyramid_steps
+        speed = self.speed_pyramid[self.idx]
         self.parent().control_widget.speed_box.setText(str(speed))
         self.parent().control_widget.controller.setSpeed.emit(speed / 60)
         self.parent().control_widget.controller.speedSettled.connect(self.audio_collect)
