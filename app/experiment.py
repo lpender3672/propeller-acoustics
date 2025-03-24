@@ -464,6 +464,7 @@ class TestWidget(QWidget):
         self.load_prop_button.clicked.connect(self.on_load_prop_clicked)
         self.select_results_directory_button.clicked.connect(self.on_select_results_directory)
         self.aero_pyramid_test_start_button.clicked.connect(self.on_aero_pyramid_test_started)
+        self.audio_pyramid_test_start_button.clicked.connect(self.on_audio_pyramid_test_started)
 
         self.record_ten_seconds_button.clicked.connect(self.record_ten_seconds)
 
@@ -473,7 +474,7 @@ class TestWidget(QWidget):
         self.step_timer.timeout.connect(self.aero_pyramid_step)
 
         self.pyramid_steps = 20
-        self.min_pyramid_speed = 100
+        self.min_pyramid_speed = 800
         self.max_pyramid_speed = 12000
         #self.pyramid_type = 'linear'
         self.pyramid_type = 'logarithmic'
@@ -577,11 +578,11 @@ class TestWidget(QWidget):
 
         self.nspbufs = 10
         self.nfcsmps = 40
-        self.naubufs = 5 * self.parent().audio_widget.buffer_freq # 5s
+        self.naubufs = 5 # 5?
 
         speed_buffer_size = self.parent().control_widget.sample_buffer_size
 
-        ntests = self.aero_pyramid_steps * 2 - 1
+        ntests = self.pyramid_steps * 2 - 1
         self.motor_data = np.zeros((ntests, self.nspbufs * speed_buffer_size, 4))
         self.force_data = np.zeros((ntests, self.nfcsmps, 3))
         # audio data is too fast the seperate thead writes it to a file
@@ -600,8 +601,8 @@ class TestWidget(QWidget):
         self.parent().control_widget.controller.finishedLogging.connect(self.check_aero_data_points)
         self.parent().force_widget.serial_thread.finishedLogging.connect(self.force_callback)
         self.parent().force_widget.serial_thread.finishedLogging.connect(self.check_aero_data_points)
-        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.audio_callback) # pyqtSignal()
-        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_aero_data_points)
+        #self.parent().audio_widget.daq_thread.finishedLogging.connect(self.audio_callback) # pyqtSignal()
+        #self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_aero_data_points)
 
         self.data_types_recieved = 0
 
@@ -649,7 +650,7 @@ class TestWidget(QWidget):
         if self.idx == 0:
             # first step
             pass 
-        elif self.idx == len(self.aero_pyramid) - 1:
+        elif self.idx == len(self.speed_pyramid) - 1:
             # last step
             self.step_timer.stop()
             self.on_aero_pyramid_test_finished()
@@ -669,7 +670,7 @@ class TestWidget(QWidget):
         self.aero_pyramid_test_start_button.setEnabled(True)
         self.audio_pyramid_test_start_button.setEnabled(True)
 
-        if self.idx == len(self.aero_pyramid) - 1:
+        if self.idx == len(self.speed_pyramid) - 1:
             # save everything
             _, _, aero_file = self.get_files()
             np.savez(aero_file, force_data=self.force_data, motor_data=self.motor_data)
@@ -682,8 +683,8 @@ class TestWidget(QWidget):
         self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.check_aero_data_points)
         self.parent().control_widget.controller.finishedLogging.disconnect(self.speed_callback)
         self.parent().control_widget.controller.finishedLogging.disconnect(self.check_aero_data_points)
-        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.audio_callback)
-        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.check_aero_data_points)
+        #self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.audio_callback)
+        #self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.check_aero_data_points)
 
     def check_audio_data_points(self, _=None):
         self.data_types_recieved += 1
@@ -699,16 +700,16 @@ class TestWidget(QWidget):
         self.naubufs = 1 * self.parent().audio_widget.buffer_freq # 1s
         speed_buffer_size = self.parent().control_widget.sample_buffer_size
 
-        ntests = self.aero_pyramid_steps * 2 - 1
+        ntests = self.pyramid_steps * 2 - 1
         self.motor_data = np.zeros((ntests, self.nspbufs * speed_buffer_size, 4))
         self.audio_fnames = []
         # audio data is too fast the seperate thead writes it to a file
 
         # threads and their appropriate signals
-        if self.parent().force_widget.serial_thread is None:
+        if self.parent().audio_widget.daq_thread is None:
             return
         
-        print("aero_pyramid Test Started")
+        print("audio pyramid Test Started")
         self.aero_pyramid_test_start_button.setEnabled(False)
         self.audio_pyramid_test_start_button.setEnabled(False)
 
@@ -716,8 +717,6 @@ class TestWidget(QWidget):
 
         self.parent().control_widget.controller.finishedLogging.connect(self.speed_callback)
         self.parent().control_widget.controller.finishedLogging.connect(self.check_audio_data_points)
-        self.parent().force_widget.serial_thread.finishedLogging.connect(self.force_callback)
-        self.parent().force_widget.serial_thread.finishedLogging.connect(self.check_audio_data_points)
         self.parent().audio_widget.daq_thread.finishedLogging.connect(self.audio_callback) # pyqtSignal()
         self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_audio_data_points)
 
@@ -737,7 +736,7 @@ class TestWidget(QWidget):
         if self.idx == 0:
             # first step
             pass 
-        elif self.idx == len(self.aero_pyramid) - 1:
+        elif self.idx == len(self.speed_pyramid) - 1:
             # last step
             self.step_timer.stop()
             self.on_audio_pyramid_test_finished()
@@ -748,6 +747,8 @@ class TestWidget(QWidget):
         self.parent().control_widget.controller.setSpeed.emit(speed / 60)
         self.parent().control_widget.controller.speedSettled.connect(self.audio_collect)
         self.parent().control_widget.controller.startCheckingSettled.emit()
+
+        print(f"Step {self.idx}, Speed: {speed}")
         
         self.idx += 1
 
@@ -756,8 +757,15 @@ class TestWidget(QWidget):
         self.parent().control_widget.controller.startLogging.emit(self.nspbufs) # pyqtSignal(nbuffers)
         #self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
         audio_file, _, _ = self.get_files()
+        audio_file = str(audio_file)
         self.audio_fnames.append(audio_file)
-        self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, self.naubufs)
+
+        buffer_freq = self.parent().audio_widget.buffer_freq 
+        sample_freq = self.parent().audio_widget.sample_freq
+        duration = 1
+        naubufs = np.ceil(duration * sample_freq / buffer_freq).astype(int)
+
+        self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, naubufs)
 
         self.data_types_expected = 2
 
@@ -776,8 +784,6 @@ class TestWidget(QWidget):
         self.idx = 0
         self.parent().control_widget.stop_button.clicked.disconnect(self.stop_audio_pyramid)
 
-        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.force_callback)
-        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.check_audio_data_points)
         self.parent().control_widget.controller.finishedLogging.disconnect(self.speed_callback)
         self.parent().control_widget.controller.finishedLogging.disconnect(self.check_audio_data_points)
         self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.audio_callback)

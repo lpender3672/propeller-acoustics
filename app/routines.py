@@ -301,7 +301,7 @@ def load_oper_from_file(file_path):
 def append_audiof_to_metaf(audiof, metaf, row):
 
     try:
-        metadata = np.load(metaf)
+        metadata = np.load(metaf, allow_pickle=True)
     except FileNotFoundError:
         metadata = np.zeros((0, len(row) + 1), dtype=object)
 

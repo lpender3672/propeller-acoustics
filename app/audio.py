@@ -33,6 +33,8 @@ def load_meta_data(prop_result_path):
 
     return meta, prop
 
+mdat, _ = load_meta_data('app/results/c.prop')
+print(mdat)
 
 def load_and_compute_rfft(prop_result_path):
 

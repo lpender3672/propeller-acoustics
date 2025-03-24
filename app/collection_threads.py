@@ -263,6 +263,8 @@ class ControllerThread(QThread):
         self.startCheckingSettled.connect(self.start_checking_settled)
         self.stopCheckingSettled.connect(self.stop_checking_settled)
 
+        self.last_watchdog_time = 0
+
         cutoff_freq = 10  # Hz
         order = 3
         nyquist = 0.5 * self.sample_rate  # Nyquist frequency
@@ -284,11 +286,11 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
         self.odrv.axis0.controller.config.vel_gain = 0.01
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
-        self.odrv.axis0.controller.config.vel_limit = 250
+        self.odrv.axis0.controller.config.vel_limit = 300
         self.odrv.axis0.config.motor.current_soft_max = 20
         self.odrv.axis0.config.motor.current_hard_max = 36
 
-        self.odrv.axis0.config.watchdog_timeout = 15 * self.watchdog_dt
+        self.odrv.axis0.config.watchdog_timeout = 20 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
         #self.watchdog_timer.start(100)
 
@@ -326,13 +328,16 @@ class ControllerThread(QThread):
 
     def watchdog_loop(self):
 
+        #print(self.timer.elapsed() - self.last_watchdog_time)
+        self.last_watchdog_time = self.timer.elapsed()
+
         try:
             motor_error = self.odrv.axis0.error
         except AttributeError:
             pass # no error?
         else:
             self.errorOccurred.emit(motor_error)
-            self.stop()
+            #self.stop()
 
         try:
             encoder_error = self.odrv.axis0.encoder.error
@@ -340,7 +345,7 @@ class ControllerThread(QThread):
             pass # no error?
         else:
             self.errorOccurred.emit(encoder_error)
-            self.stop()
+            #self.stop()
         
         # feed the beast
         self.odrv.axis0.watchdog_feed()
