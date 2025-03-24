@@ -144,8 +144,12 @@ def interpolate_clcd(xfoil_data, alpha, Re):
         Cl_valid = ~np.isnan(Cl_data)
         Cd_valid = ~np.isnan(Cd_data)
 
-        if isinstance(alpha, float):
+        if Cl_valid.sum() == 0:
+            raise ValueError("No valid Cl data in xfoil data")
+        if Cd_valid.sum() == 0:
+            raise ValueError("No valid Cd data in xfoil data")
 
+        if isinstance(alpha, float):
 
             if alpha > np.max(alpha_data[Cl_valid]):
                 Cl, Cd = Viterna_extrapolation(xfoil_data, alpha, Re)

@@ -1,5 +1,5 @@
 
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QTabWidget
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QTabWidget, QComboBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -284,6 +284,10 @@ class NoiseResultsWidget(QWidget):
         interference_tab_widget = QWidget(self)
         interference_tab_layout = QGridLayout()
 
+        self.harmonic_select = QComboBox(self)
+        self.harmonic_select.addItems([str(i) for i in range(1, 30)])
+        interference_tab_layout.addWidget(self.harmonic_select, 0, 0)
+
         self.thickness_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
         self.lift_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
         self.drag_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
@@ -309,18 +313,24 @@ class NoiseResultsWidget(QWidget):
 
         self.directivity.setMinimumHeight(400)
 
+        self.harmonic_select.currentIndexChanged.connect(self.internal_update)
+
+    def internal_update(self):
+        self.update_results(self.avs)
+
     def update_results(self, avs):
 
         if not avs.res['converged']:
             return # no loading data if BEM not converged
-        
+
+        self.avs = avs
 
         oper, prop, obs = hanson_secondary_variables(avs)
         theta = obs['theta']
 
         ms = np.arange(1, 30)
         PVm, PDm, PLm = hanson(oper, prop, obs, ms, False)
-        V, L, D, total = sum_harmonics(PVm, PDm, PLm, avs.oper['pref'])
+        #V, L, D, total = sum_harmonics(PVm, PDm, PLm, avs.oper['pref'])
         
         peak_observer = {
             'r': [avs.oper['r_obs'] * avs.prop['rt']],
@@ -333,7 +343,9 @@ class NoiseResultsWidget(QWidget):
         
         self.directivity.clear_plot()
 
-        self.directivity.add_lines(np.array([theta, V, L, D]),
+        idx = self.harmonic_select.currentIndex()
+
+        self.directivity.add_lines(np.array([theta, PVm[:,idx], PDm[:,idx], PLm[:,idx]]),
             linestyle=['-', ':', '-.'],
             label=['Thickness', 'Lift', 'Drag'])
         

@@ -426,7 +426,8 @@ class AudioWidget(QWidget):
         self.spectrum_curve.setData(freqs, dBmag)
 
     def about_to_quit(self):
-        self.daq_thread.stop()
+        if self.daq_thread:
+            self.daq_thread.stop()
 
 class TestWidget(QWidget):
     def __init__(self, parent = None):
@@ -445,9 +446,10 @@ class TestWidget(QWidget):
         self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
         self.results_dir = self.app_dir / "results"
 
-        self.pyramid_test_start_button = QPushButton("Pyramid")
+        self.aero_pyramid_test_start_button = QPushButton("aero_pyramid")
+        self.audio_pyramid_test_start_button = QPushButton("audio_pyramid")
 
-        self.record_ten_seconds_button = QPushButton("Record 10s audio")
+        self.record_ten_seconds_button = QPushButton("Record 1s audio")
 
         self.layout.addWidget(self.prop_label, 0, 0)
         self.layout.addWidget(self.prop_path, 0, 1)
@@ -455,22 +457,24 @@ class TestWidget(QWidget):
         self.layout.addWidget(self.results_label, 1, 0)
         self.layout.addWidget(self.results_directory_path, 1, 1)
         self.layout.addWidget(self.select_results_directory_button, 1, 2)
-        self.layout.addWidget(self.pyramid_test_start_button, 2, 0, 1, 2)
-        self.layout.addWidget(self.record_ten_seconds_button, 3, 0, 1, 2)
+        self.layout.addWidget(self.aero_pyramid_test_start_button, 2, 0, 1, 2)
+        self.layout.addWidget(self.audio_pyramid_test_start_button, 3, 0, 1, 2)
+        self.layout.addWidget(self.record_ten_seconds_button, 4, 0, 1, 2)
 
         self.load_prop_button.clicked.connect(self.on_load_prop_clicked)
         self.select_results_directory_button.clicked.connect(self.on_select_results_directory)
-        self.pyramid_test_start_button.clicked.connect(self.on_pyramid_test_started)
+        self.aero_pyramid_test_start_button.clicked.connect(self.on_aero_pyramid_test_started)
 
         self.record_ten_seconds_button.clicked.connect(self.record_ten_seconds)
 
         self.setLayout(self.layout)
 
         self.step_timer = QTimer()
-        self.step_timer.timeout.connect(self.pyramid_step)
+        self.step_timer.timeout.connect(self.aero_pyramid_step)
 
-        self.pyramid_steps = 20
-        self.pyramid = list(range(self.pyramid_steps)) + list(range(0, self.pyramid_steps - 1)[::-1])
+        self.aero_pyramid_steps = 20
+        self.max_pyramid_speed = 12000
+        self.aero_pyramid = list(range(self.aero_pyramid_steps)) + list(range(0, self.aero_pyramid_steps - 1)[::-1])
         self.idx = 0
 
         self.prop = None
@@ -554,7 +558,7 @@ class TestWidget(QWidget):
             self.results_directory_path.setText(dir_path)
 
 
-    def on_pyramid_test_started(self):
+    def on_aero_pyramid_test_started(self):
 
         audio_file, _, _ = self.get_files()
 
@@ -564,7 +568,7 @@ class TestWidget(QWidget):
 
         speed_buffer_size = self.parent().control_widget.sample_buffer_size
 
-        ntests = self.pyramid_steps * 2 - 1
+        ntests = self.aero_pyramid_steps * 2 - 1
         self.motor_data = np.zeros((ntests, self.nspbufs * speed_buffer_size, 4))
         self.force_data = np.zeros((ntests, self.nfcsmps, 3))
         # audio data is too fast the seperate thead writes it to a file
@@ -573,17 +577,18 @@ class TestWidget(QWidget):
         if self.parent().force_widget.serial_thread is None:
             return
         
-        print("Pyramid Test Started")
-        self.pyramid_test_start_button.setEnabled(False)
+        print("aero_pyramid Test Started")
+        self.aero_pyramid_test_start_button.setEnabled(False)
+        self.audio_pyramid_test_start_button.setEnabled(False)
 
-        self.parent().control_widget.stop_button.clicked.connect(self.stop_pyramid)
+        self.parent().control_widget.stop_button.clicked.connect(self.stop_aero_pyramid)
 
         self.parent().control_widget.controller.finishedLogging.connect(self.speed_callback)
-        self.parent().control_widget.controller.finishedLogging.connect(self.check_data_points)
+        self.parent().control_widget.controller.finishedLogging.connect(self.check_aero_data_points)
         self.parent().force_widget.serial_thread.finishedLogging.connect(self.force_callback)
-        self.parent().force_widget.serial_thread.finishedLogging.connect(self.check_data_points)
+        self.parent().force_widget.serial_thread.finishedLogging.connect(self.check_aero_data_points)
         self.parent().audio_widget.daq_thread.finishedLogging.connect(self.audio_callback) # pyqtSignal()
-        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_data_points)
+        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_aero_data_points)
 
         self.data_types_recieved = 0
 
@@ -593,15 +598,15 @@ class TestWidget(QWidget):
 
         self.parent().control_widget.start_control()
 
-        self.pyramid_step()
+        self.aero_pyramid_step()
         # measure 10s acoustic and force
-        # start speed pyramid
+        # start speed aero_pyramid
         # each point measure speed, force
-        # measure acoustic halfway up and at top of pyramid
+        # measure acoustic halfway up and at top of aero_pyramid
 
-    def stop_pyramid(self):
+    def stop_aero_pyramid(self):
         self.parent().control_widget.controller.stopCheckingSettled.emit()
-        self.on_pyramid_test_finished()
+        self.on_aero_pyramid_test_finished()
 
     def speed_callback(self, data):
         print(f"Speed Callback, {data.shape}")
@@ -612,12 +617,12 @@ class TestWidget(QWidget):
     def audio_callback(self):
         print(f"Audio Callback")
     
-    def check_data_points(self, _=None):
+    def check_aero_data_points(self, _=None):
         self.data_types_recieved += 1
 
         if self.data_types_recieved == self.data_types_expected:
             self.data_types_recieved = 0
-            self.pyramid_step()
+            self.aero_pyramid_step()
         
     def aerodynamic_collect(self):
         self.parent().control_widget.controller.speedSettled.disconnect(self.aerodynamic_collect)
@@ -625,20 +630,19 @@ class TestWidget(QWidget):
         self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
         self.data_types_expected = 2
 
-    def pyramid_step(self):
-        # sets speed to next point in pyramid
+    def aero_pyramid_step(self):
+        # sets speed to next point in aero_pyramid
 
         if self.idx == 0:
             # first step
             pass 
-        elif self.idx == len(self.pyramid) - 1:
+        elif self.idx == len(self.aero_pyramid) - 1:
             # last step
             self.step_timer.stop()
-            self.on_pyramid_test_finished()
+            self.on_aero_pyramid_test_finished()
             return
 
-        max_speed = 12000
-        speed = max_speed * self.pyramid[self.idx] / self.pyramid_steps
+        speed = self.max_pyramid_speed * self.aero_pyramid[self.idx] / self.aero_pyramid_steps
         self.parent().control_widget.speed_box.setText(str(speed))
         self.parent().control_widget.controller.setSpeed.emit(speed / 60)
         self.parent().control_widget.controller.speedSettled.connect(self.aerodynamic_collect)
@@ -646,26 +650,129 @@ class TestWidget(QWidget):
         
         self.idx += 1
 
-    def on_pyramid_test_finished(self):
-        print("Pyramid Test Finished")
+    def on_aero_pyramid_test_finished(self):
+        print("aero_pyramid Test Finished")
         self.parent().control_widget.stop_control()
-        self.pyramid_test_start_button.setEnabled(True)
+        self.aero_pyramid_test_start_button.setEnabled(True)
+        self.audio_pyramid_test_start_button.setEnabled(True)
 
-        if self.idx == len(self.pyramid) - 1:
+        if self.idx == len(self.aero_pyramid) - 1:
             # save everything
             _, _, aero_file = self.get_files()
             np.savez(aero_file, force_data=self.force_data, motor_data=self.motor_data)
         
         self.idx = 0
 
-        self.parent().control_widget.stop_button.clicked.disconnect(self.stop_pyramid)
+        self.parent().control_widget.stop_button.clicked.disconnect(self.stop_aero_pyramid)
 
         self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.force_callback)
-        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.check_data_points)
+        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.check_aero_data_points)
         self.parent().control_widget.controller.finishedLogging.disconnect(self.speed_callback)
-        self.parent().control_widget.controller.finishedLogging.disconnect(self.check_data_points)
+        self.parent().control_widget.controller.finishedLogging.disconnect(self.check_aero_data_points)
         self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.audio_callback)
-        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.check_data_points)
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.check_aero_data_points)
+
+    def check_audio_data_points(self, _=None):
+        self.data_types_recieved += 1
+
+        if self.data_types_recieved == self.data_types_expected:
+            self.data_types_recieved = 0
+            # maybe append audio data to meta data
+            self.audio_pyramid_step()
+
+    def on_audio_pyramid_test_started(self):
+
+        self.nspbufs = 10
+        self.naubufs = 1 * self.parent().audio_widget.buffer_freq # 1s
+        speed_buffer_size = self.parent().control_widget.sample_buffer_size
+
+        ntests = self.aero_pyramid_steps * 2 - 1
+        self.motor_data = np.zeros((ntests, self.nspbufs * speed_buffer_size, 4))
+        self.audio_fnames = []
+        # audio data is too fast the seperate thead writes it to a file
+
+        # threads and their appropriate signals
+        if self.parent().force_widget.serial_thread is None:
+            return
+        
+        print("aero_pyramid Test Started")
+        self.aero_pyramid_test_start_button.setEnabled(False)
+        self.audio_pyramid_test_start_button.setEnabled(False)
+
+        self.parent().control_widget.stop_button.clicked.connect(self.stop_audio_pyramid)
+
+        self.parent().control_widget.controller.finishedLogging.connect(self.speed_callback)
+        self.parent().control_widget.controller.finishedLogging.connect(self.check_audio_data_points)
+        self.parent().force_widget.serial_thread.finishedLogging.connect(self.force_callback)
+        self.parent().force_widget.serial_thread.finishedLogging.connect(self.check_audio_data_points)
+        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.audio_callback) # pyqtSignal()
+        self.parent().audio_widget.daq_thread.finishedLogging.connect(self.check_audio_data_points)
+
+        self.data_types_recieved = 0
+
+        #self.parent().control_widget.controller.startLogging.emit(self.nspbufs) # pyqtSignal(nbuffers)
+        #self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
+        #self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, self.naubufs) # pyqtSignal(file_name, nbuffers=None)
+
+        self.parent().control_widget.start_control()
+
+        self.audio_pyramid_step()   
+
+    def audio_pyramid_step(self):
+        # sets speed to next point in aero_pyramid
+
+        if self.idx == 0:
+            # first step
+            pass 
+        elif self.idx == len(self.aero_pyramid) - 1:
+            # last step
+            self.step_timer.stop()
+            self.on_audio_pyramid_test_finished()
+            return
+
+        speed = self.max_pyramid_speed * self.aero_pyramid[self.idx] / self.aero_pyramid_steps
+        self.parent().control_widget.speed_box.setText(str(speed))
+        self.parent().control_widget.controller.setSpeed.emit(speed / 60)
+        self.parent().control_widget.controller.speedSettled.connect(self.audio_collect)
+        self.parent().control_widget.controller.startCheckingSettled.emit()
+        
+        self.idx += 1
+
+    def audio_collect(self):
+        self.parent().control_widget.controller.speedSettled.disconnect(self.audio_collect)
+        self.parent().control_widget.controller.startLogging.emit(self.nspbufs) # pyqtSignal(nbuffers)
+        #self.parent().force_widget.serial_thread.startLogging.emit(self.nfcsmps) # pyqtSignal(nsamples)
+        audio_file, _, _ = self.get_files()
+        self.audio_fnames.append(audio_file)
+        self.parent().audio_widget.daq_thread.startLogging.emit(audio_file, self.naubufs)
+
+        self.data_types_expected = 2
+
+    def on_audio_pyramid_test_finished(self):
+        self.parent().control_widget.stop_control()
+        self.aero_pyramid_test_start_button.setEnabled(True)
+        self.audio_pyramid_test_start_button.setEnabled(True)
+
+        # append all audio fnames and averaged motor data to meta data
+        _, metaf, _ = self.get_files()
+        for i, audio_file in enumerate(self.audio_fnames): # req: [speed, current, temp]
+            # we have: [thetime, vel, current, temperature]
+            _, speed, current, temp = np.mean(self.motor_data[i, :, :], axis=0)
+            append_audiof_to_metaf(audio_file, metaf, [speed, current, temp])
+
+        self.idx = 0
+        self.parent().control_widget.stop_button.clicked.disconnect(self.stop_audio_pyramid)
+
+        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.force_callback)
+        self.parent().force_widget.serial_thread.finishedLogging.disconnect(self.check_audio_data_points)
+        self.parent().control_widget.controller.finishedLogging.disconnect(self.speed_callback)
+        self.parent().control_widget.controller.finishedLogging.disconnect(self.check_audio_data_points)
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.audio_callback)
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.check_audio_data_points)
+
+    def stop_audio_pyramid(self):
+        self.parent().control_widget.controller.stopCheckingSettled.emit()
+        self.on_audio_pyramid_test_finished()
 
 class MainWindow(QWidget):
     def __init__(self):
