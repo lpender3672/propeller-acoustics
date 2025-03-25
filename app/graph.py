@@ -98,10 +98,10 @@ def plot_FM(aero_data, ax, label=None):
 
 fig, ax = plt.subplots( 2, 1)
 plot_prop('app/results/dalprop5045.prop', ax[0], ax[1], label='dalprop5045')
+plot_prop('app/results/printed5045.prop', ax[0], ax[1], label='printed 5045')
 #plot_prop('app/results/dalprop5045bnr.prop', ax[0], ax[1], label='3 blade')
 #plot_prop('app/results/d100clarkY.prop', ax[0], ax[1], label='clarkY')
 
-plot_prop('app/results/testloop.prop', ax[0], ax[1], label='loop')
 plot_prop('app/results/dalprop6045.prop', ax[0], ax[1], label='dalprop6045')
 
 ax[0].set_xlim([50, 2000])

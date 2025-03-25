@@ -292,8 +292,9 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.vel_gain = 0.01
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
         self.odrv.axis0.controller.config.vel_limit = 300
+        self.odrv.axis0.controller.config.vel_ramp_rate = 300
         self.odrv.axis0.config.motor.current_soft_max = 30
-        self.odrv.axis0.config.motor.current_hard_max = 36
+        self.odrv.axis0.config.motor.current_hard_max = 38
 
         self.odrv.axis0.config.watchdog_timeout = 20 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
