@@ -51,10 +51,10 @@ def plot_prop(prop_result_path, ax1, ax2, label=None):
     rt = prop['rt']
     A = np.pi * rt**2
 
-    filtered_speed_t = avg_speed[avg_thrust > 0.01]
-    filtered_thrust = avg_thrust[avg_thrust > 0.01]
-    filtered_speed_q = avg_speed[avg_torque > 0.01]
-    filtered_torque = avg_torque[avg_torque > 0.01]
+    filtered_speed_t = avg_speed[avg_thrust > 1e-2]
+    filtered_thrust = avg_thrust[avg_thrust > 1e-2]
+    filtered_speed_q = avg_speed[avg_torque > 1e-4]
+    filtered_torque = avg_torque[avg_torque > 1e-4]
 
     CT = filtered_thrust / (rho * A * filtered_speed_t**2 * rt**2)
     CQ = filtered_torque / (rho * A * filtered_speed_q**2 * rt**3)
@@ -79,9 +79,9 @@ def plot_FM(aero_data, ax, label=None):
     avg_thrust = np.interp(avg_raw_forces[:,0], tcal_data[:,0,0], tcal_data[:,1,0])
     avg_torque = np.interp(avg_raw_forces[:,1], qcal_data[:,0,1], qcal_data[:,1,1])
 
-    filtered_speed = avg_speed[(avg_thrust > 0.01) & (avg_torque > 0.001)]
-    filtered_thrust = avg_thrust[(avg_thrust > 0.01) & (avg_torque > 0.001)]
-    filtered_torque = avg_torque[(avg_thrust > 0.01) & (avg_torque > 0.001)]
+    filtered_speed = avg_speed[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
+    filtered_thrust = avg_thrust[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
+    filtered_torque = avg_torque[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
 
     D = 0.127
     rho = 1.225
@@ -97,9 +97,12 @@ def plot_FM(aero_data, ax, label=None):
 
 
 fig, ax = plt.subplots( 2, 1)
-plot_prop('app/results/dalprop5045.prop', ax[0], ax[1], label='2 blade')
-plot_prop('app/results/dalprop5045bnr.prop', ax[0], ax[1], label='3 blade')
-plot_prop('app/results/d100clarkY.prop', ax[0], ax[1], label='clarkY')
+plot_prop('app/results/dalprop5045.prop', ax[0], ax[1], label='dalprop5045')
+#plot_prop('app/results/dalprop5045bnr.prop', ax[0], ax[1], label='3 blade')
+#plot_prop('app/results/d100clarkY.prop', ax[0], ax[1], label='clarkY')
+
+plot_prop('app/results/testloop.prop', ax[0], ax[1], label='loop')
+plot_prop('app/results/dalprop6045.prop', ax[0], ax[1], label='dalprop6045')
 
 ax[0].set_xlim([50, 2000])
 ax[1].set_xlim([100, 2000])

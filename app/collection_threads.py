@@ -216,6 +216,7 @@ class ControllerThread(QThread):
     stateChanged = pyqtSignal(str)
     errorOccurred = pyqtSignal(str)
     newSample = pyqtSignal(np.ndarray)
+    calibrateMotor = pyqtSignal()
 
     startLogging = pyqtSignal(int) # finite or continous
     finishedLogging = pyqtSignal(np.ndarray) # is emitted when a finite log finishes
@@ -256,6 +257,7 @@ class ControllerThread(QThread):
         self.setSpeed.connect(self.set_speed)
         self.startMotor.connect(self.start_motor)
         self.stopMotor.connect(self.stop_motor)
+        self.calibrateMotor.connect(self.calibrate_motor)
 
         self.timer = QElapsedTimer() # time cannot be obtained from Odrive
 
@@ -270,6 +272,9 @@ class ControllerThread(QThread):
         nyquist = 0.5 * self.sample_rate  # Nyquist frequency
         normal_cutoff = cutoff_freq / nyquist  # Normalize cutoff frequency
         self.b, self.a = butter(order, normal_cutoff, btype='low', analog=False)
+
+    def calibrate_motor(self):
+        self.set_odrive_state(AxisState.FULL_CALIBRATION_SEQUENCE)
 
     def run(self):
 
@@ -287,7 +292,7 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.vel_gain = 0.01
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
         self.odrv.axis0.controller.config.vel_limit = 300
-        self.odrv.axis0.config.motor.current_soft_max = 20
+        self.odrv.axis0.config.motor.current_soft_max = 30
         self.odrv.axis0.config.motor.current_hard_max = 36
 
         self.odrv.axis0.config.watchdog_timeout = 20 * self.watchdog_dt

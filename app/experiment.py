@@ -64,10 +64,14 @@ class ControlWidget(QWidget):
         self.stop_button = QPushButton("Stop")
         self.stop_button.setEnabled(False)  # Initially disabled
 
+        self.calibrate_button = QPushButton("Calibrate")
+
         self.output_box = QLineEdit()
         self.output_box.setReadOnly(True)
 
         layout = QVBoxLayout()
+
+        layout.addWidget(self.calibrate_button)
 
         layout.addWidget(QLabel("Speed Setpoint:"))
         layout.addWidget(self.speed_box)
@@ -106,8 +110,9 @@ class ControlWidget(QWidget):
         self.stop_button.clicked.connect(self.stop_control)
         self.speed_box.editingFinished.connect(self.set_speed)
 
-        self.controller.start()
+        self.calibrate_button.clicked.connect(self.controller.calibrateMotor.emit)
 
+        self.controller.start()
     
     def error_occurred(self, error):
         print(error)
@@ -417,11 +422,24 @@ class AudioWidget(QWidget):
         print(error)
 
     def update_spectrum_plot(self, sample):
+        # If sample is multi-channel, extract the selected channel.
+        if sample.ndim > 1:
+            idx = self.channel_selector.currentIndex()
+            sample = sample[:, idx]
+        
+        # Apply Hanning window
+        window = np.hanning(sample.shape[0])
+        windowed_data = sample * window
 
-        dtft = np.fft.rfft(sample)
+        # Zero padding
+        zero_padding = 2 ** np.ceil(np.log2(windowed_data.shape[0]) + 1).astype(int)
+
+        # Compute FFT
+        dtft = np.fft.rfft(windowed_data, n=zero_padding)
         dt = 1 / self.sample_freq
-        freqs = np.fft.rfftfreq(len(sample), d=dt)
+        freqs = np.fft.rfftfreq(zero_padding, d=dt)
 
+        # Compute dB magnitude
         dBmag = 20 * np.log10(np.maximum(np.abs(dtft), 1e-10))
         self.spectrum_curve.setData(freqs, dBmag)
 
@@ -474,8 +492,8 @@ class TestWidget(QWidget):
         self.step_timer.timeout.connect(self.aero_pyramid_step)
 
         self.pyramid_steps = 20
-        self.min_pyramid_speed = 800
-        self.max_pyramid_speed = 12000
+        self.min_pyramid_speed = 3000
+        self.max_pyramid_speed = 14000
         #self.pyramid_type = 'linear'
         self.pyramid_type = 'logarithmic'
 
