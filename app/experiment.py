@@ -356,7 +356,7 @@ class AudioWidget(QWidget):
         self.signal_plot = pg.PlotWidget()
         self.spectrum_plot = pg.PlotWidget()
 
-        self.signal_curve = self.signal_plot.plot(pen=pg.mkPen(color="r", width=2))
+        self.harmonic_curve = self.signal_plot.plot(pen=pg.mkPen(color="r", width=2))
         self.spectrum_curve = self.spectrum_plot.plot(pen=pg.mkPen(color="r", width=2))
 
         self.channel_selector = QComboBox()
@@ -374,11 +374,13 @@ class AudioWidget(QWidget):
         self.sample_freq = 51200.0
         self.buffer_freq = 4000 # self.nyquist_factor * self.bpf
 
+        self.window = np.hanning(self.buffer_freq)
+
         layout = QGridLayout()
 
         layout.addWidget(self.channel_selector, 0, 0)
-        layout.addWidget(self.signal_plot, 1, 0)
-        layout.addWidget(self.spectrum_plot, 2, 0)
+        layout.addWidget(self.spectrum_plot, 1, 0)
+        layout.addWidget(self.signal_plot, 2, 0)
 
         self.setLayout(layout)
 
@@ -405,7 +407,6 @@ class AudioWidget(QWidget):
                 return
             else:
                 self.channel_selector.addItem(self.daq_thread.channel_names[-1])
-
             
         self.daq_thread.start()
 
@@ -415,33 +416,70 @@ class AudioWidget(QWidget):
             channel_data = data[idx]
             self.data_buffer = np.roll(self.data_buffer, -channel_data.shape[0], axis=0)
             self.data_buffer[-channel_data.shape[0]:] = channel_data
-            self.signal_curve.setData(self.data_buffer)
+
             self.update_spectrum_plot(self.data_buffer)
     
     def error_occurred(self, error):
         print(error)
 
     def update_spectrum_plot(self, sample):
-        # If sample is multi-channel, extract the selected channel.
+
         if sample.ndim > 1:
             idx = self.channel_selector.currentIndex()
             sample = sample[:, idx]
         
-        # Apply Hanning window
-        window = np.hanning(sample.shape[0])
-        windowed_data = sample * window
+        windowed_data = sample * self.window
 
-        # Zero padding
         zero_padding = 2 ** np.ceil(np.log2(windowed_data.shape[0]) + 1).astype(int)
 
-        # Compute FFT
         dtft = np.fft.rfft(windowed_data, n=zero_padding)
         dt = 1 / self.sample_freq
         freqs = np.fft.rfftfreq(zero_padding, d=dt)
 
-        # Compute dB magnitude
         dBmag = 20 * np.log10(np.maximum(np.abs(dtft), 1e-10))
         self.spectrum_curve.setData(freqs, dBmag)
+
+        # now we need to integrate the harmonics
+        prop = self.parent().test_widget.prop
+        if prop is None:
+            return
+        
+        motor_data = self.parent().control_widget.motor_data
+        if motor_data is None:
+            return
+        
+        avg_speed = np.mean(motor_data[-10:,1]) * -1/60
+        bpf = avg_speed * prop['B']
+
+        if bpf < 1:
+            return
+
+        harmonics = np.arange(bpf, freqs[-1], bpf)
+
+        intergrated_harmonics = np.zeros((harmonics.shape[0]))
+
+        aband = 10
+
+        for j in range(harmonics.shape[0]):
+
+            mask = (freqs >= harmonics[j] - aband) & (freqs <= harmonics[j] + aband)
+            fqharm = freqs[mask]
+            ftharm = dtft[mask]
+
+            # trapz power spectral density
+            intergrated_harmonics[j] = np.trapz(np.abs(ftharm), fqharm**2, axis=0)
+
+        intergrated_harmonics_dB = 20 * np.log10(np.maximum(intergrated_harmonics, 1e-10))
+
+        max_harmonic = 20
+        harmonic_num = harmonics // bpf
+        ms = harmonic_num[harmonic_num < max_harmonic]
+        plot_harmonics = intergrated_harmonics_dB[harmonic_num < max_harmonic]
+
+        self.harmonic_curve.setData(ms, plot_harmonics)
+
+        self.signal_plot.getViewBox().enableAutoRange(axis='y', enable=False)
+        self.signal_plot.getViewBox().setYRange(50, 100)
 
     def about_to_quit(self):
         if self.daq_thread:
@@ -493,7 +531,7 @@ class TestWidget(QWidget):
 
         self.pyramid_steps = 20
         self.min_pyramid_speed = 3000
-        self.max_pyramid_speed = 14000
+        self.max_pyramid_speed = 12000
         #self.pyramid_type = 'linear'
         self.pyramid_type = 'logarithmic'
 
