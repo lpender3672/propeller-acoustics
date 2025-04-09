@@ -82,18 +82,33 @@ def add_correct_microphone(metaf):
     np.save(metaf, metadata)
 
 
-result_folder = Path('app/results/')
-# get all folders *.prop
-metafs = [f / 'meta_data.npy' for f in result_folder.iterdir() if f.is_dir() and f.name.endswith('.prop')]
+def fix_all():
 
-for mf in metafs:
+    result_folder = Path('app/results/')
+    # get all folders *.prop
+    metafs = [f / 'meta_data.npy' for f in result_folder.iterdir() if f.is_dir() and f.name.endswith('.prop')]
+
+    for mf in metafs:
+        try:
+            clean_metadata(mf)
+        except FileNotFoundError:
+            print(f"File not found: {mf}")
+            continue
+
+        add_correct_microphone(mf)
+
+
+def print_metaf(metaf):
     try:
-        clean_metadata(mf)
+        metadata = np.load(metaf, allow_pickle=True)
     except FileNotFoundError:
-        print(f"File not found: {mf}")
-        continue
+        raise RuntimeError
 
-    add_correct_microphone(mf)
+    for row in metadata:
+        print(row)
+
+print_metaf('app/results/c.prop/meta_data.npy')
+
 
 #ammend_column_to_metadata('app/results/dalprop5045.prop/meta_data.npy', None)
 

@@ -497,6 +497,10 @@ class TestWidget(QWidget):
         self.results_label = QLabel("Results")  
         self.results_directory_path = QLineEdit()
         self.results_directory_path.setReadOnly(True)
+        self.microphone_label = QLabel("Microphone Layout")
+        self.microphone_layout_path = QLineEdit()
+        self.microphone_layout_path.setReadOnly(True)
+        self.microphone_layout_button = QPushButton("...")
         self.select_results_directory_button = QPushButton("...")
 
         self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -513,12 +517,16 @@ class TestWidget(QWidget):
         self.layout.addWidget(self.results_label, 1, 0)
         self.layout.addWidget(self.results_directory_path, 1, 1)
         self.layout.addWidget(self.select_results_directory_button, 1, 2)
-        self.layout.addWidget(self.aero_pyramid_test_start_button, 2, 0, 1, 2)
-        self.layout.addWidget(self.audio_pyramid_test_start_button, 3, 0, 1, 2)
-        self.layout.addWidget(self.record_ten_seconds_button, 4, 0, 1, 2)
+        self.layout.addWidget(self.microphone_label, 2, 0)
+        self.layout.addWidget(self.microphone_layout_path, 2, 1)
+        self.layout.addWidget(self.microphone_layout_button, 2, 2)
+        self.layout.addWidget(self.aero_pyramid_test_start_button, 3, 0, 1, 2)
+        self.layout.addWidget(self.audio_pyramid_test_start_button, 4, 0, 1, 2)
+        self.layout.addWidget(self.record_ten_seconds_button, 5, 0, 1, 2)
 
         self.load_prop_button.clicked.connect(self.on_load_prop_clicked)
         self.select_results_directory_button.clicked.connect(self.on_select_results_directory)
+        self.microphone_layout_button.clicked.connect(self.on_select_microhpone_layout)
         self.aero_pyramid_test_start_button.clicked.connect(self.on_aero_pyramid_test_started)
         self.audio_pyramid_test_start_button.clicked.connect(self.on_audio_pyramid_test_started)
 
@@ -529,9 +537,9 @@ class TestWidget(QWidget):
         self.step_timer = QTimer()
         self.step_timer.timeout.connect(self.aero_pyramid_step)
 
-        self.pyramid_steps = 20
+        self.pyramid_steps = 16
         self.min_pyramid_speed = 3000
-        self.max_pyramid_speed = 12000
+        self.max_pyramid_speed = 17000
         #self.pyramid_type = 'linear'
         self.pyramid_type = 'logarithmic'
 
@@ -591,17 +599,17 @@ class TestWidget(QWidget):
 
     def finished_recording(self, fname):
         dt = time.time() - self.audio_start_time
+        _, metaf,_ = self.get_files()
+        _, speed, current, temp = np.mean(self.motor_data[0, :, :], axis=0) # [thetime, vel, current, temperature]
+
+        micpath = str(Path(self.microphone_layout_path.text()))
+        append_audiof_to_metaf(fname, metaf, [speed, current, temp, micpath])
+
+        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.finished_recording)
+
         finished_dialog = QMessageBox()
         finished_dialog.setText(f"Finished recording audio in f{dt}")
         finished_dialog.exec()
-
-        _, metaf,_ = self.get_files()
-        # append audio result to aero file
-        _, speed, current, temp = np.mean(self.motor_data[0, :, :], axis=0) # [thetime, vel, current, temperature]
-
-        append_audiof_to_metaf(fname, metaf, [speed, current, temp])
-
-        self.parent().audio_widget.daq_thread.finishedLogging.disconnect(self.finished_recording)
     
     def on_load_prop_clicked(self):
         print("Load Prop button clicked")
@@ -627,6 +635,12 @@ class TestWidget(QWidget):
         if dir_path:
             self.results_directory_path.setText(dir_path)
 
+    def on_select_microhpone_layout(self):
+        layout_path = QFileDialog.getOpenFileName(self, "Select Microphone Layout", "app/results/microphone_states", filter="CSV files (*.csv)")[0]
+        if layout_path:
+            self.microphone_layout_path.setText(layout_path)
+
+        self.mic_layout_path = layout_path
 
     def on_aero_pyramid_test_started(self):
 
@@ -835,7 +849,8 @@ class TestWidget(QWidget):
         for i, audio_file in enumerate(self.audio_fnames): # req: [speed, current, temp]
             # we have: [thetime, vel, current, temperature]
             _, speed, current, temp = np.mean(self.motor_data[i, :, :], axis=0)
-            append_audiof_to_metaf(audio_file, metaf, [speed, current, temp])
+            micpath = str(Path(self.microphone_layout_path.text()))
+            append_audiof_to_metaf(audio_file, metaf, [speed, current, temp, micpath])
 
         self.idx = 0
         self.parent().control_widget.stop_button.clicked.disconnect(self.stop_audio_pyramid)
@@ -847,6 +862,12 @@ class TestWidget(QWidget):
 
     def stop_audio_pyramid(self):
         self.parent().control_widget.controller.stopCheckingSettled.emit()
+
+        # delete all of self.audio_fnames
+        for audio_file in self.audio_fnames:
+            if os.path.exists(audio_file):
+                os.remove(audio_file)
+
         self.on_audio_pyramid_test_finished()
 
 class MainWindow(QWidget):

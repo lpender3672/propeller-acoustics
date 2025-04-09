@@ -301,9 +301,12 @@ class ControllerThread(QThread):
         self.odrv.axis0.controller.config.vel_gain = 0.005
         self.odrv.axis0.controller.config.vel_integrator_gain = 0.01
         self.odrv.axis0.controller.config.vel_limit = 300
-        self.odrv.axis0.controller.config.vel_ramp_rate = 200
+        self.odrv.axis0.controller.config.vel_ramp_rate = 100
         self.odrv.axis0.config.motor.current_soft_max = 30
         self.odrv.axis0.config.motor.current_hard_max = 38
+        self.odrv.axis0.config.calibration_lockin.current = 20
+        self.odrv.axis0.motor.motor_thermistor.config.temp_limit_lower = 80
+        self.odrv.axis0.motor.motor_thermistor.config.temp_limit_upper = 100
 
         self.odrv.axis0.config.watchdog_timeout = 20 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
