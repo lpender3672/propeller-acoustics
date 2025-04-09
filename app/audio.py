@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 
 from pathlib import Path
+import os
 
 import pandas as pd
 
@@ -48,7 +49,12 @@ def load_and_compute_rfft(prop_result_path):
     for i,row in enumerate(meta):
         # do for all speeds
         audiof = Path(row[0])
-        data = np.fromfile(audiof, dtype=np.float64).reshape(-1, total_channels)
+        try:
+            relative_audiof = audiof.relative_to(audiof.parent.parent.parent.parent)
+            data = np.fromfile(relative_audiof, dtype=np.float64).reshape(-1, total_channels)
+        except FileNotFoundError:
+            print("Warning: File not found")
+            continue
 
         window = np.hanning(data.shape[0]).reshape(-1, 1)
         windowed_data = data * window

@@ -103,7 +103,11 @@ class DAQThread(QThread):
     def __init__(self, parent=None, sample_rate=44000, group_samples=167, runtime=0):
         super().__init__(parent)
 
-        self.task = nidaqmx.Task()
+        try:
+            self.task = nidaqmx.Task()
+        except nidaqmx.errors.DaqNotFoundError:
+            self.task = None
+
         self.total_channels = 0
         self.channel_names = []
 
@@ -123,6 +127,9 @@ class DAQThread(QThread):
         self.timer = QElapsedTimer()
 
     def add_channel(self):
+
+        if not self.task:
+            return False
 
         channels_per_module = 4
         nmod = self.total_channels // channels_per_module
@@ -145,9 +152,11 @@ class DAQThread(QThread):
     def run(self):
         
         # check if device attached
+        if not self.task:
+            return
         if not self.task.devices:
             return
-        
+           
         self.task.timing.cfg_samp_clk_timing(
             self.sample_rate,
             sample_mode=AcquisitionType.CONTINUOUS,
@@ -289,10 +298,10 @@ class ControllerThread(QThread):
         # controller settings
         self.odrv.axis0.controller.config.control_mode = ControlMode.VELOCITY_CONTROL
         self.odrv.axis0.controller.config.input_mode = InputMode.VEL_RAMP
-        self.odrv.axis0.controller.config.vel_gain = 0.01
-        self.odrv.axis0.controller.config.vel_integrator_gain = 0.05
+        self.odrv.axis0.controller.config.vel_gain = 0.005
+        self.odrv.axis0.controller.config.vel_integrator_gain = 0.01
         self.odrv.axis0.controller.config.vel_limit = 300
-        self.odrv.axis0.controller.config.vel_ramp_rate = 300
+        self.odrv.axis0.controller.config.vel_ramp_rate = 200
         self.odrv.axis0.config.motor.current_soft_max = 30
         self.odrv.axis0.config.motor.current_hard_max = 38
 
