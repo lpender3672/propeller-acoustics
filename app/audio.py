@@ -33,8 +33,8 @@ def load_meta_data(prop_result_path):
 
     return meta, prop
 
-mdat, _ = load_meta_data('app/results/c.prop')
-print(mdat)
+#mdat, _ = load_meta_data('app/results/c.prop')
+#print(mdat)
 
 def load_and_compute_rfft(prop_result_path):
 
@@ -218,31 +218,34 @@ def plot_raw(data_freq, ft_data, ax=None, **kwargs):
 
     return ax
 
-data_freq, ft_data = load_and_compute_rfft('app/results/dalprop5045.prop')
 
-fig, ax = plt.subplots(len(view_channels), 1, sharex=True, figsize=(10, 10))
-plot_raw(data_freq, ft_data, ax, label='uncalibrated')
-cal_ft = apply_calib(data_freq, ft_data, mcalib_data)
-plot_raw(data_freq, cal_ft, ax, label='calibrated')
+if __name__ == "__main__":
 
-plot_harmonics('app/results/dalprop5045.prop')
-plot_radar_harmonics('app/results/dalprop5045.prop', harmonics_of_interest=(1, 5, 10))
+    data_freq, ft_data = load_and_compute_rfft('app/results/dalprop5045.prop')
 
-plt.tight_layout()
-plt.show()
+    fig, ax = plt.subplots(len(view_channels), 1, sharex=True, figsize=(10, 10))
+    plot_raw(data_freq, ft_data, ax, label='uncalibrated')
+    cal_ft = apply_calib(data_freq, ft_data, mcalib_data)
+    plot_raw(data_freq, cal_ft, ax, label='calibrated')
+
+    plot_harmonics('app/results/dalprop5045.prop')
+    plot_radar_harmonics('app/results/dalprop5045.prop', harmonics_of_interest=(1, 5, 10))
+
+    plt.tight_layout()
+    plt.show()
 
 
-#plot_prop_sound(twin_data, ax, label='Twin', alpha=0.9)
-#plot_prop_sound(tri_data, ax, label='Tri', alpha=0.9, linestyle='--')
-#plot_prop_sound(loop_data, ax, label='Loop', alpha=0.9, linestyle='-.')
-#plot_prop_sound(naca0024_data, ax, label='NACA 0024', alpha=0.9)
+    #plot_prop_sound(twin_data, ax, label='Twin', alpha=0.9)
+    #plot_prop_sound(tri_data, ax, label='Tri', alpha=0.9, linestyle='--')
+    #plot_prop_sound(loop_data, ax, label='Loop', alpha=0.9, linestyle='-.')
+    #plot_prop_sound(naca0024_data, ax, label='NACA 0024', alpha=0.9)
 
-#plot_prop_sound(tri_data, ax, label='Tri 6000 RPM', alpha=0.9, linestyle='--')
+    #plot_prop_sound(tri_data, ax, label='Tri 6000 RPM', alpha=0.9, linestyle='--')
 
-#plot_prop_sound(tri12_v, ax, label='Tri 12kRPM', alpha=0.9, linestyle='-')
-#plot_prop_sound(tri12_av, ax, label='Tri 12kRPM antivibration', alpha=0.9, linestyle='-')
+    #plot_prop_sound(tri12_v, ax, label='Tri 12kRPM', alpha=0.9, linestyle='-')
+    #plot_prop_sound(tri12_av, ax, label='Tri 12kRPM antivibration', alpha=0.9, linestyle='-')
 
-#plot_prop_sound(tri12, ax, label='Tri 12000 RPM', alpha=0.9, linestyle='-')
-#plot_prop_sound(tri12_shrouded, ax, label='Tri 12000 RPM shrouded', alpha=0.9, linestyle='--')
-#plot_prop_sound(motor, ax, label='Motor 12000 RPM', alpha=0.9, linestyle='-.')
-#plot_prop_sound(motor_shrouded, ax, label='Motor shrouded 12000 RPM', alpha=0.9, linestyle='--')
+    #plot_prop_sound(tri12, ax, label='Tri 12000 RPM', alpha=0.9, linestyle='-')
+    #plot_prop_sound(tri12_shrouded, ax, label='Tri 12000 RPM shrouded', alpha=0.9, linestyle='--')
+    #plot_prop_sound(motor, ax, label='Motor 12000 RPM', alpha=0.9, linestyle='-.')
+    #plot_prop_sound(motor_shrouded, ax, label='Motor shrouded 12000 RPM', alpha=0.9, linestyle='--')

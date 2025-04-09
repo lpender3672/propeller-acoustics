@@ -67,7 +67,20 @@ def plot_prop(prop_result_path, ax1, ax2, label=None):
     return ax1, ax2
 
 
-def plot_FM(aero_data, ax, label=None):
+def plot_FM(prop_result_path, ax, label=None):
+
+    full_path = Path(prop_result_path).resolve()
+    fprop = full_path.parent.parent / "props" / full_path.name
+    prop = load_prop_from_file(fprop)
+
+    candidates = list(full_path.glob("aero_*"))
+    if not candidates:
+        print("Warning: No aero data found for", prop_result_path)
+        return None
+    
+    faero = max(candidates, key=lambda f: f.stat().st_mtime)
+
+    aero_data = np.load(faero)
 
     force_data = aero_data['force_data']
     motor_data = aero_data['motor_data']
@@ -99,10 +112,11 @@ def plot_FM(aero_data, ax, label=None):
 fig, ax = plt.subplots( 2, 1)
 plot_prop('app/results/dalprop5045.prop', ax[0], ax[1], label='dalprop5045')
 plot_prop('app/results/printed5045.prop', ax[0], ax[1], label='printed 5045')
+plot_prop('app/results/dalprop4045.prop', ax[0], ax[1], label='4045')
 #plot_prop('app/results/dalprop5045bnr.prop', ax[0], ax[1], label='3 blade')
 #plot_prop('app/results/d100clarkY.prop', ax[0], ax[1], label='clarkY')
 
-plot_prop('app/results/dalprop6045.prop', ax[0], ax[1], label='dalprop6045')
+plot_prop('app/results/dalprop6045.prop', ax[0], ax[1], label='6045')
 
 ax[0].set_xlim([50, 2000])
 ax[1].set_xlim([100, 2000])
@@ -110,5 +124,14 @@ ax[0].set_ylim([0, 0.05])
 ax[1].set_ylim([0, 0.01])
 
 ax[1].legend(loc='lower left')
+
+fig, ax = plt.subplots( 1, 1)
+
+plot_FM('app/results/dalprop5045.prop', ax)
+plot_FM('app/results/printed5045.prop', ax)
+plot_FM('app/results/dalprop4045.prop', ax)
+plot_FM('app/results/dalprop6045.prop', ax)
+
+
 
 plt.show()

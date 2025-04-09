@@ -1,0 +1,107 @@
+
+import numpy as np
+
+from routines import *
+
+from audio import (
+    load_meta_data,
+    load_and_compute_rfft,
+)
+
+import matplotlib.pyplot as plt
+from scipy.signal import butter, filtfilt
+
+
+tcal_data = np.load('app/bcal_thrust.npy')
+qcal_data = np.load('app/bcal_torque.npy')
+
+
+def load_aer_data(prop_result_path):
+
+    full_path = Path(prop_result_path).resolve()
+    fprop = full_path.parent.parent / "props" / full_path.name
+    prop = load_prop_from_file(fprop)
+
+    candidates = list(full_path.glob("aero_*"))
+    if not candidates:
+        print("Warning: No aero data found for", prop_result_path)
+        return None
+    
+    faero = max(candidates, key=lambda f: f.stat().st_mtime)
+
+    aero_data = np.load(faero)
+
+    return aero_data, prop
+
+
+def calculate_reference_pressures(prop_result_path):
+
+    aero_data, prop = load_aer_data(prop_result_path)
+
+    force_data = aero_data['force_data']
+    motor_data = aero_data['motor_data']
+
+    avg_speed = np.mean(motor_data[:,:,1], axis=1) * 2 * np.pi / 60
+    avg_speed = np.abs(avg_speed)
+    avg_raw_forces = np.mean(force_data[:,:,1:], axis=1)
+
+    avg_thrust = np.interp(avg_raw_forces[:,0], tcal_data[:,0,0], tcal_data[:,1,0])
+    avg_torque = np.interp(avg_raw_forces[:,1], qcal_data[:,0,1], qcal_data[:,1,1])
+
+    filtered_speed = avg_speed[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
+    filtered_thrust = avg_thrust[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
+    filtered_torque = avg_torque[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
+
+
+    meta, _ = load_meta_data(prop_result_path)
+
+    total_channels = 7
+    freq = 51200 # hz
+
+    cutoff_freq = 50
+
+    # 51200 Hz
+    freq_cutoff_idx = 56000
+
+    ft_data = np.zeros((len(meta), freq_cutoff_idx, total_channels))
+
+
+    speeds = []
+    rmses = []
+
+    for i,row in enumerate(meta):
+        # do for all speeds
+        audiof = Path(row[0])
+        data = np.fromfile(audiof, dtype=np.float64).reshape(-1, total_channels)
+        speed = row[1] / -60
+
+        speed = max(abs(speed), 10)
+
+        b, a = butter(1, [0.1*speed / freq, 10*speed / freq], btype='bandpass', analog=False)
+
+        data_fltrd = filtfilt(b, a, data[:,5])
+
+        rms = np.sqrt(np.mean(data_fltrd**2))
+
+        rmses.append(rms)
+        speeds.append(speed)
+
+    a,b = np.polyfit(np.log(speeds), np.log(rmses), 1)
+    
+    print("Slope:", a)
+    print("Intercept:", b)
+    
+    plt.loglog(speeds, rmses, 'o')
+    plt.loglog(speeds, np.exp(b) * speeds**a, label="Fit")  
+    plt.grid(which='both')
+    plt.xlabel("Speed (RPM)")
+    plt.ylabel("RMS")
+    plt.legend()
+    plt.show()
+
+    
+
+
+calculate_reference_pressures('app/results/dalprop5045.prop')
+
+
