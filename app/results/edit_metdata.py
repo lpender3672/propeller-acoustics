@@ -107,7 +107,7 @@ def print_metaf(metaf):
     for row in metadata:
         print(row)
 
-print_metaf('app/results/c.prop/meta_data.npy')
+print_metaf('app/results/5045_s30.prop/meta_data.npy')
 
 
 #ammend_column_to_metadata('app/results/dalprop5045.prop/meta_data.npy', None)
