@@ -10,6 +10,7 @@ from audio import (
 
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
+import pandas as pd
 
 
 tcal_data = np.load('app/bcal_thrust.npy')
@@ -72,7 +73,13 @@ def calculate_reference_pressures(prop_result_path):
     for i,row in enumerate(meta):
         # do for all speeds
         audiof = Path(row[0])
-        data = np.fromfile(audiof, dtype=np.float64).reshape(-1, total_channels)
+        relative_audiof = rebase_path(audiof)
+
+        try:
+            data = np.fromfile(relative_audiof, dtype=np.float64).reshape(-1, total_channels)
+        except FileNotFoundError:
+            continue
+
         speed = row[1] / -60
 
         speed = max(abs(speed), 10)
@@ -99,8 +106,56 @@ def calculate_reference_pressures(prop_result_path):
     plt.legend()
     plt.show()
 
-    
 
+def rebase_path(path):
+
+    if isinstance(path, str):
+        path = Path(path)
+        
+    return path.relative_to(path.parent.parent.parent.parent)
+
+def rebase_pathlist(pathlist):
+    return [rebase_path(path) for path in pathlist]
+
+
+def parse_lookup_df(results_folder):
+
+    # Base directory
+    base_dir = Path(results_folder)
+
+    df_list = []
+
+    for meta_path in base_dir.glob("**/*.prop/meta_data.npy"):
+        try:
+
+            prop_name = meta_path.parent.name #.replace(".prop", "")
+
+            meta_array = np.load(meta_path, allow_pickle=True)
+
+            df = pd.DataFrame()
+
+            prop_path = base_dir.parent / "props" / prop_name
+
+            df['audio_path'] = rebase_pathlist(meta_array[:, 0])
+            df['speed'] = meta_array[:, 1]
+            df['current'] = meta_array[:, 2]
+            df['temperature'] = meta_array[:, 3]
+            df['prop_path'] = prop_path
+            df['mic_path'] = rebase_pathlist(meta_array[:, 4])
+
+            df_list.append(df)
+
+        except Exception as e:
+            print(f"Error processing {meta_path}: {e}")
+
+    if not df_list:
+        return pd.DataFrame()
+    
+    combined_df = pd.concat(df_list, ignore_index=True)
+
+    return combined_df
+
+df = parse_lookup_df('app/results/')
 
 calculate_reference_pressures('app/results/dalprop5045.prop')
 
