@@ -3,7 +3,7 @@ import numpy as np
 
 from routines import *
 
-from audio import (
+from app.results.audio import (
     load_meta_data,
     load_and_compute_rfft,
 )

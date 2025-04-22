@@ -325,6 +325,7 @@ class InputWidget(QWidget):
         self.xfoil_thread.start()
 
     def xfoil_thread_finished_after_load_prop_clicked(self, xfoil_data):
+        self.xfoil_thread.finished.disconnect(self.xfoil_thread_finished_after_load_prop_clicked)
         self.xfoil_data = xfoil_data
         self.prop_defined = True
         self.prop_table.set_values(self.prop)

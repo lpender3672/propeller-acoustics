@@ -1,12 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-from scipy.signal import find_peaks
-
 from pathlib import Path
 import os
-
+import sys
 import pandas as pd
+
+from scipy.signal import (
+    find_peaks,
+    butter,
+    filtfilt
+)
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from routines import (
     load_prop_from_file
@@ -37,6 +42,11 @@ def load_meta_data(prop_result_path):
 #mdat, _ = load_meta_data('app/results/c.prop')
 #print(mdat)
 
+def butter_filt(data, speed, freq):
+    b, a = butter(1, [0.1*speed / freq, 10*speed / freq], btype='bandpass', analog=False)
+    data_fltrd = filtfilt(b, a, data)
+    return data_fltrd
+
 def load_and_compute_rfft(prop_result_path):
 
     meta, _ = load_meta_data(prop_result_path)
@@ -53,7 +63,7 @@ def load_and_compute_rfft(prop_result_path):
             relative_audiof = audiof.relative_to(audiof.parent.parent.parent.parent)
             data = np.fromfile(relative_audiof, dtype=np.float64).reshape(-1, total_channels)
         except FileNotFoundError:
-            print("Warning: File not found")
+            print(f"Warning: File not found {relative_audiof}, skipping...")
             continue
 
         window = np.hanning(data.shape[0]).reshape(-1, 1)
@@ -95,6 +105,9 @@ def integrate_harmonics(freq, ft_data, bpfs, aband = 10):
 
     for i in range(ft_data.shape[0]): # speeds
 
+        if np.isclose(bpfs[i], 0):
+            continue
+
         harmonics = np.arange(bpfs[i], freq[-1], bpfs[i])
 
         intergrated_harmonics = np.zeros((harmonics.shape[0], ft_data.shape[2]))
@@ -131,7 +144,7 @@ def plot_harmonics(prop_result_path, max_harmonic = 20):
     hmnics = np.arange(0, max_harmonic)
 
     for i, idx in enumerate(view_channels):
-        channel_harmonics = integrated_harmonics[0, :max_harmonic, idx].astype(float)
+        channel_harmonics = integrated_harmonics[0][:max_harmonic, idx].astype(float)
         channel_harmonics_dB = 10 * np.log10(channel_harmonics)
         label = f'Channel {idx+1} ' + r'$\theta =' + f'{microphone_positions[idx]}$'
         ax.plot(hmnics, channel_harmonics_dB, label=label)
@@ -178,7 +191,8 @@ def plot_radar_harmonics(prop_result_path, harmonics_of_interest=(1, 2, 3)):
     # For each harmonic index in harmonics_of_interest
     for h_idx in harmonics_of_interest:
         # integrated_harmonics[0][h_idx, :] gives us the amplitude at that harmonic across channels
-        # Slicing [:7] to get the first 7 channels
+        # Slicing [:6] to get the first 6 channels
+        # the 7th is a duplicate angle
         channel_amps = integrated_harmonics[0][h_idx, :6].astype(float)
         channel_amps_dB = 10 * np.log10(channel_amps)
 
@@ -235,7 +249,7 @@ if __name__ == "__main__":
     plot_raw(data_freq, cal_ft, ax, label='calibrated')
 
     plot_harmonics('app/results/dalprop5045.prop')
-    plot_radar_harmonics('app/results/dalprop5045.prop', harmonics_of_interest=(1, 5, 10))
+    plot_radar_harmonics('app/results/dalprop5045.prop', harmonics_of_interest=list(range(1,10)))
 
     plt.tight_layout()
     plt.show()

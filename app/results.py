@@ -1,9 +1,11 @@
 
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QTabWidget, QComboBox
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QTabWidget, QComboBox, QPushButton
+from PyQt6.QtCore import QThread
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 import numpy as np
+import sounddevice as sd
 
 from table import OutputTable, TableVar
 
@@ -264,6 +266,51 @@ class ResultsTable(OutputTable):
             self.clear_values()
 
 
+class AudioPlayerThread(QThread):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.audio_data = None
+        
+        # play 5s of audio
+        self.play_time = 5
+        self.playback_rate = 1.0
+
+    def run(self):
+        if self.audio_data is not None:
+
+            with sd.OutputStream(samplerate=44100, channels=1, dtype='float32') as stream:
+
+                stream.write(self.audio_data)
+                sd.sleep(int(self.play_time * 1000))
+
+    def set_audio_data(self, audio_data):
+        self.audio_data = audio_data
+
+
+def synthesise(f0, harmonic_db, fs=44100, duration=1.0):
+
+    n_samples = int(fs * duration)
+    n_fft = n_samples 
+
+    harmonic_amp = 10**(harmonic_db / 20)
+
+    spectrum = np.zeros(n_fft//2 + 1, dtype=np.complex64)  # rfft size
+
+    for i, amp in enumerate(harmonic_amp):
+        freq = f0 * (i + 1)
+        bin_index = int(np.round(freq / fs * n_fft))
+        if bin_index < len(spectrum):
+
+            phase = np.random.uniform(0, 2*np.pi)
+            spectrum[bin_index] += amp * np.exp(1j * phase)
+
+    noise_level = 0.01  # noise magnitude
+    spectrum += (np.random.randn(*spectrum.shape) + 1j * np.random.randn(*spectrum.shape)) * noise_level
+
+    signal = np.fft.irfft(spectrum, n=n_fft)
+    signal /= np.max(np.abs(signal))
+    return signal
+
 class NoiseResultsWidget(QWidget):
     def __init__(self, parent, *args):
         super().__init__(parent, *args)
@@ -315,6 +362,14 @@ class NoiseResultsWidget(QWidget):
 
         self.harmonic_select.currentIndexChanged.connect(self.internal_update)
 
+        # audio play
+        self.audio_player = AudioPlayerThread(self)
+        self.audio_player.set_audio_data(None)
+
+        self.play_audio_button = QPushButton("Play Audio", self)
+        self.play_audio_button.clicked.connect(self.audio_player.run)
+
+
     def internal_update(self):
         self.update_results(self.avs)
 
@@ -322,6 +377,8 @@ class NoiseResultsWidget(QWidget):
 
         if not avs.res['converged']:
             return # no loading data if BEM not converged
+        
+        return
 
         self.avs = avs
 
@@ -339,7 +396,11 @@ class NoiseResultsWidget(QWidget):
         vector_contributions = get_radial_magnitudes(oper, prop, peak_observer, 1) # TODO select m
 
         HVm, HDm, HLm = hanson(oper, prop, peak_observer, ms, False)
-        hmonics = calc_harmonics(HVm, HDm, HLm, avs.oper['pref'])
+        #hmonics = calc_harmonics(HVm, HDm, HLm, avs.oper['pref'])
+
+        f0 = prop['Omega'] * prop['B'] / (2 * np.pi)
+        #synthesised_signal = synthesise(f0, hmonics, duration=1.0)
+        #self.audio_player.set_audio_data(synthesised_signal)
         
         self.directivity.clear_plot()
 
@@ -376,14 +437,14 @@ class NoiseResultsWidget(QWidget):
             linestyle=['-'],
             label=['Total']
         )
-
+"""
         self.hmonic_plot.add_lines(
             [ms, hmonics],
             linestyle=['-'],
             label=['Harmonics']
         )
-
-        avs.res['OASPL'] = 10 * np.log10(total[-1] * np.conj(total[-1])).real
+"""
+        #avs.res['OASPL'] = 10 * np.log10(total[-1] * np.conj(total[-1])).real
 
 
 class AerodynamicResultsWidget(QWidget):
