@@ -222,7 +222,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     xnf, znf = av.airfoil_data[:,0], av.airfoil_data[:,1]
     xf = np.interp(np.linspace(0, 1, 2*av.prop['nx']), np.linspace(0, 1, xnf.shape[0]), xnf)
     zf = np.interp(np.linspace(0, 1, 2*av.prop['nx']), np.linspace(0, 1, znf.shape[0]), znf)
-    upscaled_airfoil = np.column_stack([xf, zf])
+    
     if apply_min_thickness:
         tf = zf[:av.prop['nx']] - zf[av.prop['nx']:]
         zmean = (zf[:av.prop['nx']] + zf[av.prop['nx']:]) / 2
@@ -248,6 +248,8 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     xf *= bdir
     sweep_angle *= bdir
     twist *= bdir
+
+    upscaled_airfoil = np.column_stack([xf + 0.5, zf])
 
     if av.prop['twinB'] == 'Single':
         Ntip = 0
@@ -473,6 +475,10 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     for i, f in enumerate(triangles):
         for j in range(3):
             blademesh.vectors[i][j] = coords[f[j],:]
+
+    print("MAX X IS ", 2*np.max(X))
+    print("MAX Y IS ", 2*np.max(Y))
+    print("MAX Z IS ", 2*np.max(Z))
 
     # Write the mesh to file "cube.stl"
     return blademesh
