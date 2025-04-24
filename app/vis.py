@@ -1,9 +1,19 @@
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QCheckBox, QFileDialog, QPushButton, QMessageBox, QDialog
+from PyQt6.QtWidgets import (
+    QVBoxLayout,
+    QWidget,
+    QGridLayout,
+    QCheckBox,
+    QFileDialog,
+    QPushButton,
+    QMessageBox,
+    QDialog,
+)
 from PyQt6.QtCore import Qt, pyqtSignal
 import pyqtgraph.opengl as gl
 import numpy as np
 from stl import mesh
 from matplotlib import cm
+
 
 class STLViewerDialog(QDialog):
     # when widget is double clicked, open dialog
@@ -17,7 +27,7 @@ class STLViewerDialog(QDialog):
         self.setWindowFlags(Qt.WindowType.Window)
 
         self.widget.view.escapePressed.connect(self.close)
-        
+
 
 class EventGLViewWidget(gl.GLViewWidget):
     doubleClicked = pyqtSignal()
@@ -26,7 +36,7 @@ class EventGLViewWidget(gl.GLViewWidget):
     def mouseDoubleClickEvent(self, event):
         self.doubleClicked.emit()
         super().mouseDoubleClickEvent(event)
-    
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_Escape:
             self.escapePressed.emit()
@@ -48,18 +58,26 @@ def create_arrow(start, end, color=(1, 0, 0, 1), rfac=0.01):
     z_axis = np.array([0, 0, 1])  # Default cone orientation along z-axis
     rotation_vector = np.cross(z_axis, arrow_direction)
     rotation_angle = np.arccos(np.dot(z_axis, arrow_direction)) * 180 / np.pi
-    
+
     if np.linalg.norm(rotation_vector) > 0:
         rotation_vector /= np.linalg.norm(rotation_vector)
     else:
         rotation_vector = z_axis
 
-    cylinder_meshdata = gl.MeshData.cylinder(rows=10, cols=20, radius=[cylradius, cylradius], length=arrow_length)
-    cylinder_mesh = gl.GLMeshItem(meshdata=cylinder_meshdata, smooth=True, color=color, shader='shaded')
+    cylinder_meshdata = gl.MeshData.cylinder(
+        rows=10, cols=20, radius=[cylradius, cylradius], length=arrow_length
+    )
+    cylinder_mesh = gl.GLMeshItem(
+        meshdata=cylinder_meshdata, smooth=True, color=color, shader="shaded"
+    )
 
     # Create a cone mesh for the arrowhead
-    cone_meshdata = gl.MeshData.cylinder(rows=10, cols=20, radius=[coneradius, 0], length=coneradius*2)
-    cone_mesh = gl.GLMeshItem(meshdata=cone_meshdata, smooth=True, color=color, shader='shaded')
+    cone_meshdata = gl.MeshData.cylinder(
+        rows=10, cols=20, radius=[coneradius, 0], length=coneradius * 2
+    )
+    cone_mesh = gl.GLMeshItem(
+        meshdata=cone_meshdata, smooth=True, color=color, shader="shaded"
+    )
 
     # Apply the rotation matrix to the cylinder and cone
     cylinder_mesh.rotate(rotation_angle, *rotation_vector[0:3])
@@ -69,6 +87,7 @@ def create_arrow(start, end, color=(1, 0, 0, 1), rfac=0.01):
     cone_mesh.translate(*end)
 
     return cylinder_mesh, cone_mesh
+
 
 class STLViewerWidget(QWidget):
     def __init__(self, parent=None, popup=False):
@@ -98,10 +117,9 @@ class STLViewerWidget(QWidget):
 
         self.view.doubleClicked.connect(self.display_fullscreen_dialog)
 
-        #viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
+        # viewSettingLayout.addWidget(self.smoothToggle, 0, 0)
         viewSettingLayout.addWidget(self.arrowToggle, 0, 0)
         viewSettingLayout.addWidget(self.edgeToggle, 0, 1)
-        
 
         if not popup:
             viewSettingLayout.addWidget(self.save_button, 0, 2)
@@ -113,7 +131,7 @@ class STLViewerWidget(QWidget):
         self.view.setCameraPosition(distance=1)
 
         self.num_blades = 1
-    
+
     def display_fullscreen_dialog(self):
         if self.popup:
             return
@@ -121,24 +139,28 @@ class STLViewerWidget(QWidget):
             self.dialog.close()
             self.dialog = None
             return
-        
+
         self.dialog = STLViewerDialog(self)
         self.dialog.widget.set_mesh(self.stl_mesh)
         self.dialog.show()
-    
+
     def load_stl_file(self, stl_file):
         self.stl_file = stl_file
         self.stl_mesh = mesh.Mesh.from_file(stl_file)
         self.update_mesh_plot()
-    
+
     def save_stl_file(self, stl_file):
-        path = QFileDialog.getSaveFileName(self, "Select propeller file", filter="Stereolithography file (*.stl)")[0]
+        path = QFileDialog.getSaveFileName(
+            self, "Select propeller file", filter="Stereolithography file (*.stl)"
+        )[0]
         if not path:
             return
-        
+
         try:
             meshtoscale = mesh.Mesh(np.copy(self.stl_mesh.data))
-            meshtoscale.vectors *= 1000 * 100 / 2.54 # I think Tony's software is in like 10 thousandths of an inch?
+            meshtoscale.vectors *= (
+                1000 * 100 / 2.54
+            )  # I think Tony's software is in like 10 thousandths of an inch?
             meshtoscale.save(path)
         except FileNotFoundError:
             QMessageBox.critical(self, "Error", "Failed to save stl file")
@@ -164,13 +186,17 @@ class STLViewerWidget(QWidget):
         vertices = stl_mesh.vectors.reshape(-1, 3)
         faces = np.arange(len(vertices)).reshape(-1, 3)
 
-        recalculated_normals = np.cross(stl_mesh.v1 - stl_mesh.v0, stl_mesh.v2 - stl_mesh.v0)
-        recalculated_normals = recalculated_normals / (np.linalg.norm(recalculated_normals, axis=1)[:, None] + 1e-8)
+        recalculated_normals = np.cross(
+            stl_mesh.v1 - stl_mesh.v0, stl_mesh.v2 - stl_mesh.v0
+        )
+        recalculated_normals = recalculated_normals / (
+            np.linalg.norm(recalculated_normals, axis=1)[:, None] + 1e-8
+        )
 
         normals = np.repeat(recalculated_normals, 3, axis=0)
 
         # light direction to dot product with normals
-        light_dir = np.array([1, 1, 1]) 
+        light_dir = np.array([1, 1, 1])
         light_dir = light_dir / np.linalg.norm(light_dir)
 
         min_intensity = np.inf
@@ -181,15 +207,14 @@ class STLViewerWidget(QWidget):
             self.view.addItem(line)
             self.view.addItem(arrow)
 
-
         intensity = np.dot(normals, light_dir)
         intensity_per_face = intensity[::3]
 
         min_intensity = min(min_intensity, np.nanmin(intensity_per_face))
         max_intensity = max(max_intensity, np.nanmax(intensity_per_face))
-    
+
         intensity_normalized = (intensity_per_face - min_intensity) / (
-        max_intensity - min_intensity + 1e-8
+            max_intensity - min_intensity + 1e-8
         )
 
         # Map to colormap
@@ -199,9 +224,8 @@ class STLViewerWidget(QWidget):
             vertexes=vertices,
             faces=faces,
             faceColors=colors,
-            smooth= self.smoothToggle.isChecked(),
-            drawEdges= self.edgeToggle.isChecked(),
-            edgeColor=(1, 1, 1, 1)
+            smooth=self.smoothToggle.isChecked(),
+            drawEdges=self.edgeToggle.isChecked(),
+            edgeColor=(1, 1, 1, 1),
         )
         self.view.addItem(mesh_item)
-    

@@ -1,31 +1,31 @@
-
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QGridLayout, QTabWidget, QComboBox, QPushButton
-from PyQt6.QtCore import QThread
+import numpy as np
+import sounddevice as sd
+from bem import betz_off_design, guaranteed_convergence_BEM, operating_range, static_bem
+from hanson import (
+    calc_harmonics,
+    get_radial_magnitudes,
+    hanson,
+    hanson_av,
+    hanson_secondary_variables,
+    sum_harmonics,
+)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-import numpy as np
-import sounddevice as sd
-
+from PyQt6.QtCore import QThread
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QGridLayout,
+    QPushButton,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 from table import OutputTable, TableVar
 
-from hanson import (
-    hanson_av,
-    hanson,
-    hanson_secondary_variables,
-    sum_harmonics,
-    get_radial_magnitudes,
-    calc_harmonics
-)
-from bem import (
-    betz_off_design,
-    operating_range,
-    guaranteed_convergence_BEM,
-    static_bem
-    )
 
 class PlotCanvas(FigureCanvas, QWidget):
-    def __init__(self, parent=None, xlabel = "", ylabel = "", title = "", hideaxes = False):
+    def __init__(self, parent=None, xlabel="", ylabel="", title="", hideaxes=False):
 
         self.fig = Figure()
         self.ax = self.fig.add_subplot(111)
@@ -43,9 +43,9 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.clear_plot()
 
         if hideaxes:
-            self.ax.axis('off')
+            self.ax.axis("off")
 
-    def add_lines(self, line_data, linestyle = None, label = None):
+    def add_lines(self, line_data, linestyle=None, label=None):
         if isinstance(line_data, list):
             line_data = np.array(line_data)
 
@@ -54,7 +54,7 @@ class PlotCanvas(FigureCanvas, QWidget):
         if linestyle:
             if not isinstance(linestyle, list):
                 linestyle = [linestyle] * (line_data.shape[0] - 1)
-            assert len(linestyle) == line_data.shape[0] - 1 # theta isnt styled
+            assert len(linestyle) == line_data.shape[0] - 1  # theta isnt styled
             self.line_styles.append(linestyle)
         else:
             self.line_styles.append(["-" for _ in range(line_data.shape[0])])
@@ -62,11 +62,13 @@ class PlotCanvas(FigureCanvas, QWidget):
         if label:
             if not isinstance(label, list):
                 label = [label]
-            assert len(label) == line_data.shape[0] - 1, "Must have unique label" # theta isnt labelled
+            assert (
+                len(label) == line_data.shape[0] - 1
+            ), "Must have unique label"  # theta isnt labelled
             self.line_labels.append(label)
         else:
             n = len(self.line_labels)
-            self.line_labels.append([str(n+i) for i in range(line_data.shape[0])])
+            self.line_labels.append([str(n + i) for i in range(line_data.shape[0])])
 
         if len(self.line_data) > len(self.line_colors):
             self.line_data.pop(0)
@@ -78,10 +80,10 @@ class PlotCanvas(FigureCanvas, QWidget):
             self.line_colors.pop(0)
             self.line_styles.pop(0)
             self.line_labels.pop(0)
-        
+
         self.plot_data()
-    
-    def add_points(self, point_data, marker = None, label = None):
+
+    def add_points(self, point_data, marker=None, label=None):
         if isinstance(point_data, list):
             point_data = np.array(point_data)
 
@@ -114,21 +116,43 @@ class PlotCanvas(FigureCanvas, QWidget):
             self.point_colors.pop(0)
             self.point_markers.pop(0)
             self.point_labels.pop(0)
-        
+
         self.plot_data()
-        
+
     def clear_lines(self):
         self.line_data = []
-        self.line_colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'cyan', 'magenta']
+        self.line_colors = [
+            "blue",
+            "red",
+            "green",
+            "orange",
+            "purple",
+            "brown",
+            "pink",
+            "gray",
+            "cyan",
+            "magenta",
+        ]
         self.line_styles = []
         self.line_labels = []
-    
+
     def clear_points(self):
         self.point_data = []
-        self.point_colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'cyan', 'magenta']
+        self.point_colors = [
+            "blue",
+            "red",
+            "green",
+            "orange",
+            "purple",
+            "brown",
+            "pink",
+            "gray",
+            "cyan",
+            "magenta",
+        ]
         self.point_markers = []
         self.point_labels = []
-    
+
     def clear_plot(self):
         self.ax.clear()
         self.ax.grid(True)
@@ -138,7 +162,7 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.fig.tight_layout()
         self.draw()
 
-    def plot_data(self, draw = True):
+    def plot_data(self, draw=True):
         # clear
 
         for i, line_data in enumerate(self.line_data):
@@ -146,33 +170,35 @@ class PlotCanvas(FigureCanvas, QWidget):
             for j in range(line_data.shape[0] - 1):
 
                 self.ax.plot(
-                    line_data[0], line_data[j+1],
-                    linestyle= self.line_styles[i][j],
-                    color= self.line_colors[i],
-                    label= self.line_labels[i][j]
+                    line_data[0],
+                    line_data[j + 1],
+                    linestyle=self.line_styles[i][j],
+                    color=self.line_colors[i],
+                    label=self.line_labels[i][j],
                 )
         for i, point_data in enumerate(self.point_data):
 
             for j in range(point_data.shape[0] - 1):
 
                 self.ax.plot(
-                    point_data[0], point_data[j+1],
-                    marker= self.point_markers[i][j],
-                    color= self.point_colors[i],
-                    label= self.point_labels[i][j]
+                    point_data[0],
+                    point_data[j + 1],
+                    marker=self.point_markers[i][j],
+                    color=self.point_colors[i],
+                    label=self.point_labels[i][j],
                 )
 
         self.set_ylim()
 
-        self.ax.legend(loc='upper right')
+        self.ax.legend(loc="upper right")
         self.ax.grid(True)
         self.fig.tight_layout()
 
         if draw:
             self.draw()
 
-    def set_ylim(self, bottom_override = None, top_override = None):
-        
+    def set_ylim(self, bottom_override=None, top_override=None):
+
         miny = np.inf
         maxy = -np.inf
         for line_data in self.line_data:
@@ -181,7 +207,7 @@ class PlotCanvas(FigureCanvas, QWidget):
         for point_data in self.point_data:
             miny = min(miny, np.nanmin(point_data[1:]))
             maxy = max(maxy, np.nanmax(point_data[1:]))
-        
+
         if np.abs(miny) == np.inf:
             miny = np.sign(maxy)
         if np.abs(maxy) == np.inf:
@@ -197,9 +223,7 @@ class PlotCanvas(FigureCanvas, QWidget):
         bottom = min(miny - drangey, miny + drangey)
         top = max(maxy - drangey, maxy + drangey)
 
-        self.ax.set_ylim(
-            bottom, top
-        )
+        self.ax.set_ylim(bottom, top)
 
 
 class PolarPlotCanvas(PlotCanvas):
@@ -208,7 +232,7 @@ class PolarPlotCanvas(PlotCanvas):
 
         if self.ax:
             self.fig.delaxes(self.ax)
-        
+
         self.ax = self.fig.add_subplot(111, polar=True)
 
         self.clear_lines()
@@ -216,11 +240,11 @@ class PolarPlotCanvas(PlotCanvas):
 
     def clear_plot(self):
         super().clear_plot()
-        if self.ax.name == 'polar':
-            self.ax.set_theta_zero_location('N')
+        if self.ax.name == "polar":
+            self.ax.set_theta_zero_location("N")
             self.ax.set_thetamin(0)
             self.ax.set_thetamax(180)
-        
+
     def set_ylim(self):
         super().set_ylim(bottom_override=0)
 
@@ -228,24 +252,22 @@ class PolarPlotCanvas(PlotCanvas):
         super().plot_data(draw=False)
 
         self.fig.subplots_adjust(right=0.7)
-        self.ax.legend( loc='center right', bbox_to_anchor=(1.3, 0.5))
+        self.ax.legend(loc="center right", bbox_to_anchor=(1.3, 0.5))
 
         self.draw()
 
 
 class ResultsTable(OutputTable):
     def __init__(self, parent):
-        
+
         vars = [
             TableVar(r"$C_T$", "[-]", "Thrust coefficient", float, 3),
             TableVar(r"$C_P$", "[-]", "Power coefficient", float, 3),
             TableVar(r"$FM$", "[-]", "Figure of Merit", float, 3),
             TableVar(r"$OASPL$", "[dB]", "Sound pressure level at observer", float, 3),
-
         ]
         self.keys = ["CT", "CP", "FM", "OASPL"]
         super().__init__(vars, parent)
-    
 
     def set_values(self, res):
         keys_to_set = [key for key in self.keys if key in res]
@@ -253,14 +275,14 @@ class ResultsTable(OutputTable):
         for i, key in enumerate(keys_to_set):
             self.vars[i].value = res[key]
         super().set_values()
-    
+
     def clear_values(self):
         for var in self.vars:
             var.value = None
         super().set_values()
 
     def update_results(self, avs):
-        if avs.res['converged']:
+        if avs.res["converged"]:
             self.set_values(avs.res)
         else:
             self.clear_values()
@@ -270,7 +292,7 @@ class AudioPlayerThread(QThread):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.audio_data = None
-        
+
         # play 5s of audio
         self.play_time = 5
         self.playback_rate = 1.0
@@ -278,7 +300,9 @@ class AudioPlayerThread(QThread):
     def run(self):
         if self.audio_data is not None:
 
-            with sd.OutputStream(samplerate=44100, channels=1, dtype='float32') as stream:
+            with sd.OutputStream(
+                samplerate=44100, channels=1, dtype="float32"
+            ) as stream:
 
                 stream.write(self.audio_data)
                 sd.sleep(int(self.play_time * 1000))
@@ -290,26 +314,29 @@ class AudioPlayerThread(QThread):
 def synthesise(f0, harmonic_db, fs=44100, duration=1.0):
 
     n_samples = int(fs * duration)
-    n_fft = n_samples 
+    n_fft = n_samples
 
-    harmonic_amp = 10**(harmonic_db / 20)
+    harmonic_amp = 10 ** (harmonic_db / 20)
 
-    spectrum = np.zeros(n_fft//2 + 1, dtype=np.complex64)  # rfft size
+    spectrum = np.zeros(n_fft // 2 + 1, dtype=np.complex64)  # rfft size
 
     for i, amp in enumerate(harmonic_amp):
         freq = f0 * (i + 1)
         bin_index = int(np.round(freq / fs * n_fft))
         if bin_index < len(spectrum):
 
-            phase = np.random.uniform(0, 2*np.pi)
+            phase = np.random.uniform(0, 2 * np.pi)
             spectrum[bin_index] += amp * np.exp(1j * phase)
 
     noise_level = 0.01  # noise magnitude
-    spectrum += (np.random.randn(*spectrum.shape) + 1j * np.random.randn(*spectrum.shape)) * noise_level
+    spectrum += (
+        np.random.randn(*spectrum.shape) + 1j * np.random.randn(*spectrum.shape)
+    ) * noise_level
 
     signal = np.fft.irfft(spectrum, n=n_fft)
     signal /= np.max(np.abs(signal))
     return signal
+
 
 class NoiseResultsWidget(QWidget):
     def __init__(self, parent, *args):
@@ -320,7 +347,6 @@ class NoiseResultsWidget(QWidget):
 
         self.directivity = PolarPlotCanvas(self)
         self.directivity_toolbar = NavigationToolbar(self.directivity, self)
-
 
         self.hmonic_plot = PlotCanvas(self, hideaxes=True)
 
@@ -340,12 +366,12 @@ class NoiseResultsWidget(QWidget):
         self.drag_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
         self.total_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
 
-        self.thickness_interference.line_colors = ['blue']
-        self.lift_interference.line_colors = ['red']
-        self.drag_interference.line_colors = ['green']
-        self.total_interference.line_colors = ['black']
-        self.hmonic_plot.line_colors = ['blue', 'red']
-        self.directivity.line_colors = ['blue', 'red']
+        self.thickness_interference.line_colors = ["blue"]
+        self.lift_interference.line_colors = ["red"]
+        self.drag_interference.line_colors = ["green"]
+        self.total_interference.line_colors = ["black"]
+        self.hmonic_plot.line_colors = ["blue", "red"]
+        self.directivity.line_colors = ["blue", "red"]
 
         interference_tab_layout.addWidget(self.thickness_interference, 0, 0)
         interference_tab_layout.addWidget(self.lift_interference, 0, 1)
@@ -369,74 +395,77 @@ class NoiseResultsWidget(QWidget):
         self.play_audio_button = QPushButton("Play Audio", self)
         self.play_audio_button.clicked.connect(self.audio_player.run)
 
-
     def internal_update(self):
         self.update_results(self.avs)
 
     def update_results(self, avs):
 
-        if not avs.res['converged']:
-            return # no loading data if BEM not converged
-        
+        if not avs.res["converged"]:
+            return  # no loading data if BEM not converged
+
         return
 
         self.avs = avs
 
         oper, prop, obs = hanson_secondary_variables(avs)
-        theta = obs['theta']
+        theta = obs["theta"]
 
         ms = np.arange(1, 30)
         PVm, PDm, PLm = hanson(oper, prop, obs, ms, False)
-        #V, L, D, total = sum_harmonics(PVm, PDm, PLm, avs.oper['pref'])
-        
+        # V, L, D, total = sum_harmonics(PVm, PDm, PLm, avs.oper['pref'])
+
         peak_observer = {
-            'r': [avs.oper['r_obs'] * avs.prop['rt']],
-            'theta': [avs.oper['theta_obs']]
+            "r": [avs.oper["r_obs"] * avs.prop["rt"]],
+            "theta": [avs.oper["theta_obs"]],
         }
-        vector_contributions = get_radial_magnitudes(oper, prop, peak_observer, 1) # TODO select m
+        vector_contributions = get_radial_magnitudes(
+            oper, prop, peak_observer, 1
+        )  # TODO select m
 
         HVm, HDm, HLm = hanson(oper, prop, peak_observer, ms, False)
-        #hmonics = calc_harmonics(HVm, HDm, HLm, avs.oper['pref'])
+        # hmonics = calc_harmonics(HVm, HDm, HLm, avs.oper['pref'])
 
-        f0 = prop['Omega'] * prop['B'] / (2 * np.pi)
-        #synthesised_signal = synthesise(f0, hmonics, duration=1.0)
-        #self.audio_player.set_audio_data(synthesised_signal)
-        
+        f0 = prop["Omega"] * prop["B"] / (2 * np.pi)
+        # synthesised_signal = synthesise(f0, hmonics, duration=1.0)
+        # self.audio_player.set_audio_data(synthesised_signal)
+
         self.directivity.clear_plot()
 
         idx = self.harmonic_select.currentIndex()
 
-        self.directivity.add_lines(np.array([theta, PVm[:,idx], PDm[:,idx], PLm[:,idx]]),
-            linestyle=['-', ':', '-.'],
-            label=['Thickness', 'Lift', 'Drag'])
-        
+        self.directivity.add_lines(
+            np.array([theta, PVm[:, idx], PDm[:, idx], PLm[:, idx]]),
+            linestyle=["-", ":", "-."],
+            label=["Thickness", "Lift", "Drag"],
+        )
+
         self.thickness_interference.clear_plot()
         self.lift_interference.clear_plot()
         self.drag_interference.clear_plot()
         self.total_interference.clear_plot()
         self.hmonic_plot.clear_plot()
-        
+
         self.thickness_interference.add_lines(
             np.array([vector_contributions[0].real, vector_contributions[0].imag]),
-            linestyle=['-'],
-            label=['Thickness']
+            linestyle=["-"],
+            label=["Thickness"],
         )
         self.drag_interference.add_lines(
             np.array([vector_contributions[1].real, vector_contributions[1].imag]),
-            linestyle=['-'],
-            label=['Drag']
+            linestyle=["-"],
+            label=["Drag"],
         )
         self.lift_interference.add_lines(
             np.array([vector_contributions[2].real, vector_contributions[2].imag]),
-            linestyle=['-'],
-            label=['Lift']
+            linestyle=["-"],
+            label=["Lift"],
         )
         total = np.sum(vector_contributions, axis=0)
         self.total_interference.add_lines(
-            np.array([total.real, total.imag]),
-            linestyle=['-'],
-            label=['Total']
+            np.array([total.real, total.imag]), linestyle=["-"], label=["Total"]
         )
+
+
 """
         self.hmonic_plot.add_lines(
             [ms, hmonics],
@@ -444,7 +473,7 @@ class NoiseResultsWidget(QWidget):
             label=['Harmonics']
         )
 """
-        #avs.res['OASPL'] = 10 * np.log10(total[-1] * np.conj(total[-1])).real
+# avs.res['OASPL'] = 10 * np.log10(total[-1] * np.conj(total[-1])).real
 
 
 class AerodynamicResultsWidget(QWidget):
@@ -455,93 +484,95 @@ class AerodynamicResultsWidget(QWidget):
 
         self.tabWidget = QTabWidget(self)
 
-        self.CTprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_T/\sigma$ [-]")
+        self.CTprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_T/\\sigma$ [-]")
         self.CPprofile = PlotCanvas(self, "$r/r_t$ [-]", "$C_P$ [-]")
 
-        self.CTprofile.line_colors = ['blue', 'red']
-        self.CPprofile.line_colors = ['blue', 'red']
+        self.CTprofile.line_colors = ["blue", "red"]
+        self.CPprofile.line_colors = ["blue", "red"]
 
         self.performance = PlotCanvas(self, "$J$", "Coefficicent")
         self.AoA = PlotCanvas(self, "$r/r_t$ [-]", "$\\alpha$ [deg]")
 
-        self.AoA.line_colors = ['blue', 'red']
+        self.AoA.line_colors = ["blue", "red"]
 
         self.tabWidget.addTab(self.CTprofile, "Loading")
         self.tabWidget.addTab(self.CPprofile, "Power")
         self.tabWidget.addTab(self.performance, "Performance")
         self.tabWidget.addTab(self.AoA, "Angle of Attack")
 
-        
-        #self.layout.addWidget(self.profile, 0, 0, 2, 1)
-        #self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
-        #self.layout.addWidget(self.performance, 0, 1, 2, 1)
-        #self.layout.addWidget(self.performance_toolbar, 2, 1, 1, 1)
+        # self.layout.addWidget(self.profile, 0, 0, 2, 1)
+        # self.layout.addWidget(self.profile_toolbar, 2, 0, 1, 1)
+        # self.layout.addWidget(self.performance, 0, 1, 2, 1)
+        # self.layout.addWidget(self.performance_toolbar, 2, 1, 1, 1)
 
         self.layout.addWidget(self.tabWidget)
 
     def update_results(self, avs):
-        
-        #avs = betz_off_design(avs)
-        #avs = bem(avs)
+
+        # avs = betz_off_design(avs)
+        # avs = bem(avs)
         avs = static_bem(avs)
-            # plot Cx and Cz against r0_rt
-        
-        if avs.res['converged']:
+        # plot Cx and Cz against r0_rt
+
+        if avs.res["converged"]:
             self.CTprofile.clear_plot()
             self.CPprofile.clear_plot()
             self.performance.clear_plot()
             self.AoA.clear_plot()
 
-            idxs = avs.res['invalids']
+            idxs = avs.res["invalids"]
 
             # fill between xs
             if len(idxs) > 0:
                 try:
                     self.CTprofile.ax.fill_betweenx(
                         [-1e3, 1e3],
-                        avs.prop['r0_rt'][idxs[0]],
-                        avs.prop['r0_rt'][idxs[-1]],
-                        color='pink',
+                        avs.prop["r0_rt"][idxs[0]],
+                        avs.prop["r0_rt"][idxs[-1]],
+                        color="pink",
                         alpha=0.8,
-                        label='Invalid'
+                        label="Invalid",
                     )
                     self.CPprofile.ax.fill_betweenx(
                         [-1e3, 1e3],
-                        avs.prop['r0_rt'][idxs[0]],
-                        avs.prop['r0_rt'][idxs[-1]],
-                        color='pink',
+                        avs.prop["r0_rt"][idxs[0]],
+                        avs.prop["r0_rt"][idxs[-1]],
+                        color="pink",
                         alpha=0.8,
-                        label='Invalid'
+                        label="Invalid",
                     )
-                except:
+                except BaseException:
                     pass
 
-
-            sigma = avs.prop['B'] * avs.prop['c'] / (2 * np.pi * avs.prop['r0_rt'] * avs.prop['rt'])
+            sigma = (
+                avs.prop["B"]
+                * avs.prop["c"]
+                / (2 * np.pi * avs.prop["r0_rt"] * avs.prop["rt"])
+            )
 
             self.CTprofile.add_lines(
-                [avs.prop['r0_rt'],
-                avs.res['dCT']],
-                linestyle=['--']
-            )
-            
-            self.CPprofile.add_lines(
-                [avs.prop['r0_rt'],
-                avs.res['dCQ']],
-                linestyle=['--']
+                [avs.prop["r0_rt"], avs.res["dCT"]], linestyle=["--"]
             )
 
-            self.AoA.add_lines(
-                [avs.prop['r0_rt'],
-                avs.res['alpha']],
-                linestyle=['--']
+            self.CPprofile.add_lines(
+                [avs.prop["r0_rt"], avs.res["dCQ"]], linestyle=["--"]
             )
+
+            self.AoA.add_lines([avs.prop["r0_rt"], avs.res["alpha"]], linestyle=["--"])
 
         else:
             # indicate failed convergence
             # get active widget
             self.tabWidget.setCurrentIndex(0)
-            self.CTprofile.ax.text(0.5, 0.5, "Convergence Failed", fontsize=12, ha='center', va='center', transform=self.CTprofile.ax.transAxes)
+            self.CTprofile.ax.text(
+                0.5,
+                0.5,
+                "Convergence Failed",
+                fontsize=12,
+                ha="center",
+                va="center",
+                transform=self.CTprofile.ax.transAxes,
+            )
             self.CTprofile.draw()
 
         """
@@ -551,7 +582,7 @@ class AerodynamicResultsWidget(QWidget):
 
         if CTs.size == 0:
             return
-        
+
         self.performance.add_lines(
             [Js, CTs],
             linestyle=['-'],

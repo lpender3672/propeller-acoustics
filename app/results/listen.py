@@ -1,17 +1,18 @@
+import os
+from pathlib import Path
+
 import numpy as np
 import sounddevice as sd
-from pathlib import Path
-import os
-
 from audio import (
-    load_meta_data,
     butter_filt,
+    load_meta_data,
 )
 
 total_channels = 7
 freq = 51200  # Hz
 
-def listen_to_microphone(prop_result_path, mic_idx, speed = 1000):
+
+def listen_to_microphone(prop_result_path, mic_idx, speed=1000):
     """
     Plays the audio from a specific microphone at a specific speed.
 
@@ -26,19 +27,21 @@ def listen_to_microphone(prop_result_path, mic_idx, speed = 1000):
     """
 
     meta, _ = load_meta_data(prop_result_path)
-    
+
     # get closest matching speed
     row = meta[np.argmin(np.abs(meta[:, 1] + speed))]
     audiof = Path(row[0])
-    actual_speed = -row[1] * 2 * np.pi / 60 # rads/s
+    actual_speed = -row[1] * 2 * np.pi / 60  # rads/s
     relative_audiof = audiof.relative_to(audiof.parent.parent.parent.parent)
     print(relative_audiof)
     if not os.path.exists(relative_audiof):
         return
 
     try:
-        data = np.fromfile(relative_audiof, dtype=np.float64).reshape(-1, total_channels)
-        
+        data = np.fromfile(relative_audiof, dtype=np.float64).reshape(
+            -1, total_channels
+        )
+
     except FileNotFoundError:
         print(f"Warning: File not found {audiof}, skipping...")
         return
@@ -54,5 +57,4 @@ def listen_to_microphone(prop_result_path, mic_idx, speed = 1000):
 
 
 if __name__ == "__main__":
-    listen_to_microphone('app/results/dalprop5045.prop', 1, 12000)
-    
+    listen_to_microphone("app/results/dalprop5045.prop", 1, 12000)

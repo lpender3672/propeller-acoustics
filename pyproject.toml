@@ -1,12 +1,62 @@
-[project]
+[tool.poetry]
 name = "propeller-acoustics"
 version = "0.1.0"
 description = ""
 authors = []
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
-dependencies = ["matplotlib (>=3.10.1,<4.0.0)", "numpy (>=2.2.5,<3.0.0)", "numpy-stl (>=3.2.0,<4.0.0)", "pandas (>=2.2.3,<3.0.0)", "scipy (>=1.15.2,<2.0.0)", "sympy (>=1.13.3,<2.0.0)", "pyqt6 (==6.8.0)", "pyqt6-sip (>=13.10.0,<14.0.0)", "pyqtgraph (>=0.13.7,<0.14.0)", "pyserial (>=3.5,<4.0)", "fibre (==0.0.1.*)", "odrive (>=0.6.10.post0,<0.7.0)", "sounddevice (>=0.5.1,<0.6.0)", "pyopengl (>=3.1.9,<4.0.0)", "pyopengl-accelerate (>=3.1.9,<4.0.0)", "nidaqmx (>=1.0.2,<2.0.0)", "nptdms (>=1.10.0,<2.0.0)", "openpyxl (>=3.1.5,<4.0.0)"]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+matplotlib = ">=3.10.1,<4.0.0"
+numpy = ">=2.2.5,<3.0.0"
+"numpy-stl" = ">=3.2.0,<4.0.0"
+pandas = ">=2.2.3,<3.0.0"
+scipy = ">=1.15.2,<2.0.0"
+sympy = ">=1.13.3,<2.0.0"
+pyqt6 = "6.8.0"
+"pyqt6-sip" = ">=13.10.0,<14.0.0"
+pyqtgraph = ">=0.13.7,<0.14.0"
+pyserial = ">=3.5,<4.0"
+fibre = "0.0.1.*"
+odrive = ">=0.6.10.post0,<0.7.0"
+sounddevice = ">=0.5.1,<0.6.0"
+pyopengl = ">=3.1.9,<4.0.0"
+"pyopengl-accelerate" = ">=3.1.9,<4.0.0"
+nidaqmx = ">=1.0.2,<2.0.0"
+nptdms = ">=1.10.0,<2.0.0"
+openpyxl = ">=3.1.5,<4.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = ">=23.12.1"
+flake8 = ">=7.0.0"
+isort = ">=5.13.2"
+pylint = ">=3.1.0"
+autopep8 = ">=2.0.4"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+include = '\.pyw?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pylint.messages_control]
+disable = [
+    "C0111", # missing-docstring
+    "C0103", # invalid-name
+    "C0330", # bad-continuation
+    "C0326", # bad-whitespace
+]
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.autopep8]
+max_line_length = 88
+aggressive = 1

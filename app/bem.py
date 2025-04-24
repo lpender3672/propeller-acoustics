@@ -1,42 +1,41 @@
-
 import numpy as np
-
 from matplotlib import pyplot as plt
 from routines import (
     XFOIL_INSTALLED,
-    run_xfoil,
-    load_foil,
     AppVars,
+    correct_clcd_sweep,
+    interpolate_clcd,
+    load_foil,
     load_oper_from_file,
     load_prop_from_file,
-    interpolate_clcd,
-    correct_clcd_sweep
+    run_xfoil,
 )
-from scipy.optimize import root, brentq
+from scipy.optimize import brentq, root
+
 
 def static_bem(av):
 
-    nr = av.prop['nr']
-    omega = av.oper['Omega']
+    nr = av.prop["nr"]
+    omega = av.oper["Omega"]
 
     res = {}
-    res['dCT'] = np.zeros(av.prop['nr'])
-    res['dCQ'] = np.zeros(av.prop['nr'])
-    res['dFM'] = np.zeros(av.prop['nr'])
-    res['Cl'] = np.zeros(av.prop['nr'])
-    res['Cd'] = np.zeros(av.prop['nr'])
-    res['alpha'] = np.zeros(av.prop['nr'])
-    res['invalids'] = np.zeros(0)
+    res["dCT"] = np.zeros(av.prop["nr"])
+    res["dCQ"] = np.zeros(av.prop["nr"])
+    res["dFM"] = np.zeros(av.prop["nr"])
+    res["Cl"] = np.zeros(av.prop["nr"])
+    res["Cd"] = np.zeros(av.prop["nr"])
+    res["alpha"] = np.zeros(av.prop["nr"])
+    res["invalids"] = np.zeros(0)
 
     for i in range(nr):
 
         a = 0
         tol = 1e-6
-        rf = 0.1 # relaxation factor
+        rf = 0.1  # relaxation factor
         da = 1
-        beta = av.prop['twist'][i]
-        r = av.prop['r0_rt'][i] * av.prop['rt']
-        sigma = av.prop['B'] * av.prop['c'][i] / (2 * np.pi * r)
+        beta = av.prop["twist"][i]
+        r = av.prop["r0_rt"][i] * av.prop["rt"]
+        sigma = av.prop["B"] * av.prop["c"][i] / (2 * np.pi * r)
 
         while da > tol:
 
@@ -47,13 +46,12 @@ def static_bem(av):
 
             new_a = 0.5 * np.sqrt(Cl * sigma * np.cos(phi) * (1 + a**2))
             da = np.abs(new_a - a)
-            
-            a = rf * new_a + (1-rf) * a
 
-        res['alpha'][i] = alpha
-        res['Cl'][i] = Cl
-        res['Cd'][i] = Cd
+            a = rf * new_a + (1 - rf) * a
 
+        res["alpha"][i] = alpha
+        res["Cl"][i] = Cl
+        res["Cd"][i] = Cd
 
         cphi = np.cos(phi)
         sphi = np.sin(phi)
@@ -61,57 +59,61 @@ def static_bem(av):
         ct = Cl * sphi + Cd * cphi
 
         v = omega * r
-        res['dCT'][i] = 0.5 * av.oper['rho'] * v**2 * av.prop['c'][i] * cn
-        res['dCQ'][i] = r * 0.5 * av.oper['rho'] * v**2 * av.prop['c'][i] * ct
+        res["dCT"][i] = 0.5 * av.oper["rho"] * v**2 * av.prop["c"][i] * cn
+        res["dCQ"][i] = r * 0.5 * av.oper["rho"] * v**2 * av.prop["c"][i] * ct
         # calc force coefficients
 
-        res['dFM'][i] = np.sign(res['dCT'][i]) * np.abs(res['dCT'][i]) ** (2/3) / (np.sqrt(2) * np.abs(res['dCQ'][i]))
+        res["dFM"][i] = (
+            np.sign(res["dCT"][i])
+            * np.abs(res["dCT"][i]) ** (2 / 3)
+            / (np.sqrt(2) * np.abs(res["dCQ"][i]))
+        )
 
-    print(res['Cl'])
-    res['converged'] = True
+    print(res["Cl"])
+    res["converged"] = True
     av.res = res
-    
+
     return av
 
 
 def betz_design(av):
 
-    #print(av.prop)
-    #print(av.oper)
+    # print(av.prop)
+    # print(av.oper)
 
-    R = av.prop['rt']
-    B = av.prop['B']
-    Omega = av.oper['Omega']
-    nu = av.oper['nu']
-    ro = av.oper['rho']
+    R = av.prop["rt"]
+    B = av.prop["B"]
+    Omega = av.oper["Omega"]
+    nu = av.oper["nu"]
+    ro = av.oper["rho"]
 
-    Nsect = av.prop['nr']
+    Nsect = av.prop["nr"]
 
     # Select an initial estimate for zeta
     dzeta = 100
-    xi = av.prop['r0_rt']
+    xi = av.prop["r0_rt"]
 
     alpha = 5 * np.pi / 180
     Cl = 0.5
     Cd = 0.1
 
-    target_thrust_N = 1 # N
-    target_power_W = 50 # W
+    target_thrust_N = 1  # N
+    target_power_W = 50  # W
 
-    V = av.oper['V'] # m/s
+    V = av.oper["V"]  # m/s
     if V == 0:
         print("V is zero, unanble to find betz optimal solution")
         return False
     T_c = 2 * target_thrust_N / (ro * V**2 * np.pi * R**2)
     P_c = 2 * target_power_W / (ro * V**3 * np.pi * R**2)
     y = xi * R * Omega / V
-    lamda = V / (Omega * R) # advance ratio
+    lamda = V / (Omega * R)  # advance ratio
 
     zeta = np.sqrt(2 * T_c)
 
-    print(f'Advance ratio: {lamda}')
+    print(f"Advance ratio: {lamda}")
 
-    while np.abs(dzeta/zeta) > 1e-3:
+    while np.abs(dzeta / zeta) > 1e-3:
 
         # Design of Optimum Propellers
         # Charles N. Adkins*
@@ -121,18 +123,18 @@ def betz_design(av):
         # 2 calculate F and phi
         phi_t = np.arctan(lamda * (1 + zeta / 2))
         # ensure phi_t is not too small
-        phi_t = np.clip(phi_t, 1e-3, np.pi/2)
+        phi_t = np.clip(phi_t, 1e-3, np.pi / 2)
 
-        f = B/2 * (1 - xi) / np.sin(phi_t)
+        f = B / 2 * (1 - xi) / np.sin(phi_t)
         F = 2 / np.pi * np.arccos(np.exp(-f))
-        phi = np.arctan2( np.tan(phi_t), xi)
+        phi = np.arctan2(np.tan(phi_t), xi)
 
         # 3 calculate Wc and Re_c
         G = F * np.cos(phi) * np.sin(phi)
         Wc = 4 * np.pi * lamda * G * V * R * zeta / (Cl * B)
         Re_c = Wc / nu
 
-        #print(np.max(Re_c) - np.min(Re_c))
+        # print(np.max(Re_c) - np.min(Re_c))
 
         # 4,5 determine epsilon and Cl
         # TODO: find best airfoil at each chord Reynolds number
@@ -142,19 +144,28 @@ def betz_design(av):
         epsilon = Cd / Cl
 
         # 6 calculate a, a', W
-        a = zeta / 2 * np.cos(phi)**2 * (1 - epsilon * np.tan(phi))
-        a_prime = zeta / (2 * y) * np.cos(phi) * np.sin(phi) * (1 + epsilon / np.tan(phi))
+        a = zeta / 2 * np.cos(phi) ** 2 * (1 - epsilon * np.tan(phi))
+        a_prime = (
+            zeta / (2 * y) * np.cos(phi) * np.sin(phi) * (1 + epsilon / np.tan(phi))
+        )
         W = V * (1 + a) / np.sin(phi)
         # 7 recompute step 3 for chord and blade twist
         Wc = 4 * np.pi * lamda * G * V * R * zeta / (Cl * B)
         c = Wc / W
         beta = alpha + phi
 
-        #print(np.max(phi))
+        # print(np.max(phi))
 
         # 8 calculate derivatives and integrate wrt xi
-        I1_prime = 4 * xi * G * (1 - epsilon * np.tan(phi)) 
-        I2_prime = lamda * I1_prime / (2 * xi) * (1 + epsilon / np.tan(phi)) * np.cos(phi) * np.sin(phi)
+        I1_prime = 4 * xi * G * (1 - epsilon * np.tan(phi))
+        I2_prime = (
+            lamda
+            * I1_prime
+            / (2 * xi)
+            * (1 + epsilon / np.tan(phi))
+            * np.cos(phi)
+            * np.sin(phi)
+        )
         J1_prime = 4 * xi * G * (1 + epsilon / np.tan(phi))
         J2_prime = J1_prime / 2 * (1 - epsilon * np.tan(phi)) * np.cos(phi) ** 2
 
@@ -168,11 +179,11 @@ def betz_design(av):
         J1_over_2J2 = J1 / (2 * J2)
 
         # Thrust specified
-        #new_zeta = I1_over_2I2 - (I1_over_2I2**2 - T_c / I2)**(1/2)
-        #P_c = J1 * zeta + J2 * zeta**2
+        # new_zeta = I1_over_2I2 - (I1_over_2I2**2 - T_c / I2)**(1/2)
+        # P_c = J1 * zeta + J2 * zeta**2
 
         # Power specified
-        new_zeta = - J1_over_2J2 + (J1_over_2J2**2 + P_c / J2)**(1/2)
+        new_zeta = -J1_over_2J2 + (J1_over_2J2**2 + P_c / J2) ** (1 / 2)
         T_c = I1 * zeta + I2 * zeta**2
 
         if np.isnan(new_zeta):
@@ -185,30 +196,31 @@ def betz_design(av):
     else:
         print("Betz calculation converged")
         # success
-        av.prop['c'] = c
-        av.prop['twist'] = beta
+        av.prop["c"] = c
+        av.prop["twist"] = beta
 
-        av.dist['CTL_c_type'] = 'custom'
-        av.dist['CTL_twist_type'] = 'custom'
-        
+        av.dist["CTL_c_type"] = "custom"
+        av.dist["CTL_twist_type"] = "custom"
+
         return True
-    
+
+
 def betz_off_design(av):
 
-    R = av.prop['rt']
-    B = av.prop['B']
-    Omega = av.oper['Omega']
-    nu = av.oper['nu']
-    ro = av.oper['rho']
-    xi = av.prop['r0_rt']
-    c = av.prop['c']
-    sweep = av.prop['sweep']
-    beta = av.prop['twist']
+    R = av.prop["rt"]
+    B = av.prop["B"]
+    Omega = av.oper["Omega"]
+    nu = av.oper["nu"]
+    ro = av.oper["rho"]
+    xi = av.prop["r0_rt"]
+    c = av.prop["c"]
+    sweep = av.prop["sweep"]
+    beta = av.prop["twist"]
 
-    V = av.oper['V'] # m/s
+    V = av.oper["V"]  # m/s
 
     y = xi * R * Omega / V
-    lamda = V / (Omega * R * np.cos(sweep)) # advance ratio
+    lamda = V / (Omega * R * np.cos(sweep))  # advance ratio
 
     # An initial estimate for phi can be obtained from Eq. (8) by setting zeta = 0
     phi = np.arctan((1 + 0) * lamda / xi)
@@ -216,12 +228,12 @@ def betz_off_design(av):
 
     sigma = B * c / (2 * np.pi * xi * R)
 
-    loss_model = 'Prantl'
+    loss_model = "Prantl"
 
     iters = 0
 
-    while (iters < 100):
-        if (np.max(np.abs(dphi / phi)) < 1e-3):
+    while iters < 100:
+        if np.max(np.abs(dphi / phi)) < 1e-3:
             break
 
         # Analysis of Arbitrary Designs
@@ -230,8 +242,8 @@ def betz_off_design(av):
         alpha = beta - phi
         # airfoil coefficients are known from the section data and alpha
 
-        #Cl = Cl0 + alpha * 2 * np.pi
-        #Cd = Cd0
+        # Cl = Cl0 + alpha * 2 * np.pi
+        # Cd = Cd0
         Cl, Cd = interpolate_clcd(av.airfoil_data, alpha, 5e5)
 
         # better to wait and see if its out of bounds
@@ -239,18 +251,20 @@ def betz_off_design(av):
 
         Cx = Cl * np.cos(phi) - Cd * np.sin(phi)
         Cz = Cl * np.sin(phi) + Cd * np.cos(phi)
-        K = Cz / (4 * np.sin(phi)**2)
+        K = Cz / (4 * np.sin(phi) ** 2)
         K_prime = Cx / (4 * np.sin(phi) * np.cos(phi))
-        phi_t = np.arctan( xi * np.tan(phi))
-        if loss_model == 'Prantl':
-            F = 2 / np.pi * np.arccos(np.exp( - B/2 * (1/xi - 1) / np.sin(phi_t))) # Prandtl tip loss factor
-        elif loss_model == 'Viterna':
+        phi_t = np.arctan(xi * np.tan(phi))
+        if loss_model == "Prantl":
+            F = (
+                2 / np.pi * np.arccos(np.exp(-B / 2 * (1 / xi - 1) / np.sin(phi_t)))
+            )  # Prandtl tip loss factor
+        elif loss_model == "Viterna":
             pass
         else:
-            F = 1 # no tip loss factor
+            F = 1  # no tip loss factor
 
-        a = sigma * K * ( F - sigma * K)
-        a_prime = sigma * K_prime * ( F + sigma * K_prime)
+        a = sigma * K * (F - sigma * K)
+        a_prime = sigma * K_prime * (F + sigma * K_prime)
         # Viterna and Janetzke clip a and a_prime to 0.7
         a = np.clip(a, -0.7, 0.7)
         a_prime = np.clip(a_prime, -0.7, 0.7)
@@ -259,7 +273,7 @@ def betz_off_design(av):
         # the Reynolds number is determined from the known chord and W
         W = np.sqrt((V * (1 + a)) ** 2 + (Ucorr * (1 - a_prime)) ** 2)
         Re_c = W * c / nu
-        #print(Re_c)
+        # print(Re_c)
         new_phi = np.arctan(V * (1 + a) / (Ucorr * (1 - a_prime)))
         dphi = new_phi - phi
         phi = new_phi
@@ -267,45 +281,56 @@ def betz_off_design(av):
 
     else:
         # never broke out of loop
-        av.res['converged'] = False
+        av.res["converged"] = False
         return av
-    
-    av.res['converged'] = True
-    av.res['alpha'] = alpha
-    av.res['Cl'] = Cl
-    av.res['Cd'] = Cd
-    invalids = np.where((alpha * 180/np.pi < - 30))[0]
-    av.res['invalids'] = invalids
+
+    av.res["converged"] = True
+    av.res["alpha"] = alpha
+    av.res["Cl"] = Cl
+    av.res["Cd"] = Cd
+    invalids = np.where((alpha * 180 / np.pi < -30))[0]
+    av.res["invalids"] = invalids
     # set interesting values
-    
+
     # not sure if this is right because of a typo in the paper, specifically exponent of 3/2
-    #CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F**(3/2) / ((F + sigma * K_prime) * np.cos(phi))**2
-    #CP_prime = CT_prime * np.pi * xi * Cx / Cz * np.cos(sweep)
+    # CT_prime = (np.pi ** 3 / 4) * sigma * Cz * xi * F**(3/2) / ((F + sigma * K_prime) * np.cos(phi))**2
+    # CP_prime = CT_prime * np.pi * xi * Cx / Cz * np.cos(sweep)
     Wsq = (V * (1 + a)) ** 2 + (Ucorr * (1 - a_prime)) ** 2
     T_prime = 1 / 2 * B * Wsq * c * (F * Cl * np.cos(phi) - Cd * np.sin(phi))
-    Q_prime = 1 / 2 * B * Wsq * c * (F * Cl * np.sin(phi) + Cd * np.cos(phi)) * xi * R * np.cos(sweep)
+    Q_prime = (
+        1
+        / 2
+        * B
+        * Wsq
+        * c
+        * (F * Cl * np.sin(phi) + Cd * np.cos(phi))
+        * xi
+        * R
+        * np.cos(sweep)
+    )
     P_prime = Omega * Q_prime
 
     A = np.pi * R**2
-    CT_prime = T_prime / (1/2 * A * (R * Omega) ** 2)
-    CP_prime = P_prime / (1/2 * A * (R * Omega) ** 3)
-    
-    #print(Cl)
+    CT_prime = T_prime / (1 / 2 * A * (R * Omega) ** 2)
+    CP_prime = P_prime / (1 / 2 * A * (R * Omega) ** 3)
+
+    # print(Cl)
 
     CT = np.trapz(CT_prime, xi * R)
     CP = np.trapz(CP_prime, xi * R)
 
-    FM = np.sign(CT) * np.abs(CT) ** (2/3) / (np.sqrt(2) * np.abs(CP))
+    FM = np.sign(CT) * np.abs(CT) ** (2 / 3) / (np.sqrt(2) * np.abs(CP))
 
-    av.res['CT'] = CT
-    av.res['CP'] = CP
-    av.res['FM'] = FM
-    av.res['dCP'] = CP_prime
-    av.res['dCT'] = CT_prime
+    av.res["CT"] = CT
+    av.res["CP"] = CP
+    av.res["FM"] = FM
+    av.res["dCP"] = CP_prime
+    av.res["dCT"] = CT_prime
 
-    #print(f"CP: {CP}, CT: {CT}, FM: {FM}")
+    # print(f"CP: {CP}, CT: {CT}, FM: {FM}")
 
     return av
+
 
 def firstbracket(f, xmin, xmax, n, backwardsearch=False):
 
@@ -324,6 +349,7 @@ def firstbracket(f, xmin, xmax, n, backwardsearch=False):
         fprev = fnext
 
     return False, 0.0, 0.0
+
 
 def determine_quadrants(epsilon_everywhere, Vx, Vy, theta):
     epsilon = 1e-6
@@ -380,9 +406,13 @@ def determine_quadrants(epsilon_everywhere, Vx, Vy, theta):
 
     return startfrom90, order
 
-def main_function(residual, firstbracket, order, npts, forcebackwardsearch, implicitad_option):
+
+def main_function(
+    residual, firstbracket, order, npts, forcebackwardsearch, implicitad_option
+):
 
     pass
+
 
 def guaranteed_convergence_BEM(av):
 
@@ -399,38 +429,37 @@ def guaranteed_convergence_BEM(av):
         Cl_valid = ~np.isnan(Cl0)
         Cd_valid = ~np.isnan(Cd0)
 
-    av.res['converged'] = False
+    av.res["converged"] = False
 
-    twist = av.prop['twist']
-    sweep = av.prop['sweep']
-    B = av.prop['B']
-    R = av.prop['rt']
-    Omega = av.oper['Omega']
-    V = av.oper['V']
-    lamda_r = V / (Omega * av.prop['r0_rt'] * R)
-    sigmap = B * av.prop['c'] / (2 * np.pi * av.prop['r0_rt'] * R)
+    twist = av.prop["twist"]
+    sweep = av.prop["sweep"]
+    B = av.prop["B"]
+    R = av.prop["rt"]
+    Omega = av.oper["Omega"]
+    V = av.oper["V"]
+    lamda_r = V / (Omega * av.prop["r0_rt"] * R)
+    sigmap = B * av.prop["c"] / (2 * np.pi * av.prop["r0_rt"] * R)
 
     def prantl_tiploss(r, Rhub, Rtip, phi, B):
         asphi = abs(np.sin(phi))
-        factortip = B/2.0*(Rtip/r - 1)/asphi
-        F = 2.0/np.pi*np.arccos(np.exp(-factortip))
+        factortip = B / 2.0 * (Rtip / r - 1) / asphi
+        F = 2.0 / np.pi * np.arccos(np.exp(-factortip))
         return F
-    
-    
+
     def residual_and_result(phi, i, result):
         # Unpack inputs
-        B = av.prop['B']
-        r = av.prop['r0_rt'][i] * av.prop['rt']
-        chord = av.prop['c'][i]
-        theta = av.prop['twist'][i]
-        Rhub = av.prop['rh']
-        Rtip = av.prop['rt']
-        Vx = av.oper['V']
-        Vy = av.oper['Omega'] * r
-        rho = av.oper['rho']
-        mu = rho * av.oper['nu']
+        B = av.prop["B"]
+        r = av.prop["r0_rt"][i] * av.prop["rt"]
+        chord = av.prop["c"][i]
+        theta = av.prop["twist"][i]
+        Rhub = av.prop["rh"]
+        Rtip = av.prop["rt"]
+        Vx = av.oper["V"]
+        Vy = av.oper["Omega"] * r
+        rho = av.oper["rho"]
+        mu = rho * av.oper["nu"]
         pitch = 0
-        asound = av.oper['c0']
+        asound = av.oper["c0"]
 
         # Constants
         sigma_p = B * chord / (2.0 * np.pi * r)
@@ -509,50 +538,53 @@ def guaranteed_convergence_BEM(av):
         u *= G
         v *= G
 
-        W = np.sqrt((Vx + u)**2 + (Vy - v)**2)
+        W = np.sqrt((Vx + u) ** 2 + (Vy - v) ** 2)
         Np = cn * 0.5 * rho * W**2 * chord
         Tp = ct * 0.5 * rho * W**2 * chord
 
-        result['alpha'][i] = alpha
-        #dT = B * Np
-        #dQ = B * r * Tp
+        result["alpha"][i] = alpha
+        # dT = B * Np
+        # dQ = B * r * Tp
         A = np.pi * Rtip**2
-        #dCT = dT / (rho * A * (Omega * Rtip)**2)
-        #dCP = dQ / (rho * A * (Omega * Rtip)**3)
+        # dCT = dT / (rho * A * (Omega * Rtip)**2)
+        # dCP = dQ / (rho * A * (Omega * Rtip)**3)
 
         if k >= -2.0 / 3:  # Momentum region
             dCT = 4 * a * (1 - a) * F
         else:  # Empirical region
-            dCT = (50/9 - 4*F)*a**2 - (40/9 - 4*F)*a + 8/9
-        
-        dCP = (1-a) * dCT + 0.5 * sigma_p * cd * (r/R)**3
+            dCT = (50 / 9 - 4 * F) * a**2 - (40 / 9 - 4 * F) * a + 8 / 9
 
-        Vtip = av.oper['Omega'] * Rtip
-        result['dCT'][i] = B * Np / (0.5 * rho * Vtip**2 * A)
-        result['dCP'][i] = B * Tp * r * sweep[i] * av.oper['Omega'] / (0.5 * rho * Vtip**3 * A)
-        result['Cl'][i] = cl
-        result['Cd'][i] = cd
+        dCP = (1 - a) * dCT + 0.5 * sigma_p * cd * (r / R) ** 3
 
-        #print(i, R, alpha)
+        Vtip = av.oper["Omega"] * Rtip
+        result["dCT"][i] = B * Np / (0.5 * rho * Vtip**2 * A)
+        result["dCP"][i] = (
+            B * Tp * r * sweep[i] * av.oper["Omega"] / (0.5 * rho * Vtip**3 * A)
+        )
+        result["Cl"][i] = cl
+        result["Cd"][i] = cd
+
+        # print(i, R, alpha)
 
         return R, result
-    
-    
+
     Vy = Omega * R
-    theta = av.prop['twist'][-1]
+    theta = av.prop["twist"][-1]
     startfrom90, order = determine_quadrants(True, 0, Vy, theta)
 
     res = {}
-    res['dCT'] = np.zeros(av.prop['nr'])
-    res['dCP'] = np.zeros(av.prop['nr'])
-    res['dFM'] = np.zeros(av.prop['nr'])
-    res['Cl'] = np.zeros(av.prop['nr'])
-    res['Cd'] = np.zeros(av.prop['nr'])
-    res['alpha'] = np.zeros(av.prop['nr'])
+    res["dCT"] = np.zeros(av.prop["nr"])
+    res["dCP"] = np.zeros(av.prop["nr"])
+    res["dFM"] = np.zeros(av.prop["nr"])
+    res["Cl"] = np.zeros(av.prop["nr"])
+    res["Cd"] = np.zeros(av.prop["nr"])
+    res["alpha"] = np.zeros(av.prop["nr"])
 
     success = False
-    for i in range(av.prop['nr']):
-        for j in range(len(order)):  # Quadrant orders. In most cases, it should find root in the first quadrant searched.
+    for i in range(av.prop["nr"]):
+        for j in range(
+            len(order)
+        ):  # Quadrant orders. In most cases, it should find root in the first quadrant searched.
             phimin, phimax = order[j]
 
             backwardsearch = False
@@ -564,10 +596,21 @@ def guaranteed_convergence_BEM(av):
                     backwardsearch = True
 
             # Find bracket
-            success, phiL, phiU = firstbracket(lambda phi: residual_and_result(phi, i, res)[0], phimin, phimax, 10, backwardsearch)
+            success, phiL, phiU = firstbracket(
+                lambda phi: residual_and_result(phi, i, res)[0],
+                phimin,
+                phimax,
+                10,
+                backwardsearch,
+            )
 
             def solve(res):
-                phistar = brentq(lambda phi: residual_and_result(phi, i, res)[0], phiL, phiU, xtol=1e-9)
+                phistar = brentq(
+                    lambda phi: residual_and_result(phi, i, res)[0],
+                    phiL,
+                    phiU,
+                    xtol=1e-9,
+                )
                 return phistar
 
             # Once bracket is found, solve root-finding problem and compute loads
@@ -576,19 +619,23 @@ def guaranteed_convergence_BEM(av):
 
                 _, res = residual_and_result(phistar, i, res)
 
+    res["converged"] = True
+    res["invalids"] = np.where(
+        (res["alpha"] * 180 / np.pi < falphas.min())
+        | (res["alpha"] * 180 / np.pi > falphas.max())
+    )[0]
 
-    res['converged'] = True
-    res['invalids'] = np.where(
-        (res['alpha'] * 180/np.pi < falphas.min()) | 
-        (res['alpha'] * 180/np.pi > falphas.max())
-        )[0]
-    
-    res['CT'] = np.trapz(res['dCT'], av.prop['r0_rt'])
-    res['CP'] = np.trapz(res['dCP'], av.prop['r0_rt'])
-    res['FM'] = np.sign(res['CT']) * np.abs(res['CT']) ** (2/3) / (np.sqrt(2) * np.abs(res['CP']))
-    
+    res["CT"] = np.trapz(res["dCT"], av.prop["r0_rt"])
+    res["CP"] = np.trapz(res["dCP"], av.prop["r0_rt"])
+    res["FM"] = (
+        np.sign(res["CT"])
+        * np.abs(res["CT"]) ** (2 / 3)
+        / (np.sqrt(2) * np.abs(res["CP"]))
+    )
+
     av.res = res
     return av  # Return None if no bracket is found
+
 
 def operating_range(av, Js):
 
@@ -598,60 +645,62 @@ def operating_range(av, Js):
 
     avcopy = av.copy()
 
-    for i,J in enumerate(Js):
-        avcopy.oper['V'] = J * avcopy.oper['Omega'] * avcopy.prop['rt']
+    for i, J in enumerate(Js):
+        avcopy.oper["V"] = J * avcopy.oper["Omega"] * avcopy.prop["rt"]
         avcopy = guaranteed_convergence_BEM(avcopy)
 
-        if not avcopy.res['converged']:
+        if not avcopy.res["converged"]:
             CPs[i] = np.nan
             CTs[i] = np.nan
             FMs[i] = np.nan
             continue
 
-        ivlds = avcopy.res['invalids']
-        if (len(ivlds) > 0 and ivlds[-1] > avcopy.prop['nr'] // 2):
+        ivlds = avcopy.res["invalids"]
+        if len(ivlds) > 0 and ivlds[-1] > avcopy.prop["nr"] // 2:
             CPs[i] = np.nan
             CTs[i] = np.nan
             FMs[i] = np.nan
             continue
 
-        CPs[i] = avcopy.res['CP']
-        CTs[i] = avcopy.res['CT']
-        FMs[i] = avcopy.res['FM']
+        CPs[i] = avcopy.res["CP"]
+        CTs[i] = avcopy.res["CT"]
+        FMs[i] = avcopy.res["FM"]
 
     return Js[CTs > 0], CPs[CTs > 0], CTs[CTs > 0], FMs[CTs > 0]
+
 
 def main():
 
     av = AppVars()
 
-    av.oper = load_oper_from_file('app/app_vars.json')
-    av.prop = load_prop_from_file('app/props/constant_chord.prop')
+    av.oper = load_oper_from_file("app/app_vars.json")
+    av.prop = load_prop_from_file("app/props/constant_chord.prop")
 
-    av.airfoil_data = load_foil(av.prop['foil_path'])
+    av.airfoil_data = load_foil(av.prop["foil_path"])
     av.airfoil_data = run_xfoil(av.airfoil_data)
 
-    av.oper['V'] = 10
+    av.oper["V"] = 10
     av = guaranteed_convergence_BEM(av)
 
-    if not av.res['converged']:
+    if not av.res["converged"]:
         print("BEM did not converge")
         return
     fig, ax = plt.subplots()
-    ax.plot(av.prop['r0_rt'], av.res['alpha'])
+    ax.plot(av.prop["r0_rt"], av.res["alpha"])
 
     Js = np.linspace(-0.1, 0.1, 20)
     Js, CPs, CTs, FMs = operating_range(av, Js)
 
     fig, ax = plt.subplots()
 
-    ax.plot(Js, CTs, label='CT')
+    ax.plot(Js, CTs, label="CT")
     ax.legend()
 
     ax.set_ylim(0, 20)
 
     plt.show()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
 
     main()

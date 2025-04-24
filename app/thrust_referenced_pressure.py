@@ -1,20 +1,16 @@
-
+import matplotlib.pyplot as plt
 import numpy as np
-
+import pandas as pd
 from routines import *
+from scipy.signal import butter, filtfilt
 
 from app.results.audio import (
-    load_meta_data,
     load_and_compute_rfft,
+    load_meta_data,
 )
 
-import matplotlib.pyplot as plt
-from scipy.signal import butter, filtfilt
-import pandas as pd
-
-
-tcal_data = np.load('app/bcal_thrust.npy')
-qcal_data = np.load('app/bcal_torque.npy')
+tcal_data = np.load("app/bcal_thrust.npy")
+qcal_data = np.load("app/bcal_torque.npy")
 
 
 def load_aer_data(prop_result_path):
@@ -27,7 +23,7 @@ def load_aer_data(prop_result_path):
     if not candidates:
         print("Warning: No aero data found for", prop_result_path)
         return None
-    
+
     faero = max(candidates, key=lambda f: f.stat().st_mtime)
 
     aero_data = np.load(faero)
@@ -36,34 +32,36 @@ def load_aer_data(prop_result_path):
 
 
 def butter_filt(data, speed, freq):
-    b, a = butter(1, [0.1*speed / freq, 10*speed / freq], btype='bandpass', analog=False)
+    b, a = butter(
+        1, [0.1 * speed / freq, 10 * speed / freq], btype="bandpass", analog=False
+    )
     data_fltrd = filtfilt(b, a, data)
     rms = np.sqrt(np.mean(data_fltrd**2))
     return rms
+
 
 def calculate_reference_pressures(prop_result_path):
 
     aero_data, prop = load_aer_data(prop_result_path)
 
-    force_data = aero_data['force_data']
-    motor_data = aero_data['motor_data']
+    force_data = aero_data["force_data"]
+    motor_data = aero_data["motor_data"]
 
-    avg_speed = np.mean(motor_data[:,:,1], axis=1) * 2 * np.pi / 60
+    avg_speed = np.mean(motor_data[:, :, 1], axis=1) * 2 * np.pi / 60
     avg_speed = np.abs(avg_speed)
-    avg_raw_forces = np.mean(force_data[:,:,1:], axis=1)
+    avg_raw_forces = np.mean(force_data[:, :, 1:], axis=1)
 
-    avg_thrust = np.interp(avg_raw_forces[:,0], tcal_data[:,0,0], tcal_data[:,1,0])
-    avg_torque = np.interp(avg_raw_forces[:,1], qcal_data[:,0,1], qcal_data[:,1,1])
+    avg_thrust = np.interp(avg_raw_forces[:, 0], tcal_data[:, 0, 0], tcal_data[:, 1, 0])
+    avg_torque = np.interp(avg_raw_forces[:, 1], qcal_data[:, 0, 1], qcal_data[:, 1, 1])
 
     filtered_speed = avg_speed[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
     filtered_thrust = avg_thrust[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
     filtered_torque = avg_torque[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
 
-
     meta, _ = load_meta_data(prop_result_path)
 
     total_channels = 7
-    freq = 51200 # hz
+    freq = 51200  # hz
 
     cutoff_freq = 50
 
@@ -72,17 +70,18 @@ def calculate_reference_pressures(prop_result_path):
 
     ft_data = np.zeros((len(meta), freq_cutoff_idx, total_channels))
 
-
     speeds = []
     rmses = []
 
-    for i,row in enumerate(meta):
+    for i, row in enumerate(meta):
         # do for all speeds
         audiof = Path(row[0])
         relative_audiof = rebase_path(audiof)
 
         try:
-            data = np.fromfile(relative_audiof, dtype=np.float64).reshape(-1, total_channels)
+            data = np.fromfile(relative_audiof, dtype=np.float64).reshape(
+                -1, total_channels
+            )
         except FileNotFoundError:
             continue
 
@@ -94,14 +93,14 @@ def calculate_reference_pressures(prop_result_path):
     rmses = np.array(rmses)
     speeds = np.array(speeds)
 
-    a,b = np.polyfit(np.log(speeds[speeds > 10]), np.log(rmses[speeds > 10]), 1)
-    
+    a, b = np.polyfit(np.log(speeds[speeds > 10]), np.log(rmses[speeds > 10]), 1)
+
     print("Slope:", a)
     print("Intercept:", b)
-    
-    plt.loglog(speeds, rmses, 'o')
-    plt.loglog(speeds, np.exp(b) * speeds**a, label="Fit")  
-    plt.grid(which='both')
+
+    plt.loglog(speeds, rmses, "o")
+    plt.loglog(speeds, np.exp(b) * speeds**a, label="Fit")
+    plt.grid(which="both")
     plt.xlabel("Speed (RPM)")
     plt.ylabel("RMS")
     plt.legend()
@@ -112,9 +111,10 @@ def rebase_path(path):
 
     if isinstance(path, str):
         path = Path(path)
-        
+
     ans = path.relative_to(path.parent.parent.parent.parent)
     return str(ans)
+
 
 def rebase_pathlist(pathlist):
     return [rebase_path(path) for path in pathlist]
@@ -130,7 +130,7 @@ def parse_lookup_df(results_folder):
     for meta_path in base_dir.glob("**/*.prop/meta_data.npy"):
         try:
 
-            prop_name = meta_path.parent.name #.replace(".prop", "")
+            prop_name = meta_path.parent.name  # .replace(".prop", "")
 
             meta_array = np.load(meta_path, allow_pickle=True)
 
@@ -138,12 +138,12 @@ def parse_lookup_df(results_folder):
 
             prop_path = base_dir.parent / "props" / prop_name
 
-            df['audio_path'] = rebase_pathlist(meta_array[:, 0])
-            df['speed'] = meta_array[:, 1]
-            df['current'] = meta_array[:, 2]
-            df['temperature'] = meta_array[:, 3]
-            df['prop_path'] = prop_path
-            df['mic_path'] = rebase_pathlist(meta_array[:, 4])
+            df["audio_path"] = rebase_pathlist(meta_array[:, 0])
+            df["speed"] = meta_array[:, 1]
+            df["current"] = meta_array[:, 2]
+            df["temperature"] = meta_array[:, 3]
+            df["prop_path"] = prop_path
+            df["mic_path"] = rebase_pathlist(meta_array[:, 4])
 
             df_list.append(df)
 
@@ -152,14 +152,14 @@ def parse_lookup_df(results_folder):
 
     if not df_list:
         return pd.DataFrame()
-    
+
     combined_df = pd.concat(df_list, ignore_index=True)
 
     return combined_df
 
 
 def plot_radar_graph(lookup_df):
-    grouped = lookup_df.groupby(['prop_path', 'speed'])
+    grouped = lookup_df.groupby(["prop_path", "speed"])
 
     total_channels = 7
 
@@ -172,16 +172,18 @@ def plot_radar_graph(lookup_df):
         speed = speed / -60
         if speed < 10:
             continue
-        
+
         for _, row in group.iterrows():
-            mic_path = row['mic_path']
-            prop_path = row['prop_path']
-            
-            mic_data = np.genfromtxt(mic_path, delimiter=',', dtype=None, encoding=None)
-            if not os.path.exists(row['audio_path']):
+            mic_path = row["mic_path"]
+            prop_path = row["prop_path"]
+
+            mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=None, encoding=None)
+            if not os.path.exists(row["audio_path"]):
                 continue
 
-            audio_data = np.fromfile(row['audio_path'], dtype=np.float64).reshape(-1, total_channels)
+            audio_data = np.fromfile(row["audio_path"], dtype=np.float64).reshape(
+                -1, total_channels
+            )
 
             for i in range(total_channels):
 
@@ -191,10 +193,8 @@ def plot_radar_graph(lookup_df):
         # plot radar graph
 
 
-df = parse_lookup_df('app/results/')
+df = parse_lookup_df("app/results/")
 
 plot_radar_graph(df)
 
-#calculate_reference_pressures('app/results/dalprop5045.prop')
-
-
+# calculate_reference_pressures('app/results/dalprop5045.prop')

@@ -1,17 +1,16 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QGridLayout
-from PyQt6.QtCore import QObject, pyqtSignal
-
-from input import InputWidget
-from dists import DistributionsWidget
-from results import NoiseResultsWidget, AerodynamicResultsWidget, ResultsTable
-from geometry import generate_propeller_mesh
-from routines import AppVars
-from vis import STLViewerWidget
-
-import numpy as np
 import os
 import subprocess
 from pathlib import Path
+
+import numpy as np
+from dists import DistributionsWidget
+from geometry import generate_propeller_mesh
+from input import InputWidget
+from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QGridLayout, QWidget
+from results import AerodynamicResultsWidget, NoiseResultsWidget, ResultsTable
+from routines import AppVars
+from vis import STLViewerWidget
 
 
 class MainWindow(QWidget):
@@ -21,7 +20,7 @@ class MainWindow(QWidget):
         self.av = AppVars()
 
         self.app_dir = Path(os.path.dirname(os.path.realpath(__file__)))
-        
+
         self.assemble_widgets()
         self.attach_signals()
 
@@ -31,8 +30,8 @@ class MainWindow(QWidget):
 
         if not self.input_widget.load_oper_from_file(av_file):
             pass
-            
-        self.stl_viewer.load_stl_file("practical/designs/clarkY.stl")#
+
+        self.stl_viewer.load_stl_file("practical/designs/clarkY.stl")  #
 
     def assemble_widgets(self):
         layout = QGridLayout(self)
@@ -53,7 +52,6 @@ class MainWindow(QWidget):
         self.noise_results_widget.setMinimumWidth(400)
         self.aerodynamic_results_widget.setMinimumHeight(400)
 
-        
         layout.addWidget(self.input_widget, 0, 0, 2, 1)
         layout.addWidget(self.results_table, 2, 0, 1, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
@@ -70,15 +68,15 @@ class MainWindow(QWidget):
         self.input_widget.save_prop_btn.clicked.connect(self.save_prop)
 
         self.input_widget.new_prop_from_file.connect(self.on_new_prop_from_file)
-    
-    def update_prop(self, update_results = True):
+
+    def update_prop(self, update_results=True):
         print("Updating prop")
-        
+
         self.av.prop.update(self.input_widget.prop)
-        
+
         if not self.input_widget.prop_defined:
             return
-        
+
         self.av.airfoil_data = self.input_widget.airfoil_data
         self.av.xfoil_data = self.input_widget.xfoil_data
 
@@ -86,47 +84,45 @@ class MainWindow(QWidget):
 
         # update mesh
 
-        self.stl_viewer.set_mesh(
-            generate_propeller_mesh(self.av)
-        )
+        self.stl_viewer.set_mesh(generate_propeller_mesh(self.av))
 
         if not self.input_widget.oper_defined:
             return
 
         if update_results:
-            #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
+            # subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
             self.results_table.update_results(self.av)
-    
+
     def on_new_prop_from_file(self):
         self.av.prop.update(self.input_widget.prop)
         self.av.dist.update(self.input_widget.dist)
         self.av.airfoil_data = self.input_widget.airfoil_data
 
-        self.dists_widget.set_dists(self.av) # this will then update the prop
+        self.dists_widget.set_dists(self.av)  # this will then update the prop
 
-    def update_oper(self, update_results = True):
+    def update_oper(self, update_results=True):
         print("Updating oper")
         self.av.oper.update(self.input_widget.oper)
 
         # dont need to update mesh, conditions were not changed
-        #self.stl_viewer.set_mesh(
+        # self.stl_viewer.set_mesh(
         #    generate_blade_mesh(self.av)
-        #)
+        # )
         # do need to update results if prop is defined
         if not self.input_widget.prop_defined:
-            return # no prop defined
-        
+            return  # no prop defined
+
         if update_results:
-            #subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
+            # subprocess.run(["app/build/propeller_lifting_line.exe", self.ft_input_file])
             self.aerodynamic_results_widget.update_results(self.av)
             self.noise_results_widget.update_results(self.av)
             self.results_table.update_results(self.av)
 
     def save_prop(self):
         self.input_widget.save_prop_to_file(self.av)
-    
+
     def closeEvent(self, event):
         av_file = os.path.join(self.app_dir, "app_vars.json")
         self.input_widget.save_oper_to_file(av_file)

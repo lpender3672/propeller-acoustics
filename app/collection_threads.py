@@ -1,38 +1,37 @@
+from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+import pyqtgraph as pg
+import sys
+import datetime
 
+import fibre
+import nidaqmx
 import nidaqmx.constants
 import nidaqmx.error_codes
 import nidaqmx.stream_readers
 import nidaqmx.system
 import nidaqmx.system.device
-import serial
-from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer, QElapsedTimer
-from odrive.enums import *
+import numpy as np
 import odrive
-
-import datetime
-
-from nptdms import TdmsFile
-import nidaqmx
-from nidaqmx.stream_readers import AnalogMultiChannelReader
-
+import serial
 from nidaqmx.constants import (
     READ_ALL_AVAILABLE,
     AcquisitionType,
     LoggingMode,
     LoggingOperation,
 )
+from nidaqmx.stream_readers import AnalogMultiChannelReader
+from nptdms import TdmsFile
+from odrive.enums import *
+from PyQt6.QtCore import QElapsedTimer, QObject, QThread, QTimer, pyqtSignal
 from scipy.signal import butter, filtfilt
 
-
-import numpy as np
-import fibre
 
 class SerialReaderThread(QThread):
     data_received = pyqtSignal(np.ndarray)
     error_occurred = pyqtSignal(Exception)
 
-    startLogging = pyqtSignal(int) # finite log only
-    finishedLogging = pyqtSignal(np.ndarray) # is emitted when a finite log finishes
+    startLogging = pyqtSignal(int)  # finite log only
+    finishedLogging = pyqtSignal(np.ndarray)  # is emitted when a finite log finishes
 
     def __init__(self, serial_port, baud_rate):
         super().__init__()
@@ -40,7 +39,9 @@ class SerialReaderThread(QThread):
         self.serial = None
         try:
             self.serial = serial.Serial(serial_port, baud_rate, timeout=1)
-            line = self.serial.readline().decode('utf-8').strip().split(",") # current format in practical/pico/main.c
+            line = (
+                self.serial.readline().decode("utf-8").strip().split(",")
+            )  # current format in practical/pico/main.c
             assert len(line) == 3
         except serial.SerialException as e:
             self.error_occurred.emit(e)
@@ -51,7 +52,7 @@ class SerialReaderThread(QThread):
             self.serial.close()
             self.serial = None
             return
-        
+
         self.running = True
         self.sampling = False
         self.startLogging.connect(self.start_logging)
@@ -62,9 +63,11 @@ class SerialReaderThread(QThread):
 
         while self.running:
             try:
-                line = self.serial.readline().decode('utf-8').strip()
+                line = self.serial.readline().decode("utf-8").strip()
                 if line:
-                    time_str, amp0_str, amp1_str = line.split(",") # current format in practical/pico/main.c
+                    time_str, amp0_str, amp1_str = line.split(
+                        ","
+                    )  # current format in practical/pico/main.c
                     time_val = float(time_str.strip())
                     amp0_val = int(amp0_str.strip())
                     amp1_val = int(amp1_str.strip())
@@ -80,8 +83,8 @@ class SerialReaderThread(QThread):
                     self.data_received.emit(datapoint)
             except Exception as e:
                 self.error_occurred.emit(e)
-                #print(f"Error reading: pico be buggin {e}")
-        
+                # print(f"Error reading: pico be buggin {e}")
+
     def start_logging(self, nsamples):
         self.sampling = True
         self.sample_idx = 0
@@ -91,13 +94,14 @@ class SerialReaderThread(QThread):
         self.running = False
         self.serial.close()
 
+
 class DAQThread(QThread):
     newSample = pyqtSignal(np.ndarray)
     errorOccurred = pyqtSignal(str)
 
-    startLogging = pyqtSignal(str, int) # finite or continous
-    finishedLogging = pyqtSignal(str) # is emitted when a finite log finishes
-    stopLogging = pyqtSignal() # finite or continous
+    startLogging = pyqtSignal(str, int)  # finite or continous
+    finishedLogging = pyqtSignal(str)  # is emitted when a finite log finishes
+    stopLogging = pyqtSignal()  # finite or continous
 
     def __init__(self, parent=None, sample_rate=44000, group_samples=167, runtime=0):
         super().__init__(parent)
@@ -111,8 +115,10 @@ class DAQThread(QThread):
         self.channel_names = []
 
         self.sample_rate = sample_rate
-        self.group_samples = group_samples # samples per rotation of the motor
-        self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
+        self.group_samples = group_samples  # samples per rotation of the motor
+        self.sample_buffer = np.zeros(
+            (self.total_channels, self.group_samples), dtype=np.float64
+        )
         self.runtime = runtime
 
         self.is_logging = False
@@ -133,41 +139,49 @@ class DAQThread(QThread):
         channels_per_module = 4
         nmod = self.total_channels // channels_per_module
         nch = self.total_channels % channels_per_module
-        chstr = f"cDAQ1Mod{nmod+1}/ai{nch}"
+        chstr = f"cDAQ1Mod{nmod + 1}/ai{nch}"
         terminal_cfg = nidaqmx.constants.TerminalConfiguration.PSEUDO_DIFF
 
         try:
-            self.task.ai_channels.add_ai_microphone_chan(chstr, terminal_config=terminal_cfg)
+            self.task.ai_channels.add_ai_microphone_chan(
+                chstr, terminal_config=terminal_cfg
+            )
         except nidaqmx.DaqError as e:
-            #if e.error_type == nidaqmx.error_codes.DAQmxErrors.DEV_CANNOT_BE_ACCESSED:
+            # if e.error_type == nidaqmx.error_codes.DAQmxErrors.DEV_CANNOT_BE_ACCESSED:
             print(e)
             return False
 
         self.channel_names.append(chstr)
         self.total_channels += 1
-        self.sample_buffer = np.zeros((self.total_channels, self.group_samples), dtype=np.float64)
+        self.sample_buffer = np.zeros(
+            (self.total_channels, self.group_samples), dtype=np.float64
+        )
         return True
 
     def run(self):
-        
+
         # check if device attached
         if not self.task:
             return
         if not self.task.devices:
             return
-           
+
         self.task.timing.cfg_samp_clk_timing(
             self.sample_rate,
             sample_mode=AcquisitionType.CONTINUOUS,
-            samps_per_chan=self.group_samples
+            samps_per_chan=self.group_samples,
         )
         print(f"ACTUAL FREQUENCY: {self.task.timing.samp_clk_rate}")
-        self.task.register_every_n_samples_acquired_into_buffer_event(self.group_samples, self.callback)
+        self.task.register_every_n_samples_acquired_into_buffer_event(
+            self.group_samples, self.callback
+        )
         self.reader = AnalogMultiChannelReader(self.task.in_stream)
 
         if not np.isclose(self.task.timing.samp_clk_rate, self.sample_rate, atol=0.1):
             self.errorOccurred.emit(
-                f"Error setting sample rate: ensure requested rate is supported ({self.task.timing.samp_clk_rate})")
+                f"Error setting sample rate: ensure requested rate is supported ({
+                    self.task.timing.samp_clk_rate})"
+            )
             return
 
         self.task.start()
@@ -176,9 +190,11 @@ class DAQThread(QThread):
         if self.runtime > 0:
             self.msleep(self.runtime * 1000)
             self.task.stop()
-        
-    def callback(self, task_handle, every_n_samples_event_type, number_of_samples, callback_data):
-        
+
+    def callback(
+        self, task_handle, every_n_samples_event_type, number_of_samples, callback_data
+    ):
+
         self.reader.read_many_sample(
             self.sample_buffer,
             self.group_samples,
@@ -186,12 +202,12 @@ class DAQThread(QThread):
         self.newSample.emit(self.sample_buffer)
 
         if self.is_logging and self.log_file:
-                                
-                self.sample_buffer.T.tofile(self.log_file)
-                self.buffers_logged += 1
-                if self.max_buffers is not None and self.buffers_logged > self.max_buffers:
-                    self.finishedLogging.emit(self.log_file.name)
-                    self.stop_logging()
+
+            self.sample_buffer.T.tofile(self.log_file)
+            self.buffers_logged += 1
+            if self.max_buffers is not None and self.buffers_logged > self.max_buffers:
+                self.finishedLogging.emit(self.log_file.name)
+                self.stop_logging()
 
         return 0
 
@@ -226,21 +242,21 @@ class ControllerThread(QThread):
     newSample = pyqtSignal(np.ndarray)
     calibrateMotor = pyqtSignal()
 
-    startLogging = pyqtSignal(int) # finite or continous
-    finishedLogging = pyqtSignal(np.ndarray) # is emitted when a finite log finishes
+    startLogging = pyqtSignal(int)  # finite or continous
+    finishedLogging = pyqtSignal(np.ndarray)  # is emitted when a finite log finishes
 
     startCheckingSettled = pyqtSignal()
     stopCheckingSettled = pyqtSignal()
     speedSettled = pyqtSignal()
 
-    def __init__(self, parent=None, sample_rate = 200, buffer_size = 10):
+    def __init__(self, parent=None, sample_rate=200, buffer_size=10):
         super().__init__(parent)
-        
+
         # timers removed as turned into an independent thread
-        #self.watchdog_timer = QTimer(self)
-        #self.watchdog_timer.timeout.connect(self.watchdog_loop)
-        #self.aquisition_timer = QTimer(self)
-        #self.aquisition_timer.timeout.connect(self.aquisition_loop)
+        # self.watchdog_timer = QTimer(self)
+        # self.watchdog_timer.timeout.connect(self.watchdog_loop)
+        # self.aquisition_timer = QTimer(self)
+        # self.aquisition_timer.timeout.connect(self.aquisition_loop)
 
         # velocity estimate, current control
         self.sample_rate = sample_rate
@@ -254,12 +270,12 @@ class ControllerThread(QThread):
 
         self.checking_settled = False
 
-        self.watchdog_dt = 0.1 # s
+        self.watchdog_dt = 0.1  # s
         self.samples_per_watchdog = int(self.watchdog_dt * self.sample_rate)
 
         self.odrv = None
         self.target_speed = 0.0
-        self.thread_running = True # thread running
+        self.thread_running = True  # thread running
         self.motor_running = False
 
         self.setSpeed.connect(self.set_speed)
@@ -267,7 +283,7 @@ class ControllerThread(QThread):
         self.stopMotor.connect(self.stop_motor)
         self.calibrateMotor.connect(self.calibrate_motor)
 
-        self.timer = QElapsedTimer() # time cannot be obtained from Odrive
+        self.timer = QElapsedTimer()  # time cannot be obtained from Odrive
 
         self.startLogging.connect(self.start_logging)
         self.startCheckingSettled.connect(self.start_checking_settled)
@@ -279,7 +295,7 @@ class ControllerThread(QThread):
         order = 3
         nyquist = 0.5 * self.sample_rate  # Nyquist frequency
         normal_cutoff = cutoff_freq / nyquist  # Normalize cutoff frequency
-        self.b, self.a = butter(order, normal_cutoff, btype='low', analog=False)
+        self.b, self.a = butter(order, normal_cutoff, btype="low", analog=False)
 
     def calibrate_motor(self):
         self.set_odrive_state(AxisState.FULL_CALIBRATION_SEQUENCE)
@@ -309,14 +325,14 @@ class ControllerThread(QThread):
 
         self.odrv.axis0.config.watchdog_timeout = 20 * self.watchdog_dt
         self.odrv.axis0.config.enable_watchdog = True
-        #self.watchdog_timer.start(100)
+        # self.watchdog_timer.start(100)
 
         self.timer.start()
 
         loop_idx = 0
 
         while self.thread_running:
-            
+
             loop_start_time = self.timer.nsecsElapsed()
 
             self.aquisition_loop()
@@ -324,15 +340,15 @@ class ControllerThread(QThread):
                 self.watchdog_loop()
 
             if self.motor_running:
-                pass # maybe do something
+                pass  # maybe do something
 
             loop_dt_us = (self.timer.nsecsElapsed() - loop_start_time) / 1000
 
             if loop_dt_us > self.dt_us:
-                ratio = loop_dt_us/self.dt_us
+                ratio = loop_dt_us / self.dt_us
                 if ratio > 5:
                     pass
-                    #self.errorOccurred.emit(f"Warning slow odrive communication {ratio:.2f}")
+                    # self.errorOccurred.emit(f"Warning slow odrive communication {ratio:.2f}")
             else:
                 self.usleep(int(self.dt_us - loop_dt_us))
 
@@ -345,28 +361,28 @@ class ControllerThread(QThread):
 
     def watchdog_loop(self):
 
-        #print(self.timer.elapsed() - self.last_watchdog_time)
+        # print(self.timer.elapsed() - self.last_watchdog_time)
         self.last_watchdog_time = self.timer.elapsed()
 
         try:
             motor_error = self.odrv.axis0.error
         except AttributeError:
-            pass # no error?
+            pass  # no error?
         else:
             self.errorOccurred.emit(motor_error)
-            #self.stop()
+            # self.stop()
 
         try:
             encoder_error = self.odrv.axis0.encoder.error
         except AttributeError:
-            pass # no error?
+            pass  # no error?
         else:
             self.errorOccurred.emit(encoder_error)
-            #self.stop()
-        
+            # self.stop()
+
         # feed the beast
         self.odrv.axis0.watchdog_feed()
-        
+
     def aquisition_loop(self):
 
         vel = 60 * self.odrv.axis0.vel_estimate
@@ -375,7 +391,7 @@ class ControllerThread(QThread):
             current = self.odrv.axis0.motor.foc.Iq_measured
         except AttributeError:
             current = 0
-        
+
         try:
             temperature = self.odrv.axis0.motor.motor_thermistor.temperature
         except AttributeError:
@@ -390,7 +406,7 @@ class ControllerThread(QThread):
             self.sample_idx = 0
 
             if self.checking_settled:
-                fltrd = filtfilt(self.b, self.a,self.log_buffer[:,1])
+                fltrd = filtfilt(self.b, self.a, self.log_buffer[:, 1])
                 if np.isclose(fltrd, -60 * self.target_speed, atol=5, rtol=0.025).all():
                     self.speedSettled.emit()
                     self.checking_settled = False
@@ -407,8 +423,7 @@ class ControllerThread(QThread):
                     self.logging = False
                     self.finishedLogging.emit(self.log_buffer)
 
-
-    def start_logging(self, log_buffers = 1):
+    def start_logging(self, log_buffers=1):
         self.logging = True
         self.log_buffers = log_buffers
         self.log_buffer = np.zeros((log_buffers * self.buffer_size, 4))
@@ -416,12 +431,12 @@ class ControllerThread(QThread):
 
     def start_checking_settled(self):
         self.checking_settled = True
-        self.start_logging(2) # 2 buffers
+        self.start_logging(2)  # 2 buffers
 
     def stop_checking_settled(self):
         self.checking_settled = False
         self.logging = False
-        
+
     def set_speed(self, speed):
         if not self.odrv:
             self.errorOccurred.emit("No ODrive connection. Cannot set speed.")
@@ -520,10 +535,6 @@ class ControllerThread(QThread):
         self.odrv = odrive.find_any()
 
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-import pyqtgraph as pg
-import sys
-
 class CollectionTestWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -562,6 +573,7 @@ class CollectionTestWindow(QMainWindow):
     def closeEvent(self, event):
         self.daq_thread.stop()
         event.accept()
+
 
 def main():
     app = QApplication(sys.argv)
