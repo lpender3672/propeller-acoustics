@@ -8,7 +8,6 @@ import serial
 from PyQt6.QtCore import QThread, pyqtSignal, QObject, QTimer, QElapsedTimer
 from odrive.enums import *
 import odrive
-from odrive.utils import BulkCapture
 
 import datetime
 

@@ -1,3 +1,8 @@
 {
-    "cmake.sourceDirectory": "C:/Users/louis/source/repos/propeller-acoustics/app"
+    "cmake.sourceDirectory": "C:/Users/louis/source/repos/propeller-acoustics/app",
+    "python.defaultInterpreterPath": "C:\\Users\\louis\\AppData\\Local\\pypoetry\\Cache\\virtualenvs\\propeller-acoustics-xW0qjCaM-py3.13\\Scripts\\python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "C:\\Users\\louis\\AppData\\Local\\pypoetry\\Cache\\virtualenvs\\propeller-acoustics-xW0qjCaM-py3.13\\Lib\\site-packages"
+    ]
 }

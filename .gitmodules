@@ -4,3 +4,6 @@
 [submodule "practical/pico/hx711-pico-c"]
 	path = practical/pico/hx711-pico-c
 	url = https://github.com/endail/hx711-pico-c.git
+[submodule "xfoil-python"]
+	path = xfoil-python
+	url = https://github.com/DARcorporation/xfoil-python.git
