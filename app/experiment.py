@@ -503,7 +503,7 @@ class AudioWidget(QWidget):
             ftharm = dtft[mask]
 
             # trapz power spectral density
-            intergrated_harmonics[j] = np.trapz(np.abs(ftharm), fqharm**2, axis=0)
+            intergrated_harmonics[j] = np.trapezoid(np.abs(ftharm), fqharm**2, axis=0)
 
         intergrated_harmonics_dB = 20 * np.log10(
             np.maximum(intergrated_harmonics, 1e-10)
@@ -584,7 +584,7 @@ class TestWidget(QWidget):
 
         self.pyramid_steps = 16
         self.min_pyramid_speed = 3000
-        self.max_pyramid_speed = 16000
+        self.max_pyramid_speed = 17000
         # self.pyramid_type = 'linear'
         self.pyramid_type = "logarithmic"
 
