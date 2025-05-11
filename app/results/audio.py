@@ -1,14 +1,15 @@
-from routines import load_prop_from_file
 import os
 import sys
 from pathlib import Path
 
+# Add parent directory to path before imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from routines import load_prop_from_file
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt, find_peaks
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 total_channels = 7
@@ -217,7 +218,85 @@ def plot_radar_harmonics(prop_result_path, harmonics_of_interest=(1, 2, 3)):
     ax.set_rlabel_position(90)  # Move radial labels off to the side
     ax.set_title("Radar Plot of Selected Harmonics (Half-Plane)")
     ax.legend(loc="upper right")
-    plt.show()
+
+
+def rms_butter(data, speed, freq):
+    b, a = butter(
+        1, [0.1 * speed / freq, 10 * speed / freq], btype="bandpass", analog=False
+    )
+    data_fltrd = filtfilt(b, a, data)
+    rms = np.sqrt(np.mean(data_fltrd**2))
+    return rms
+
+def rmsndp_speed(prop_results_path, microphone_state, mic_idx, ax=None):
+    
+    meta, prop = load_meta_data(prop_results_path)
+
+    # filter meta files by mic file matching mic_bds and mic_angle
+    # the mic files are in meta[:, 4]
+
+    speeds = np.array([])
+    rmses = np.array([])
+
+    for row in meta:
+        mic_path = Path(row[4])
+        mic_path = mic_path.relative_to(mic_path.parent.parent.parent.parent)
+        if not (microphone_state in mic_path.name):
+            continue
+
+        correct_mic_path = mic_path.parent / microphone_state
+
+        audiof = Path(row[0])
+        try:
+            relative_audiof = audiof.relative_to(audiof.parent.parent.parent.parent)
+            data = np.fromfile(relative_audiof, dtype=np.float64).reshape(
+                -1, total_channels
+            )
+        except FileNotFoundError:
+            print(f"Warning: File not found {relative_audiof}, skipping...")
+            continue
+
+        speed = np.abs(row[1].astype(float))  # RPM
+        speed = speed * 2 * np.pi / 60
+        speed = np.abs(speed)  # rad / s
+
+        if speed < 10:
+            continue
+
+        data = data[:, mic_idx]
+        rms = rms_butter(data, speed, freq)
+
+        speeds = np.append(speeds, speed)
+        rmses = np.append(rmses, rms)
+        
+    # plot now
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    prop_name = Path(prop_results_path).name
+
+    microphone_positions = np.loadtxt(correct_mic_path, delimiter=",", skiprows=1, dtype='object')
+    label_str = f"{prop_name} Mic {mic_idx + 1} " + r"$\theta =" + f"{microphone_positions[mic_idx, 2]}$"
+
+    ax.loglog(speeds, rmses, "o-", label=label_str)
+    ax.set_xlabel("Speed (rad/s)")
+    ax.set_ylabel("RMS (V)")
+
+    ax.grid(True, which="both")
+
+    return ax
+
+def plot_rmsndp_speed():
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+
+    for i in [3]:
+        rmsndp_speed("app/results/5045_s15.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
+    for i in [3]:
+        rmsndp_speed("app/results/5045_s30.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
+    for i in [3]:
+        rmsndp_speed("app/results/5045_s45.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
+
+    ax.legend()
 
 
 def plot_prop_harmonics(folder, ax):
@@ -248,7 +327,10 @@ def plot_raw(data_freq, ft_data, ax=None, **kwargs):
     return ax
 
 
+
 if __name__ == "__main__":
+
+    plot_rmsndp_speed()
 
     data_freq, ft_data = load_and_compute_rfft("app/results/dalprop5045.prop")
 
@@ -262,7 +344,6 @@ if __name__ == "__main__":
         "app/results/dalprop5045.prop", harmonics_of_interest=list(range(1, 10))
     )
 
-    plt.tight_layout()
     plt.show()
 
     # plot_prop_sound(twin_data, ax, label='Twin', alpha=0.9)
