@@ -941,6 +941,7 @@ class TestWidget(QWidget):
         self.idx += 1
 
     def audio_collect(self):
+        #time.sleep(1) # 1 s to check nonlinearity!!!
         self.parent().control_widget.controller.speedSettled.disconnect(
             self.audio_collect
         )

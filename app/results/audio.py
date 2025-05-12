@@ -286,7 +286,21 @@ def rmsndp_speed(prop_results_path, microphone_state, mic_idx, ax=None):
 
     return ax
 
-def plot_rmsndp_speed():
+
+def plot_rmsndp_speed_nonlinearity():
+    # this is incredible!!!
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+
+    for i in [5]:
+        rmsndp_speed("app/results/dalprop5045.prop", microphone_state="gantry67.5_8bd.csv", mic_idx=i, ax=ax)
+    for i in [5]:
+        rmsndp_speed("app/results/dalprop5045_nonlinear_test.prop", microphone_state="gantry67.5_8bd.csv", mic_idx=i, ax=ax)
+    for i in [5]:
+        rmsndp_speed("app/results/dalprop5045_nonlinear_test2.prop", microphone_state="gantry67.5_8bd.csv", mic_idx=i, ax=ax)
+
+    ax.legend()
+
+def plot_rmsndp_speed_sweeps():
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
 
     for i in [3]:
@@ -330,7 +344,10 @@ def plot_raw(data_freq, ft_data, ax=None, **kwargs):
 
 if __name__ == "__main__":
 
-    plot_rmsndp_speed()
+    plot_rmsndp_speed_nonlinearity()
+    
+    plt.show()
+    exit()
 
     data_freq, ft_data = load_and_compute_rfft("app/results/dalprop5045.prop")
 
