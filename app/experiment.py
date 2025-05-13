@@ -584,7 +584,7 @@ class TestWidget(QWidget):
 
         self.pyramid_steps = 16
         self.min_pyramid_speed = 3000
-        self.max_pyramid_speed = 16000
+        self.max_pyramid_speed = 13000
         # self.pyramid_type = 'linear'
         self.pyramid_type = "logarithmic"
 
