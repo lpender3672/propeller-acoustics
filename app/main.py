@@ -1,16 +1,17 @@
 import os
 import subprocess
 from pathlib import Path
-
 import numpy as np
-from dists import DistributionsWidget
-from geometry import generate_propeller_mesh
-from input import InputWidget
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QGridLayout, QWidget
-from results import AerodynamicResultsWidget, NoiseResultsWidget, ResultsTable
-from routines import AppVars
-from vis import STLViewerWidget
+
+
+from app.dists import DistributionsWidget
+from app.geometry import generate_propeller_mesh
+from app.input import InputWidget
+from app.result_widgets import AerodynamicResultsWidget, NoiseResultsWidget, ResultsTable
+from app.routines import AppVars
+from app.vis import STLViewerWidget
 
 
 class MainWindow(QWidget):

@@ -235,6 +235,8 @@ def load_prop_from_file(file_path, include_dists=False):
         rarr_pts = prop["rh"] + (prop["rt"] - prop["rh"]) / 2 * (
             1 - np.cos(np.linspace(0, np.pi, prop["nr"] + 1))
         )
+    else:
+        raise ValueError("Unknown radial distribution type")
 
     prop["xc"] = (xc_pts[1:] + xc_pts[:-1]) / 2
     prop["r0"] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
@@ -421,11 +423,24 @@ def set_intergrands(prop):
         rarr_pts = prop["rh"] + (prop["rt"] - prop["rh"]) / 2 * (
             1 - np.cos(np.linspace(0, np.pi, prop["nr"] + 1))
         )
+    else:
+        raise ValueError("Unknown radial distribution type")
 
     prop["xc"] = (xc_pts[1:] + xc_pts[:-1]) / 2
     prop["r0"] = (rarr_pts[1:] + rarr_pts[:-1]) / 2
     prop["r0_rt"] = prop["r0"] / prop["rt"]
     prop["dz"] = np.diff(rarr_pts)
+
+
+def load_meta_data(prop_result_path):
+
+    abspath = Path(prop_result_path).resolve()
+    meta = np.load(abspath / "meta_data.npy", allow_pickle=True)
+
+    propf = abspath.parent.parent / "props" / abspath.name
+    prop = load_prop_from_file(propf)
+
+    return meta, prop
 
 
 if __name__ == "__main__":

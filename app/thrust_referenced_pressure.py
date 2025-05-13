@@ -4,7 +4,7 @@ import pandas as pd
 from routines import *
 from scipy.signal import butter, filtfilt
 
-from app.results.audio import (
+from app.results.audio_routines import (
     load_and_compute_rfft,
     load_meta_data,
 )
@@ -197,4 +197,5 @@ df = parse_lookup_df("app/results/")
 
 plot_radar_graph(df)
 
+plt.show()
 # calculate_reference_pressures('app/results/dalprop5045.prop')

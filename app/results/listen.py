@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import sounddevice as sd
-from audio import (
+from app.results.audio_routines import (
     butter_filt,
     load_meta_data,
 )

@@ -1,8 +1,11 @@
 import numpy as np
 from PyQt6.QtWidgets import QApplication
-from routines import AppVars, load_prop_from_file
 from scipy.spatial.transform import Rotation as R
 from stl import mesh
+
+from app.routines import (
+    AppVars, load_prop_from_file
+)
 
 
 def rotate2(X, Z, theta):

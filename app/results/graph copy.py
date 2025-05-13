@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import routines
+
+import app.routines
 
 toroidal_data = np.load("app/results/foxeer_toroidal.npz")
 dalprop_2blade = np.load("app/results/dalprop5045.npz")

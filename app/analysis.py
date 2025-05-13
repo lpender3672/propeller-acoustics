@@ -1,7 +1,9 @@
 import numpy as np
-from bem import betz_off_design
 from matplotlib import pyplot as plt
-from routines import (
+
+from app.bem import betz_off_design
+
+from app.routines import (
     AppVars,
     load_foil,
     load_oper_from_file,

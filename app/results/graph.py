@@ -6,10 +6,7 @@ import os
 import sys
 from scipy.optimize import curve_fit
 
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from routines import (
+from app.routines import (
     load_prop_from_file,
 )
 
@@ -41,8 +38,8 @@ def fit_cexp(x, y):
         params, _ = curve_fit(cexp, x, y, p0=initial_guess)
     except RuntimeError:
         
-        print("Error: Curve fitting failed. Returning initial guess.")
-        return initial_guess
+        print("Error: Curve fitting failed. Returning max value.")
+        return [0, 0, np.max(y)]
 
     return params
 

@@ -8,8 +8,10 @@ from pathlib import Path
 import numpy as np
 import pyqtgraph as pg
 import serial.tools.list_ports
-from collection_threads import ControllerThread, DAQThread, SerialReaderThread
-from PyQt6.QtCore import QObject, QTimer, pyqtSignal
+
+from PyQt6.QtCore import (
+    QObject, QTimer, pyqtSignal
+)
 from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import (
     QApplication,
@@ -26,7 +28,14 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from routines import append_audiof_to_metaf, load_prop_from_file
+
+from app.routines import (
+    append_audiof_to_metaf, 
+    load_prop_from_file
+)
+from app.collection_threads import (
+    ControllerThread, DAQThread, SerialReaderThread
+)
 
 gravity = 9.81  # m/s^2
 offset = 0.03  # 3 cm

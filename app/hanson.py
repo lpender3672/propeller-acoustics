@@ -1,10 +1,14 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from routines import _separate, calc_chordwise_loading
 from scipy.integrate import cumulative_trapezoid, simpson, trapezoid
 from scipy.interpolate import RectBivariateSpline, griddata
 from scipy.io import loadmat
 from scipy.special import jv as besselj
+
+from app.routines import (
+    _separate, calc_chordwise_loading
+)
+
 
 XFOIL_INSTALLED = True
 try:

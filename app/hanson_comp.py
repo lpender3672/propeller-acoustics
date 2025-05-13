@@ -1,13 +1,17 @@
 import matplotlib as mpl
 import numpy as np
-import vis
-from bem import betz_off_design, guaranteed_convergence_BEM
-from geometry import generate_and_save_propeller_mesh, generate_propeller_mesh
-from hanson import calc_noise_components, hanson, hanson_secondary_variables
+
 from matplotlib import cm
 from matplotlib import pyplot as plt
 from PyQt6.QtWidgets import QApplication
-from routines import (
+
+from scipy.integrate import (
+    cumulative_trapezoid, simpson, trapezoid
+)
+from scipy.optimize import minimize
+from scipy.special import jv as besselj
+
+from app.routines import (
     XFOIL_INSTALLED,
     AppVars,
     _separate,
@@ -21,9 +25,21 @@ from routines import (
     save_prop_to_file,
     set_intergrands,
 )
-from scipy.integrate import cumulative_trapezoid, simpson, trapezoid
-from scipy.optimize import minimize
-from scipy.special import jv as besselj
+
+from app.bem import (
+    betz_off_design, 
+    guaranteed_convergence_BEM
+)
+from app.geometry import (
+    generate_and_save_propeller_mesh, 
+    generate_propeller_mesh
+)
+from app.hanson import (
+    calc_noise_components, 
+    hanson, 
+    hanson_secondary_variables
+)
+import app.vis as vis
 
 
 def Psi(kx, X, fX):

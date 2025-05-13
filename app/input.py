@@ -1,4 +1,3 @@
-from table import InputTable, TableBox, TableVar
 import json
 import os
 from pathlib import Path
@@ -19,7 +18,14 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from routines import interpolate_clcd, load_foil, run_xfoil
+
+from app.table import (
+    InputTable, TableBox, TableVar
+)
+
+from app.routines import (
+    interpolate_clcd, load_foil, run_xfoil
+)
 
 XFOIL_INSTALLED = True
 try:

@@ -1,4 +1,3 @@
-import sys
 
 import matplotlib.pyplot as mpl
 import numpy as np

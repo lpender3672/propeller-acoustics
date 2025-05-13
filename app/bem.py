@@ -1,6 +1,9 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from routines import (
+
+from scipy.optimize import brentq, root
+
+from app.routines import (
     XFOIL_INSTALLED,
     AppVars,
     correct_clcd_sweep,
@@ -10,8 +13,6 @@ from routines import (
     load_prop_from_file,
     run_xfoil,
 )
-from scipy.optimize import brentq, root
-
 
 def static_bem(av):
 

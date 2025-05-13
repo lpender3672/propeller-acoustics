@@ -113,5 +113,4 @@ def print_metaf(metaf):
 
 print_metaf("app/results/5045_s30.prop/meta_data.npy")
 
-
 # ammend_column_to_metadata('app/results/dalprop5045.prop/meta_data.npy', None)
