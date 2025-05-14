@@ -417,6 +417,7 @@ class AudioWidget(QWidget):
         self.max_harmonic = 10
         self.nyquist_factor = 2.2
 
+        # TONY
         self.nchannels = 7
 
         # self.sample_freq = self.nyquist_factor * self.max_harmonic * self.bpf
@@ -557,7 +558,7 @@ class TestWidget(QWidget):
         self.aero_pyramid_test_start_button = QPushButton("Start Aero Pyramid")
         self.audio_pyramid_test_start_button = QPushButton("Start Audio Pyramid")
 
-        self.record_ten_seconds_button = QPushButton("Record 1s audio")
+        self.record_ten_seconds_button = QPushButton("Record single audio")
 
         self.layout.addWidget(self.prop_label, 0, 0)
         self.layout.addWidget(self.prop_path, 0, 1)
@@ -572,6 +573,13 @@ class TestWidget(QWidget):
         self.layout.addWidget(self.audio_pyramid_test_start_button, 4, 0, 1, 2)
         self.layout.addWidget(self.record_ten_seconds_button, 5, 0, 1, 2)
 
+        # add input box for duration to record
+        self.layout.addWidget(QLabel("Duration"), 5, 2)
+        self.duration_box = QLineEdit()
+        self.duration_box.setPlaceholderText("Enter duration in seconds")
+        self.duration_box.setValidator(QDoubleValidator(-1e9, 1e9, 2, self))
+        self.layout.addWidget(self.duration_box, 5, 3)
+        
         self.load_prop_button.clicked.connect(self.on_load_prop_clicked)
         self.select_results_directory_button.clicked.connect(
             self.on_select_results_directory
@@ -646,7 +654,11 @@ class TestWidget(QWidget):
         audio_file, _, _ = self.get_files()
         buffer_freq = self.parent().audio_widget.buffer_freq
         sample_freq = self.parent().audio_widget.sample_freq
-        duration = 1
+        #duration = 1
+        # get duration from duration_box
+
+        duration = float(self.duration_box.text()) if self.duration_box.text() else 1.0
+
         naubufs = np.ceil(duration * sample_freq / buffer_freq).astype(int)
         self.parent().audio_widget.daq_thread.startLogging.emit(
             str(audio_file), naubufs
