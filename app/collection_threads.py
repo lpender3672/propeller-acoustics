@@ -179,8 +179,8 @@ class DAQThread(QThread):
 
         if not np.isclose(self.task.timing.samp_clk_rate, self.sample_rate, atol=0.1):
             self.errorOccurred.emit(
-                f"Error setting sample rate: ensure requested rate is supported ({
-                    self.task.timing.samp_clk_rate})"
+                f"""Error setting sample rate: ensure requested rate is supported ({
+                    self.task.timing.samp_clk_rate})"""
             )
             return
 
