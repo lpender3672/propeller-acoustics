@@ -409,7 +409,7 @@ def generate_blade_mesh(av, are_sections_tangent=True, apply_min_thickness=False
     #    X[i,:], Y[i,:], Z[i,:] = rotate3p(sx, sy, sz, theta, unitz, rotcenter)
 
     if Ntip > 0:
-        # print(P0, P1, T0, T1)
+        print(P0, P1, T0, T1)
 
         corrected_sections = generate_tip_verticies(
             P0, P1, T0, T1, upscaled_airfoil, chord[-1], twist[-1], num_points=Ntip
@@ -728,7 +728,7 @@ def generate_tip_verticies(
     twist_values = np.pi / 2 + np.linspace(twist_offset, -twist_offset, num_points)
 
     swept_sections = []
-    for i in range(len(points)):
+    for i,_ in enumerate(points):
         center_pt = points[i]
         N_i = Ns[i]
         B_i = Bs[i]
@@ -752,7 +752,7 @@ def generate_tip_verticies(
     # handle intersections
     corrected_sections = swept_sections.copy()
 
-    for i in range(len(swept_sections)):
+    for i,_ in enumerate(swept_sections):
         center_pt = points[i]
         N_i = Ns[i]
         B_i = Bs[i]
@@ -817,23 +817,42 @@ def main2():
 
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
-    P0 = [0.00634396, 0.04945627, 0.0]
-    P1 = [-0.00634396, 0.04945627, 0.0]
-    T0 = [0, 0.1, 0]
-    T1 = [0, -0.1, 0]
+    #P0 = [0.00634396, 0.04945627, 0.0]
+    #P1 = [-0.00634396, 0.04945627, 0.0]
+       
+    P0 = [0.00634396, 0.04945627, 0.        ]
+    P1 = [-0.00634396,  0.04945627,  0.        ]
+    T0 = [1.05799316e-04, 5.51689589e-04, 1.90192544e-05]
+    T1 = [-0.00337524, -0.04983708, -0.00115071]
+
+    tfac = -0.01
+
+    T0d = [1.05799316e-04, tfac , 1.90192544e-05]
+    T1d = [-0.00337524, -tfac, -0.00115071]
+
     Np = 12
 
-    points, tangs = hermite_curve_and_tangents(P0, P1, T0, T1, Np)
+    points, tangs = hermite_curve_and_tangents(P0, P1, T0d, T1d, Np)
 
     print(points)
     ax.plot(points[:, 0], points[:, 1], points[:, 2], "-o")
     airfoil_data = np.loadtxt("app/foils/naca0012.surf")
 
+
     corrected_sections = generate_tip_verticies(
-        P0, P1, T0, T1, airfoil_data, 0.1, np.pi / 2, Np
+        P0, P1, T0d, T1d, airfoil_data, 0.01, 0, Np
     )
     for section in corrected_sections:
         ax.plot(section[:, 0], section[:, 1], section[:, 2], "-o")
+
+    # label axes
+    ax.set_xlabel("X-axis")
+    ax.set_ylabel("Y-axis")
+    ax.set_zlabel("Z-axis")
+
+    # label 0 and 1 (start and end points)
+    ax.text(P0[0], P0[1], P0[2], "P0", color="red")
+    ax.text(P1[0], P1[1], P1[2], "P1", color="red")
 
     ax.set_aspect("equal")
     plt.show()
@@ -841,10 +860,10 @@ def main2():
 
 def main():
     import sys
+    from app.vis import STLViewerWidget
 
-    import vis
-
-    prop = load_prop_from_file("app/props/constant_chord_swept.prop")
+    prop = load_prop_from_file("app/props/first_loop.prop")
+    prop['bdir'] = "CW"
     airfoil_data = np.loadtxt(prop["foil_path"])
 
     av = AppVars()
@@ -852,7 +871,7 @@ def main():
     av.airfoil_data = airfoil_data
 
     app = QApplication(sys.argv)
-    viewer = vis.STLViewerWidget()
+    viewer = STLViewerWidget()
 
     viewer.set_mesh(generate_propeller_mesh(av))
     viewer.resize(800, 600)
@@ -862,5 +881,5 @@ def main():
 
 if __name__ == "__main__":
     #
-    # main2()
-    main()
+    main2()
+    #main()
