@@ -35,18 +35,17 @@ The python currently works on versions 3.10-3.12, I think newer versions fail to
 2. Initialise and enter the poetry environment
    ```bash
     poetry install
-    poetry shell
     ``` 
 
 3. Install pyxfoil (requires mingw and gfortran to compile).
    ```bash
    git submodule update --init --recursive
-   pip install .\xfoil-python\
+   poetry run pip install .\xfoil-python\
    ```
 
 4. To collect microphone data its required to install the NI-DAQmx driver (requires admin privileges).
     ```bash
-    nidaqmx installdriver
+    poetry run nidaqmx installdriver
     ```
 
 5. Run applications

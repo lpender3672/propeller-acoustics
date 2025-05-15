@@ -6,18 +6,9 @@ from scipy.io import loadmat
 from scipy.special import jv as besselj
 
 from app.routines import (
-    _separate, calc_chordwise_loading
+    _separate,
+    calc_chordwise_loading
 )
-
-
-XFOIL_INSTALLED = True
-try:
-    from xfoil import XFoil
-    from xfoil.model import Airfoil
-except ModuleNotFoundError:
-    XFOIL_INSTALLED = False
-    print("Warning Xfoil not installed - hanson.py")
-
 
 def Psi(kx, X, fX):
     kx = kx.reshape(-1, 1)

@@ -10,7 +10,14 @@ XFOIL_INSTALLED = True
 try:
     from xfoil import XFoil
     from xfoil.model import Airfoil
-except ModuleNotFoundError:
+
+    instance = XFoil()
+    del instance
+except FileNotFoundError:
+    # dll not found
+    print("Warning its likely that a dependency was not found")
+    XFOIL_INSTALLED = False
+except (ModuleNotFoundError, ImportError):
     XFOIL_INSTALLED = False
     print("Warning Xfoil not installed")
 
