@@ -21,3 +21,37 @@ However, this acoustic theory has not been applied to looped designs, which feat
 The looped propeller structure also allows for larger sweep than standard propellers [@shima_toroidal].
 
 A fast method to predict the tonal noise would enable iterative design methods to optimise the looped propeller design for noise reduction.
+
+## To get started
+
+The python currently works on versions 3.10-3.12, I think newer versions fail to solve for compatible dependencies.
+
+1. Clone the repository:
+   ```bash
+    git clone https://github.com/lpender3672/propeller-acoustics.git
+    cd propeller-acoustics
+    ```
+
+2. Initialise and enter the poetry environment
+   ```bash
+    poetry install
+    poetry shell
+    ``` 
+
+3. Install pyxfoil (requires mingw and gfortran to compile).
+   ```bash
+   git submodule update --init --recursive
+   pip install .\xfoil-python\
+   ```
+
+4. To collect microphone data its required to install the NI-DAQmx driver (requires admin privileges).
+    ```bash
+    nidaqmx installdriver
+    ```
+
+5. Run applications
+   ```bash
+   poetry run .\app\main.py
+   poetry run .\app\experiment.py
+   ```
+
