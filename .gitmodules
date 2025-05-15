@@ -6,4 +6,4 @@
 	url = https://github.com/endail/hx711-pico-c.git
 [submodule "xfoil-python"]
 	path = xfoil-python
-	url = https://github.com/DARcorporation/xfoil-python.git
+	url = https://github.com/lpender3672/xfoil-python.git
