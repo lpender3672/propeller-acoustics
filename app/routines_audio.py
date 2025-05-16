@@ -16,7 +16,7 @@ from app.routines import (
 TOTAL_CHANNELS = 7
 FREQUENCY = 51200
 
-def load_calibration_data():
+def load_microphone_calibration():
 
     mcalibf = "practical/microphones.xlsx"
     mcalib_data = pd.read_excel(mcalibf, sheet_name="calibration", skiprows=2).to_numpy(

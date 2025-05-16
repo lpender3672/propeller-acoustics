@@ -1,104 +1,30 @@
+import numpy as np
+import matplotlib.pyplot as plt
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import sys
-from scipy.optimize import curve_fit
 
 from app.routines import (
-    load_prop_from_file,
+    load_prop_from_file
 )
 
-tcal_data = np.load("app/bcal_thrust.npy")
-qcal_data = np.load("app/bcal_torque.npy")
-fig, ax = plt.subplots()
-ax.plot(tcal_data[:, 0], tcal_data[:, 1], "-o")
-ax.plot(qcal_data[:, 0], qcal_data[:, 1], "-o")
-ax.grid()
-
-cal_data = (tcal_data, qcal_data)
-
-
-def cexp(x, a, b, c):
-    """Converging exponential function."""
-    return a * (1 - np.exp(-b * x)) + c
-
-def fit_cexp(x, y):
-    """Fits a converging exponential to the data."""
-
-    initial_guess = [np.max(y), 0.1, 0]
-
-    # sort x and y to ensure they are in the same order
-    sorted_indices = np.argsort(x)
-    x = x[sorted_indices]
-    y = y[sorted_indices]
-
-    try:
-        params, _ = curve_fit(cexp, x, y, p0=initial_guess)
-    except RuntimeError:
-        
-        print("Error: Curve fitting failed. Returning max value.")
-        return [0, 0, np.max(y)]
-
-    return params
+from app.routines_aero import (
+    calc_mean_forces,
+    calc_std_forces,
+    fit_cexp,
+    cexp,
+    load_cell_calibration,
+)
 
 
-def calc_mean_forces(aero_data, tcal_data, qcal_data):
-    force_data = aero_data["force_data"]
-    motor_data = aero_data["motor_data"]
+def plot_calibration(cal_data, label=None):
+    # TODO: improve these
 
-    mean_speed = np.mean(motor_data[:, :, 1], axis=1) * 2 * np.pi / 60
-    mean_speed = np.abs(mean_speed)
+    tcal_data, qcal_data = cal_data
 
-    mean_raw_forces = np.mean(force_data[:, :, 1:], axis=1)
-
-    # interpolate to calibration data
-    mean_thrust = np.interp(
-        mean_raw_forces[:, 0], tcal_data[:, 0, 0], tcal_data[:, 1, 0], np.nan, np.nan
-    )
-    mean_torque = np.interp(
-        mean_raw_forces[:, 1], qcal_data[:, 0, 1], qcal_data[:, 1, 1], np.nan, np.nan
-    )
-    return mean_speed, mean_thrust, mean_torque
-
-
-def calc_std_forces(aero_data, tcal_data, qcal_data):
-
-    force_data = aero_data["force_data"]
-    motor_data = aero_data["motor_data"]
-
-    # speed samples and std
-    speed_samples = motor_data[:, :, 1] * 2 * np.pi / 60
-    std_speed = np.std(speed_samples, axis=1)
-
-    raw_thrust = force_data[:, :, 1]
-    raw_torque = force_data[:, :, 2]
-
-    thrust_samples_cal = np.stack(
-        [
-            np.interp(
-                raw_thrust[i, :], tcal_data[:, 0, 0], tcal_data[:, 1, 0], np.nan, np.nan
-            )
-            for i in range(raw_thrust.shape[0])
-        ],
-        axis=0,
-    )
-    torque_samples_cal = np.stack(
-        [
-            np.interp(
-                raw_torque[i, :], qcal_data[:, 0, 1], qcal_data[:, 1, 1], np.nan, np.nan
-            )
-            for i in range(raw_torque.shape[0])
-        ],
-        axis=0,
-    )
-
-    std_thrust = np.std(thrust_samples_cal, axis=1)
-    std_torque = np.std(torque_samples_cal, axis=1)
-
-    return std_speed, std_thrust, std_torque
-
+    fig, ax = plt.subplots()
+    ax.plot(tcal_data[:, 0], tcal_data[:, 1], "-o")
+    ax.plot(qcal_data[:, 0], qcal_data[:, 1], "-o")
+    ax.grid()
 
 def plot_prop(
     prop_result_path,
@@ -106,8 +32,6 @@ def plot_prop(
     ax2,
     cal_data,
     label=None,
-    tcal_data=None,
-    qcal_data=None,
     rho=1.225,
 ):
     """
@@ -139,7 +63,7 @@ def plot_prop(
     A = np.pi * rt**2
 
     mask_t = mean_thrust > 1e-2
-    mask_q = mean_torque > 1e-4
+    mask_q = mean_torque > 1e-5
 
     speed_t = mean_speed[mask_t]
     thrust = mean_thrust[mask_t]
@@ -160,7 +84,7 @@ def plot_prop(
     yerr_CQ = err_torque / (rho * A * speed_q**2 * rt**3)
 
     # Use explicit color for thrust coefficient plot
-    ax1.plot(speed_t, CT, "o", markersize=5, label=label, zorder=1, color=prop_color)
+    ax1.plot(speed_t, CT, "o-", markersize=5, label=label, zorder=1, color=prop_color)
     # ax1.errorbar(speed_t, CT, xerr=err_speed_t, yerr=yerr_CT, fmt='none', ecolor='black', zorder=2)
     ax1.set_xscale("log")
 
@@ -212,6 +136,8 @@ def plot_prop(
     return ax1, ax2
 
 
+
+
 def plot_FM(prop_result_path, ax, cal_data, label=None):
 
     tcal_data, qcal_data = cal_data
@@ -260,36 +186,64 @@ def plot_FM(prop_result_path, ax, cal_data, label=None):
     return ax
 
 
-fig, ax = plt.subplots(2, 1)
-plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop5045")
-plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 5045")
-plot_prop("app/results/dalprop4045.prop", ax[0], ax[1], cal_data, label="4045")
-plot_prop('app/results/dalprop5045bnr.prop', ax[0], ax[1], cal_data, label='3 blade')
-plot_prop("app/results/dalprop6045.prop", ax[0], ax[1], cal_data, label="6045")
+def sweep_comparison_plot(cal_data):
 
-ax[1].legend(loc="upper left")
+    fig, ax = plt.subplots(2, 1)
 
-fig, ax = plt.subplots(2, 1)
+    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="0 deg sweep")
+    plot_prop("app/results/5045_s15.prop", ax[0], ax[1], cal_data, label="15 deg sweep")
+    plot_prop("app/results/5045_s30.prop", ax[0], ax[1], cal_data, label="30 deg sweep")
+    plot_prop("app/results/5045_s45.prop", ax[0], ax[1], cal_data, label="45 deg sweep")
 
-plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="0 deg sweep")
-plot_prop("app/results/5045_s15.prop", ax[0], ax[1], cal_data, label="15 deg sweep")
-plot_prop("app/results/5045_s30.prop", ax[0], ax[1], cal_data, label="30 deg sweep")
-plot_prop("app/results/5045_s45.prop", ax[0], ax[1], cal_data, label="45 deg sweep")
+    ax[1].legend(loc="upper left")
 
-# ax[0].set_xlim([50, 2000])
-# ax[1].set_xlim([100, 2000])
-# ax[0].set_ylim([0, 0.05])
-# ax[1].set_ylim([0, 0.01])
 
-ax[1].legend(loc="upper left")
+def printed_comparison_plot(cal_data):
 
-fig, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(2, 1)
 
-plot_FM("app/results/dalprop5045.prop", ax, cal_data)
-plot_FM("app/results/printed5045.prop", ax, cal_data)
-plot_FM("app/results/dalprop4045.prop", ax, cal_data)
-plot_FM("app/results/dalprop6045.prop", ax, cal_data)
+    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 2 blade")
+    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 2 blade")
+    plot_prop("app/results/dalprop5045bnr.prop", ax[0], ax[1], cal_data, label="dalprop 3 blade")
+    plot_prop("app/results/printed5045bnr.prop", ax[0], ax[1], cal_data, label="printed 3 blade")
 
-ax.legend(loc="upper left")
+    ax[1].legend(loc="upper left")
 
-plt.show()
+
+def diameter_comparison_plot(cal_data):
+
+    fig, ax = plt.subplots(2, 1)
+
+    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 5045")
+    plot_prop("app/results/dalprop6045.prop", ax[0], ax[1], cal_data, label="dalprop 6045")
+    plot_prop("app/results/dalprop4045.prop", ax[0], ax[1], cal_data, label="dalprop 4045")
+    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 5045")
+
+    ax[1].legend(loc="upper left")
+
+
+def FoM_comparison_plot(cal_data):
+    
+    fig, ax = plt.subplots(1, 1)
+
+    plot_FM("app/results/dalprop5045.prop", ax, cal_data)
+    plot_FM("app/results/printed5045.prop", ax, cal_data)
+    plot_FM("app/results/dalprop4045.prop", ax, cal_data)
+    plot_FM("app/results/dalprop6045.prop", ax, cal_data)
+
+    ax.legend(loc="upper left")
+
+
+if __name__ == "__main__":
+
+    cal_data = load_cell_calibration()
+
+    plot_calibration(cal_data)
+
+    sweep_comparison_plot(cal_data)
+    printed_comparison_plot(cal_data)
+    # diameter_comparison_plot(cal_data)
+    # FoM_comparison_plot(cal_data)
+    plt.tight_layout()
+    plt.show()
+
