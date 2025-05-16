@@ -15,6 +15,7 @@ from app.routines_aero import (
     load_cell_calibration
 )
 
+# TODO: raw spectrum plotting windows of key harmonics
 
 def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_polar=False, alpha=0.7, 
              colour_by=None, cmap='viridis'):

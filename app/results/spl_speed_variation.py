@@ -9,9 +9,10 @@ from app.routines import (
 from app.routines_audio import (
     load_microphone_calibration,
     rms_butter,
-    FREQUENCY,
-    TOTAL_CHANNELS
 )
+
+FREQUENCY = 51200  # Hz
+TOTAL_CHANNELS = 7
 
 def rmsndp_speed(prop_results_path, microphone_state, mic_idx, ax=None):
     #TODO: apply microhpone calibration data to the data

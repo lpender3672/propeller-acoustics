@@ -3,9 +3,12 @@ from pathlib import Path
 
 import numpy as np
 import sounddevice as sd
+
+from app.routines import (
+    load_meta_data
+)
 from app.routines_audio import (
     butter_filt,
-    load_meta_data,
 )
 
 total_channels = 7
