@@ -158,13 +158,8 @@ def calc_aero_coefficients(
         
         # fit torque curve
         params_q = fit_cexp(np.log10(speed_q), CQ)
-        speed_cont_q = np.logspace(
-            np.log10(np.min(speed_q)), np.log10(np.max(speed_q)), 1000
-        )
-        CQ_cont = cexp(np.log10(speed_cont_q), *params_q)
         
         converged_torque_coefficient = params_q[0] + params_q[2]
-
         prop_name = prop_result_path.name.replace(".prop", "")
 
         output_aero_coefficients[prop_name] = [

@@ -84,22 +84,34 @@ def plot_rmsndp_speed_nonlinearity():
     for i in [5]:
         rmsndp_speed("app/results/dalprop5045_nonlinear_test2.prop", microphone_state="gantry67.5_8bd.csv", mic_idx=i, ax=ax)
 
+    # get lower and upper limits of the y axis
+    xmin = np.min(ax.get_xlim())
+    xmax = np.max(ax.get_xlim())
+
+    x = np.linspace(xmin, xmax, 1000)
+
+    ax.plot(x, 1e-5 * x**2, "k--", label="x^2")
+
     ax.legend()
 
 def plot_rmsndp_speed_sweeps():
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
 
-    for i in [3]:
-        rmsndp_speed("app/results/5045_s15.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
-    for i in [3]:
-        rmsndp_speed("app/results/5045_s30.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
-    for i in [3]:
-        rmsndp_speed("app/results/5045_s45.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
+    for i in [0, 1, 3, 5]:
+        rmsndp_speed("app/results/dalprop5045.prop", microphone_state="gantry45_8bd.csv", mic_idx=i, ax=ax)
+    
+
+    xmin = np.min(ax.get_xlim())
+    xmax = np.max(ax.get_xlim())
+
+    x = np.linspace(xmin, xmax, 1000)
+
+    ax.plot(x, 1e-6 * x**2, "k--", label="x^2")
 
     ax.legend()
 
 
 if __name__ == "__main__":
-    plot_rmsndp_speed_nonlinearity()
+    #plot_rmsndp_speed_nonlinearity()
     plot_rmsndp_speed_sweeps()
     plt.show()
