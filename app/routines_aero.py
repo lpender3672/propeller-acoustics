@@ -41,9 +41,6 @@ def fit_cexp(x, y):
         print("Error: Curve fitting failed. Returning max value.")
         return [0, 0, np.max(y)]
     
-    else:
-        print(params)
-
     return params
 
 

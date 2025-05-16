@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import hashlib
+import pickle
 from pathlib import Path
 from matplotlib.colors import LogNorm
 
@@ -19,6 +21,10 @@ from app.routines_aero import (
     calc_aero_coefficients,
     load_cell_calibration
 )
+
+# Create cache directory if it doesn't exist
+CACHE_DIR = Path("app/results/cache")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_aer_data(prop_result_path):
@@ -62,13 +68,13 @@ def parse_lookup_df(results_folder):
     for meta_path in base_dir.glob("**/*.prop/meta_data.npy"):
         try:
 
-            prop_name = meta_path.parent.name  # .replace(".prop", "")
+            prop_fname = meta_path.parent.name  # .replace(".prop", "")
 
             meta_array = np.load(meta_path, allow_pickle=True)
 
             df = pd.DataFrame()
 
-            prop_path = base_dir.parent / "props" / prop_name
+            prop_path = base_dir.parent / "props" / prop_fname
 
             df["audio_path"] = rebase_pathlist(meta_array[:, 0])
             df["speed"] = meta_array[:, 1]
@@ -90,33 +96,101 @@ def parse_lookup_df(results_folder):
     return combined_df
 
 
-def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5):
+def _generate_cache_key(lookup_df, aero_coefficients, reference_FOM, harmonics = 0):
+        lookup_hash = hashlib.md5(pd.util.hash_pandas_object(lookup_df).values).hexdigest()
+        aero_hash = hashlib.md5(pickle.dumps(aero_coefficients)).hexdigest()
+        return f"{lookup_hash}_{aero_hash}_{reference_FOM + harmonics}"
 
-    # TODO: calculate reference pressure from aero_coefficients
-    ref_pressure = 2e-5  # for now: standard reference pressure in air
+def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FOM = 0.5, use_cache=True):
 
-    # Create a copy of the dataframe for processing
-    processed_df = pd.DataFrame()
+    pass
+    # this will be a bigger version of the previous function
+
+def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=True):
+
+
+    MIN_SPEED_HZ = 10
+    SAMPLE_FREQ_HZ = 51200 # Hz
+    REF_PRESSURE = 20e-6  # Pa
+    rho = 1.225
+
+    # Generate a unique hash for the lookup_df and aero_coefficients
+    cache_key = _generate_cache_key(lookup_df, aero_coefficients, reference_FOM)
+    cache_file = CACHE_DIR / f"{cache_key}.pkl"
+
+    if use_cache and cache_file.exists():
+        print(f"Loading cached data from {cache_file}")
+        try:
+            with open(cache_file, "rb") as f:
+                processed_df = pickle.load(f)
+                return processed_df
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Error loading cache file: {e}. Reprocessing data...")
+            # If there's an error loading the cache, continue with processing
     
-    # Process each row to extract audio data, mic data, and calculate SPL
-    data_records = []
+    # caches to avoid repeated file loading
+    prop_cache = {}
+    mic_data_cache = {}
+    
+    # we dont know how many rows we will have so we need to count first
+    total_rows = 0
+    for _, row in lookup_df.iterrows():
+        mic_path = row["mic_path"]
+        prop_path = row["prop_path"]
+        speed = np.abs(row["speed"])
+        speed_hz = speed / 60  # Convert RPM to Hz
+        
+        # Skip if speed is too low
+        if abs(speed_hz) < MIN_SPEED_HZ:
+            continue
+
+        # Count mic channels
+        try:
+            if str(mic_path) in mic_data_cache:
+                mic_data = mic_data_cache[str(mic_path)]
+            else:
+                mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=None, encoding=None, skip_header=1)
+                mic_data_cache[str(mic_path)] = mic_data
+            
+            audio_path = row["audio_path"]
+            if not os.path.exists(audio_path):
+                continue
+                
+            total_rows += len(mic_data)
+            
+        except Exception as e:
+            continue
+    
+    # Pre-allocate numpy arrays for all data
+    propellers = np.empty(total_rows, dtype=object)
+    speeds = np.empty(total_rows)
+    angles = np.empty(total_rows)
+    distances = np.empty(total_rows)
+    rms_values = np.empty(total_rows)
+    spl_values = np.empty(total_rows)
+    ndspl_values = np.empty(total_rows)
+    
+    # Process data and fill arrays
+    row_idx = 0
     
     for _, row in lookup_df.iterrows():
-        # why am i loading the same files again and again in the loop?
-        # this could be massively improved
-
         mic_path = row["mic_path"]
         prop_path = row["prop_path"]
         speed = np.abs(row["speed"])
         speed_hz = speed / 60  # Convert RPM to Hz
         speed_rad = speed_hz * 2 * np.pi  # Convert Hz to rad/s
 
-        # Load propeller data
-        prop = load_prop_from_file(prop_path)
-
         # continue if speed bad
-        if abs(speed_hz) < 10:
+        if abs(speed_hz) < MIN_SPEED_HZ:
             continue
+
+        # check cache for already loaded prop files
+        prop_path_str = str(prop_path)
+        if prop_path_str in prop_cache:
+            prop = prop_cache[prop_path_str]
+        else:
+            prop = load_prop_from_file(prop_path)
+            prop_cache[prop_path_str] = prop
             
         propeller_name = prop_path.name.replace(".prop", "")
         try:
@@ -125,60 +199,74 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5):
             print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
             continue
 
-        
-        try:
-
-            mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=None, encoding=None, skip_header=1)
-        except Exception as e:
-            print(f"Error processing row with mic_path {mic_path}: {e}")
+        # check cahce for already loaded mic files
+        mic_path_str = str(mic_path)
+        if mic_path_str in mic_data_cache:
+            mic_data = mic_data_cache[mic_path_str]
+        else:
+            # we've already checked all the mic files so if we get here we have a problem
+            print(f"Error processing row with mic_path {mic_path}: mic_data not found.")
             continue
             
-        if not os.path.exists(row["audio_path"]):
+        audio_path = row["audio_path"]
+        if not os.path.exists(audio_path):
             continue
 
-        # define effective radius
-        rho = 1.225
+        total_channels = 7 # could be len mic_data
+        if mic_data.shape[0] != total_channels:
+            print(f"Warning: Expected {total_channels} channels, but got {mic_data.shape[0]} in {mic_path}.")
+            continue
+        audio_data = np.fromfile(audio_path, dtype=np.float64).reshape(-1, total_channels)
+
         fom = CT ** (3/2) / (2 ** (1/2) * CQ)
         reff = prop["rt"] * (fom / reference_FOM)
-
-        #print(f"reff: {reff} m")
-
         nd_pressure = rho * (reff * speed_rad)**2
-
-        total_channels = 7
-        audio_data = np.fromfile(row["audio_path"], dtype=np.float64).reshape(-1, total_channels)
         
-        # for each mic channel
-        for i,_ in enumerate(mic_data):
-            angle = int(mic_data[i][2])  # angle from mic state file
-            distance = float(mic_data[i][3])  # distance from mic state file
+        num_mics = len(mic_data)
+        for i in range(num_mics):
+            # now store in the allocated arrays
+            propellers[row_idx] = propeller_name
+            speeds[row_idx] = speed
+            angles[row_idx] = float(mic_data[i][2])  # angle from mic state file
+            distances[row_idx] = float(mic_data[i][3])  # distance from mic state file
             
-            # calculating RMS
-            rms = rms_butter(audio_data[:, i], speed_hz, 51200)
-
-            # spl and ndspl
-            spl = 20 * np.log10(rms / ref_pressure)
-            ndspl = 20 * np.log10(rms / nd_pressure)
+            # Calculate RMS
+            rms = rms_butter(audio_data[:, i], speed_hz, SAMPLE_FREQ_HZ)
+            rms_values[row_idx] = rms
             
-            # Add to records
-            data_records.append({
-                'propeller': propeller_name,
-                'speed': speed,
-                'angle': angle,
-                'distance': distance,
-                'RMS': rms,
-                'SPL': spl,
-                'ndSPL' : ndspl
-            })
+            # Calculate SPL and ndSPL
+            spl_values[row_idx] = 20 * np.log10(rms / REF_PRESSURE)
+            ndspl_values[row_idx] = rms / nd_pressure
+            
+            # Increment row index
+            row_idx += 1
 
-        
+    if row_idx != total_rows:
+        print(f"Warning: Expected {total_rows} rows, but got {row_idx}.")
     
-    # Create DataFrame from processed data
-    if not data_records:
+    # Create DataFrame from arrays
+    if row_idx == 0:
         print("No data to plot after processing.")
-        return None, None
-        
-    processed_df = pd.DataFrame(data_records)
+        return None
+    
+    processed_df = pd.DataFrame({
+        'propeller': propellers,
+        'speed': speeds,
+        'angle': angles,
+        'distance': distances,
+        'RMS': rms_values,
+        'SPL': spl_values,
+        'ndSPL': ndspl_values
+    })
+
+    # Save processed data to cache if caching is enabled
+    if use_cache:
+        print(f"Saving processed data to cache file {cache_file}")
+        try:
+            with open(cache_file, "wb") as f:
+                pickle.dump(processed_df, f)
+        except Exception as e:
+            print(f"Error saving cache file: {e}")
 
     return processed_df
 
@@ -351,7 +439,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
 
     fig, ax = plt.subplots(figsize=fig_size)
     
-    is_polar = plot_type == 'polar' or (x_var == 'angle' and plot_type == 'line')
+    is_polar = plot_type == 'polar' #or (x_var == 'angle' and plot_type == 'line')
     if is_polar:
         fig, ax = plt.subplots(figsize=fig_size, subplot_kw=dict(polar=True))
     
@@ -479,23 +567,24 @@ if __name__ == "__main__":
 
     cal_data = load_cell_calibration()
 
-    aero_coefficients = calc_aero_coefficients(
+    aero_coeffs = calc_aero_coefficients(
         'app/results',
         cal_data
     )
 
     df = parse_lookup_df("app/results/")
 
-    pdf = parse_spl_df(df, aero_coefficients)
+    pdf = parse_spl_df(df, aero_coeffs)
 
-    """
+ 
     fig, ax = multi_function_plot(pdf, 
                             x_var='angle', 
                             y_var='SPL',
-                            filter_dict={'distance' : 1270, 'speed' : 10000},
+                            filter_dict={'distance' : 1270, 'speed' : (9500, 10500)},
                             group_by=['propeller'],
-                            plot_type='polar')"""
+                            plot_type='line')
     
+
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
                             y_var='ndSPL',
@@ -508,20 +597,19 @@ if __name__ == "__main__":
     
     #ax.set_xscale('log')
     #ax.set_yscale('log')
-    ax.grid(True, which='both')
     
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
                             y_var='ndSPL',
-                            filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 180},
-                            #group_by=[],
-                            plot_type='scatter',
-                            colour_by='speed',
+                            filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90, 'speed' : (10000, 13000)},
+                            group_by=['speed'],
+                            plot_type='line',
+                            #colour_by='speed',
                             log_bin_factor=0.01,
                             log_colourbar=True)
     
-    #ax.set_xscale('log')
-    #ax.set_yscale('log')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
     ax.grid(True, which='both')
 
     plt.show()
