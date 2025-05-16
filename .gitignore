@@ -5,6 +5,8 @@ build_loading/
 build_app/
 build/
 
+app/results/cache
+
 # py env
 propeller_env/
 

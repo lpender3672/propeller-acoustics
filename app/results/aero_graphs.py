@@ -125,8 +125,10 @@ def plot_prop(
 
     converged_torque_coefficient = params_q[0] + params_q[2]
 
+    FM = converged_thrust_coefficient**(3 / 2) / (converged_torque_coefficient * np.sqrt(2))
+
     print(
-        f"Prop: {label} | CT: {converged_thrust_coefficient:.7f} | CQ: {converged_torque_coefficient:.7f}"
+        f"Prop: {label} | CT: {converged_thrust_coefficient:.7f} | CQ: {converged_torque_coefficient:.7f}, | FM: {FM:.7f}"
     )
     
     ax2.grid(True, which="both")

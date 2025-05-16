@@ -111,6 +111,40 @@ def print_metaf(metaf):
         print(row)
 
 
-print_metaf("app/results/5045_s30.prop/meta_data.npy")
+def fix_microphone_angles(mic_states_folder):
+    
+    mic_states_folder = Path(mic_states_folder)
 
-# ammend_column_to_metadata('app/results/dalprop5045.prop/meta_data.npy', None)
+    for micf in mic_states_folder.glob("gantry*.csv"):
+
+        micdata = np.loadtxt(micf, delimiter=",", skiprows=1, dtype=str)
+        theta1 = float(micdata[2,2])
+        theta2 = float(micdata[3,2])
+        theta3 = float(micdata[4,2])
+        dist = float(micdata[3,3])
+
+        d1 = theta2 - theta1
+        d2 = theta3 - theta2
+        
+        if np.isclose(dist, 1270):
+            print("10bds skipping")
+            continue
+        elif np.isclose(d1, 1.0) and np.isclose(d2, 1.0):
+            # fix the angles
+            new_theta1 = theta2 - d1 * 1270 / dist
+            new_theta3 = theta3 + d2 * 1270 / dist
+
+            # update the angles in the file
+            micdata[2, 2] = str(new_theta1)
+            micdata[4, 2] = str(new_theta3)
+
+        np.savetxt(micf, micdata, delimiter=",", fmt="%s")
+
+
+if __name__ == "__main__":
+
+    #print_metaf("app/results/5045_s30.prop/meta_data.npy")
+
+    fix_microphone_angles('app/results/microphone_states/')
+
+    # ammend_column_to_metadata('app/results/dalprop5045.prop/meta_data.npy', None)
