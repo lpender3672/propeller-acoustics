@@ -10,7 +10,7 @@ from app.routines import (
 from app.routines_audio import (
     load_and_compute_rfft,
     integrate_harmonics,
-    load_calibration_data,
+    load_microphone_calibration,
     apply_calib
 )
 
@@ -21,7 +21,7 @@ view_channels = [0, 1, 5]
 def plot_harmonics(prop_result_path, max_harmonic=20, ax=None, mcalib_data=None):
 
     if mcalib_data is None:
-        mcalib_data = load_calibration_data()
+        mcalib_data = load_microphone_calibration()
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -65,7 +65,7 @@ def plot_radar_harmonics(prop_result_path, harmonics_of_interest=(1, 2, 3), ax=N
     """
 
     if mcalib_data is None:
-        mcalib_data = load_calibration_data()
+        mcalib_data = load_microphone_calibration()
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -120,7 +120,7 @@ def plot_radar_harmonics(prop_result_path, harmonics_of_interest=(1, 2, 3), ax=N
 def plot_prop_harmonics(folder, ax=None, mcalib_data=None):
 
     if mcalib_data is None:
-        mcalib_data = load_calibration_data()
+        mcalib_data = load_microphone_calibration()
 
     if ax is None:
         fig, ax = plt.subplots()

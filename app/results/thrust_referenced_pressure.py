@@ -13,10 +13,12 @@ from app.routines_audio import (
     rms_butter,
     butter_filt,
     load_meta_data,
+    load_microphone_calibration,
 )
-
-tcal_data = np.load("app/bcal_thrust.npy")
-qcal_data = np.load("app/bcal_torque.npy")
+from app.routines_aero import (
+    calc_aero_coefficients,
+    load_cell_calibration
+)
 
 
 def load_aer_data(prop_result_path):
@@ -35,73 +37,6 @@ def load_aer_data(prop_result_path):
     aero_data = np.load(faero)
 
     return aero_data, prop
-
-
-def calculate_reference_pressures(prop_result_path):
-
-    aero_data, prop = load_aer_data(prop_result_path)
-
-    force_data = aero_data["force_data"]
-    motor_data = aero_data["motor_data"]
-
-    avg_speed = np.mean(motor_data[:, :, 1], axis=1) * 2 * np.pi / 60
-    avg_speed = np.abs(avg_speed)
-    avg_raw_forces = np.mean(force_data[:, :, 1:], axis=1)
-
-    avg_thrust = np.interp(avg_raw_forces[:, 0], tcal_data[:, 0, 0], tcal_data[:, 1, 0])
-    avg_torque = np.interp(avg_raw_forces[:, 1], qcal_data[:, 0, 1], qcal_data[:, 1, 1])
-
-    filtered_speed = avg_speed[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
-    filtered_thrust = avg_thrust[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
-    filtered_torque = avg_torque[(avg_thrust > 1e-2) & (avg_torque > 1e-4)]
-
-    meta, _ = load_meta_data(prop_result_path)
-
-    total_channels = 7
-    freq = 51200  # hz
-
-    cutoff_freq = 50
-
-    # 51200 Hz
-    freq_cutoff_idx = 56000
-
-    ft_data = np.zeros((len(meta), freq_cutoff_idx, total_channels))
-
-    speeds = []
-    rmses = []
-
-    for i, row in enumerate(meta):
-        # do for all speeds
-        audiof = Path(row[0])
-        relative_audiof = rebase_path(audiof)
-
-        try:
-            data = np.fromfile(relative_audiof, dtype=np.float64).reshape(
-                -1, total_channels
-            )
-        except FileNotFoundError:
-            continue
-
-        speed = row[1] / -60
-        speed = max(abs(speed), 10)
-        rmses.append(rms_butter(data[:, 5], speed, freq))
-        speeds.append(speed)
-
-    rmses = np.array(rmses)
-    speeds = np.array(speeds)
-
-    a, b = np.polyfit(np.log(speeds[speeds > 10]), np.log(rmses[speeds > 10]), 1)
-
-    print("Slope:", a)
-    print("Intercept:", b)
-
-    plt.loglog(speeds, rmses, "o")
-    plt.loglog(speeds, np.exp(b) * speeds**a, label="Fit")
-    plt.grid(which="both")
-    plt.xlabel("Speed (RPM)")
-    plt.ylabel("RMS")
-    plt.legend()
-    plt.show()
 
 
 def rebase_path(path):
@@ -158,6 +93,7 @@ def parse_lookup_df(results_folder):
 def parse_spl_df(lookup_df, aero_coefficients):
 
     # TODO: calculate reference pressure from aero_coefficients
+    nd_pressure = 2e-5  # for now: standard reference pressure in air
     ref_pressure = 2e-5  # for now: standard reference pressure in air
 
     # Create a copy of the dataframe for processing
@@ -167,49 +103,60 @@ def parse_spl_df(lookup_df, aero_coefficients):
     data_records = []
     
     for _, row in lookup_df.iterrows():
+        # why am i loading the same files again and again in the loop?
+        # this could be massively improved
+
         mic_path = row["mic_path"]
         prop_path = row["prop_path"]
-        speed = row["speed"]
-        speed_hz = speed / -60  # Convert RPM to Hz
-        
-        # Skip if speed is too low
+        speed = np.abs(row["speed"])
+        speed_hz = speed / 60  # Convert RPM to Hz
+        speed_rad = speed_hz * 2 * np.pi  # Convert Hz to rad/s
+
+        # Load propeller data
+        prop = load_prop_from_file(prop_path)
+
+        # continue if speed bad
         if abs(speed_hz) < 10:
             continue
             
-        # Extract propeller name
-        propeller = prop_path.name.replace(".prop", "")
+        propeller_name = prop_path.name.replace(".prop", "")
+        try:
+            CT, CQ = aero_coefficients[propeller_name]
+        except KeyError:
+            print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
+            continue
         
         try:
-            # Load microphone position data
+
             mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=None, encoding=None, skip_header=1)
             
-            # Skip if audio data doesn't exist
             if not os.path.exists(row["audio_path"]):
                 continue
                 
-            # Load audio data
-            total_channels = 7  # Assuming 7 channels as in the original code
+            total_channels = 7
             audio_data = np.fromfile(row["audio_path"], dtype=np.float64).reshape(-1, total_channels)
             
-            # Process each microphone channel
+            # for each mic channel
             for i,_ in enumerate(mic_data):
-                angle = int(mic_data[i][2])  # Angle from mic_data
-                distance = float(mic_data[i][3])  # Distance from mic_data
+                angle = int(mic_data[i][2])  # angle from mic state file
+                distance = float(mic_data[i][3])  # distance from mic state file
                 
-                # Calculate RMS value
-                rms = rms_butter(audio_data[:, i], abs(speed_hz), 51200)
+                # calculating RMS
+                rms = rms_butter(audio_data[:, i], speed_hz, 51200)
 
-                # Calculate SPL (Sound Pressure Level) in dB
+                # spl and ndspl
                 spl = 20 * np.log10(rms / ref_pressure)
+                ndspl = 20 * np.log10(rms / nd_pressure)
                 
                 # Add to records
                 data_records.append({
-                    'propeller': propeller,
-                    'speed': np.abs(speed),
+                    'propeller': propeller_name,
+                    'speed': speed,
                     'angle': angle,
                     'distance': distance,
                     'RMS': rms,
-                    'SPL': spl
+                    'SPL': spl,
+                    'ndSPL' : ndspl
                 })
 
         except Exception as e:
@@ -520,10 +467,16 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
 
 if __name__ == "__main__":
 
+    cal_data = load_cell_calibration()
+
+    aero_coefficients = calc_aero_coefficients(
+        'app/results',
+        cal_data
+    )
 
     df = parse_lookup_df("app/results/")
 
-    pdf = parse_spl_df(df, None)
+    pdf = parse_spl_df(df, aero_coefficients)
 
     """
     fig, ax = multi_function_plot(pdf, 
