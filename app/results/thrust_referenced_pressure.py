@@ -103,15 +103,223 @@ def _generate_cache_key(lookup_df, aero_coefficients, reference_FOM, harmonics =
 
 def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FOM = 0.5, use_cache=True):
 
-    pass
-    # this will be a bigger version of the previous function
+    MIN_SPEED_HZ = 10
+    SAMPLE_FREQ_HZ = 51200 # Hz
+    REF_PRESSURE = 20e-6  # Pa
+    EXPECTED_CHANNELS = 7 # recorded 7 channels for nearly everything
+    EPSILON = 5e-2 # BPF bound for integration
+    rho = 1.225
+
+    # Generate a unique hash for the lookup_df and aero_coefficients
+    cache_key = _generate_cache_key(lookup_df, aero_coefficients, reference_FOM, harmonics)
+    cache_file = CACHE_DIR / f"{cache_key}.pkl"
+
+    if use_cache and cache_file.exists():
+        print(f"Loading cached data from {cache_file}")
+        try:
+            with open(cache_file, "rb") as f:
+                processed_df = pickle.load(f)
+                return processed_df
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Error loading cache file: {e}. Reprocessing data...")
+            # If there's an error loading the cache, continue with processing
+    
+    # caches to avoid repeated file loading
+    prop_cache = {}
+    mic_data_cache = {}
+    hanning_cache = {} # ok so audio files might be different lengths so cache hanning windows of the same length
+    
+    # we dont know how many rows we will have so we need to count first
+    total_rows = 0
+    for _, row in lookup_df.iterrows():
+        mic_path = row["mic_path"]
+        prop_path = row["prop_path"]
+        speed = np.abs(row["speed"])
+        speed_hz = speed / 60  # Convert RPM to Hz
+        
+        # Skip if speed is too low
+        if abs(speed_hz) < MIN_SPEED_HZ:
+            continue
+
+        prop_path_str = str(prop_path)
+        if prop_path_str in prop_cache:
+            prop = prop_cache[prop_path_str]
+        else:
+            prop = load_prop_from_file(prop_path)
+            prop_cache[prop_path_str] = prop
+        
+        bpf_hz = speed_hz * prop['B']
+        propeller_name = prop_path.name.replace(".prop", "")
+        try:
+            aero_coefficients[propeller_name]
+        except KeyError:
+            print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
+            continue
+
+        # Count mic channels
+        if str(mic_path) in mic_data_cache:
+            mic_data = mic_data_cache[str(mic_path)]
+        elif os.path.exists(mic_path):
+                mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=object, encoding=None, skip_header=1)
+                mic_data_cache[str(mic_path)] = mic_data
+        else:
+            print(f"Warning: No mic data found for {mic_path}. Skipping.")
+            continue
+        
+        audio_path = row["audio_path"]
+        if not os.path.exists(audio_path):
+            continue
+            
+        total_rows += mic_data.shape[0] * harmonics
+    
+    # allocate numpy arrays for all data
+    propellers = np.empty(total_rows, dtype=object)
+    speeds = np.empty(total_rows)
+    angles = np.empty(total_rows)
+    distances = np.empty(total_rows)
+    harmonic_values = np.empty(total_rows)
+    # harmonic sound pressure levels
+    hrms_values = np.empty(total_rows)
+    hspl_values = np.empty(total_rows)
+    ndhspl_values = np.empty(total_rows)
+    
+    # Process data and fill arrays
+    row_idx = 0
+    
+    for _, row in lookup_df.iterrows():
+        mic_path = row["mic_path"]
+        prop_path = row["prop_path"]
+        speed = np.abs(row["speed"])
+        speed_hz = speed / 60  # Convert RPM to Hz
+        speed_rad = speed_hz * 2 * np.pi  # Convert Hz to rad/s
+
+        # continue if speed bad
+        if abs(speed_hz) < MIN_SPEED_HZ:
+            continue
+
+        prop_path_str = str(prop_path)
+        if prop_path_str in prop_cache:
+            prop = prop_cache[prop_path_str]
+        else:
+            # we've already loaded all the propeller files into cache so if we get here we have a problem
+            raise RuntimeError(f"Error processing row with prop_path {prop_path}: prop not found.")
+        
+        bpf_hz = speed_hz * prop['B']
+        propeller_name = prop_path.name.replace(".prop", "")
+        try:
+            CT, CQ = aero_coefficients[propeller_name]
+        except KeyError:
+            print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
+            continue
+
+        mic_path_str = str(mic_path)
+        if mic_path_str in mic_data_cache:
+            mic_data = mic_data_cache[mic_path_str]
+        else:
+            # we again should have already loaded all the mic files into cache
+            raise RuntimeError(f"Error processing row with mic_path {mic_path}: mic_data not found.")
+            
+        audio_path = row["audio_path"]
+        if not os.path.exists(audio_path):
+            continue
+
+        total_channels = mic_data.shape[0] # could be len mic_data
+        if total_channels != EXPECTED_CHANNELS:
+            raise RuntimeError(f"Expected {EXPECTED_CHANNELS} channels, but got {total_channels} in {mic_path}.")
+        
+        audio_data = np.fromfile(audio_path, dtype=np.float64).reshape(-1, total_channels)
+
+        # make a hanning cache
+        if audio_data.shape[0] in hanning_cache:
+            hanning_window = hanning_cache[audio_data.shape[0]]
+        else:
+            hanning_window = np.hanning(audio_data.shape[0]).reshape(-1, 1)
+            hanning_cache[audio_data.shape[0]] = hanning_window
+        
+        windowed_data = audio_data * hanning_window
+        zero_padding = 2 ** np.ceil(np.log2(windowed_data.shape[0]) + 1).astype(int)
+
+        ft_data = np.fft.rfft(
+            windowed_data, n=zero_padding, axis=0
+        )
+        
+        # bpf format
+        freq_data = np.fft.rfftfreq(zero_padding, d=1 / SAMPLE_FREQ_HZ) / bpf_hz
+
+        # TODO: apply calibration
+
+        # integrate harmonics
+
+        num_mics = len(mic_data)
+
+        nnext = num_mics * harmonics
+
+        propellers[row_idx:row_idx + nnext] = propeller_name
+        speeds[row_idx:row_idx + nnext] = speed
+        angles[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 2], harmonics)  # angle from mic state file
+        distances[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 3], harmonics)  # distance from mic state file
+
+        fom = CT ** (3/2) / (2 ** (1/2) * CQ)
+        reff = prop["rt"] * (fom / reference_FOM)
+        nd_pressure = rho * (reff * speed_rad)**2
+
+        for i in range(num_mics):
+            for j in range(harmonics):
+                # i is mic number, n is harmonic number
+                n = j + 1
+
+                mask = (freq_data > (n - EPSILON)) & (freq_data < (n + EPSILON))
+                # integrate mask with np.trap
+                fqharm = freq_data[mask]
+                ftharm = ft_data[mask, i]
+
+                # seems to be working
+                integrated_value = np.trapezoid(ftharm**2, fqharm)
+                hspl = np.sqrt(integrated_value)
+
+                harmonic_values[row_idx] = n
+                hrms_values[row_idx] = hspl
+                hspl_values[row_idx] = hspl / REF_PRESSURE
+                ndhspl_values[row_idx] = hspl / nd_pressure
+
+                row_idx += 1
+
+    if row_idx != total_rows:
+        raise RuntimeError(f"Expected {total_rows} rows, but got {row_idx} rows.")
+    
+    # Create DataFrame from arrays
+    if row_idx == 0:
+        print("No data to plot after processing.")
+        return None
+    
+    processed_df = pd.DataFrame({
+        'propeller': propellers,
+        'speed': speeds,
+        'angle': angles,
+        'distance': distances,
+        'harmonic': harmonic_values,
+        'RMS' : hrms_values,
+        'HSPL': hspl_values,
+        'ndHSPL': ndhspl_values
+    })
+
+    # Save processed data to cache if caching is enabled
+    if use_cache:
+        print(f"Saving processed data to cache file {cache_file}")
+        try:
+            with open(cache_file, "wb") as f:
+                pickle.dump(processed_df, f)
+        except (FileNotFoundError) as e:
+            print(f"Error saving cache file: {e}")
+
+    return processed_df
 
 def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=True):
-
 
     MIN_SPEED_HZ = 10
     SAMPLE_FREQ_HZ = 51200 # Hz
     REF_PRESSURE = 20e-6  # Pa
+    EXPECTED_CHANNELS = 7 # recorded 7 channels for nearly everything
     rho = 1.225
 
     # Generate a unique hash for the lookup_df and aero_coefficients
@@ -144,22 +352,35 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
         if abs(speed_hz) < MIN_SPEED_HZ:
             continue
 
-        # Count mic channels
+        prop_path_str = str(prop_path)
+        if prop_path_str in prop_cache:
+            prop = prop_cache[prop_path_str]
+        else:
+            prop = load_prop_from_file(prop_path)
+            prop_cache[prop_path_str] = prop
+        
+        propeller_name = prop_path.name.replace(".prop", "")
         try:
-            if str(mic_path) in mic_data_cache:
-                mic_data = mic_data_cache[str(mic_path)]
-            else:
-                mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=None, encoding=None, skip_header=1)
-                mic_data_cache[str(mic_path)] = mic_data
-            
-            audio_path = row["audio_path"]
-            if not os.path.exists(audio_path):
-                continue
-                
-            total_rows += len(mic_data)
-            
-        except Exception as e:
+            aero_coefficients[propeller_name]
+        except KeyError:
+            print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
             continue
+
+        # Count mic channels
+        if str(mic_path) in mic_data_cache:
+            mic_data = mic_data_cache[str(mic_path)]
+        elif os.path.exists(mic_path):
+                mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=object, encoding=None, skip_header=1)
+                mic_data_cache[str(mic_path)] = mic_data
+        else:
+            print(f"Warning: No mic data found for {mic_path}. Skipping.")
+            continue
+        
+        audio_path = row["audio_path"]
+        if not os.path.exists(audio_path):
+            continue
+            
+        total_rows += mic_data.shape[0]
     
     # Pre-allocate numpy arrays for all data
     propellers = np.empty(total_rows, dtype=object)
@@ -189,8 +410,7 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
         if prop_path_str in prop_cache:
             prop = prop_cache[prop_path_str]
         else:
-            prop = load_prop_from_file(prop_path)
-            prop_cache[prop_path_str] = prop
+            raise RuntimeError(f"Error processing row with prop_path {prop_path}: prop not found.")
             
         propeller_name = prop_path.name.replace(".prop", "")
         try:
@@ -205,17 +425,16 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
             mic_data = mic_data_cache[mic_path_str]
         else:
             # we've already checked all the mic files so if we get here we have a problem
-            print(f"Error processing row with mic_path {mic_path}: mic_data not found.")
-            continue
+            raise RuntimeError(f"Error processing row with mic_path {mic_path}: mic_data not found.")
             
         audio_path = row["audio_path"]
         if not os.path.exists(audio_path):
             continue
 
-        total_channels = 7 # could be len mic_data
-        if mic_data.shape[0] != total_channels:
-            print(f"Warning: Expected {total_channels} channels, but got {mic_data.shape[0]} in {mic_path}.")
-            continue
+        total_channels = mic_data.shape[0] # could be len mic_data
+        if total_channels != EXPECTED_CHANNELS:
+            raise RuntimeError(f"Expected {EXPECTED_CHANNELS} channels, but got {total_channels} in {mic_path}.")
+
         audio_data = np.fromfile(audio_path, dtype=np.float64).reshape(-1, total_channels)
 
         fom = CT ** (3/2) / (2 ** (1/2) * CQ)
@@ -242,7 +461,7 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
             row_idx += 1
 
     if row_idx != total_rows:
-        print(f"Warning: Expected {total_rows} rows, but got {row_idx}.")
+        raise RuntimeError(f"Expected {total_rows} rows, but got {row_idx} rows.")
     
     # Create DataFrame from arrays
     if row_idx == 0:
@@ -265,7 +484,7 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
         try:
             with open(cache_file, "wb") as f:
                 pickle.dump(processed_df, f)
-        except Exception as e:
+        except (FileNotFoundError) as e:
             print(f"Error saving cache file: {e}")
 
     return processed_df
@@ -575,6 +794,8 @@ if __name__ == "__main__":
     df = parse_lookup_df("app/results/")
 
     pdf = parse_spl_df(df, aero_coeffs)
+
+    hdf = parse_harmonic_df(df, aero_coeffs, harmonics=10)
 
  
     fig, ax = multi_function_plot(pdf, 

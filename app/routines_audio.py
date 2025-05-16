@@ -121,7 +121,7 @@ def integrate_harmonics(freq, ft_data, bpfs, aband=10):
             ftharm = ft_data[i, mask, :]
 
             # trapz power spectral density
-            intergrated_harmonics[j, :] = np.trapezoid(np.abs(ftharm), fqharm**2, axis=0)
+            intergrated_harmonics[j, :] = np.trapezoid(ftharm**2, fqharm, axis=0)
 
         integrated_list.append(intergrated_harmonics)
 
