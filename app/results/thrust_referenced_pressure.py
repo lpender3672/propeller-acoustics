@@ -90,10 +90,9 @@ def parse_lookup_df(results_folder):
     return combined_df
 
 
-def parse_spl_df(lookup_df, aero_coefficients):
+def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5):
 
     # TODO: calculate reference pressure from aero_coefficients
-    nd_pressure = 2e-5  # for now: standard reference pressure in air
     ref_pressure = 2e-5  # for now: standard reference pressure in air
 
     # Create a copy of the dataframe for processing
@@ -125,43 +124,54 @@ def parse_spl_df(lookup_df, aero_coefficients):
         except KeyError:
             print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
             continue
+
         
         try:
 
             mic_data = np.genfromtxt(mic_path, delimiter=",", dtype=None, encoding=None, skip_header=1)
-            
-            if not os.path.exists(row["audio_path"]):
-                continue
-                
-            total_channels = 7
-            audio_data = np.fromfile(row["audio_path"], dtype=np.float64).reshape(-1, total_channels)
-            
-            # for each mic channel
-            for i,_ in enumerate(mic_data):
-                angle = int(mic_data[i][2])  # angle from mic state file
-                distance = float(mic_data[i][3])  # distance from mic state file
-                
-                # calculating RMS
-                rms = rms_butter(audio_data[:, i], speed_hz, 51200)
-
-                # spl and ndspl
-                spl = 20 * np.log10(rms / ref_pressure)
-                ndspl = 20 * np.log10(rms / nd_pressure)
-                
-                # Add to records
-                data_records.append({
-                    'propeller': propeller_name,
-                    'speed': speed,
-                    'angle': angle,
-                    'distance': distance,
-                    'RMS': rms,
-                    'SPL': spl,
-                    'ndSPL' : ndspl
-                })
-
         except Exception as e:
             print(f"Error processing row with mic_path {mic_path}: {e}")
             continue
+            
+        if not os.path.exists(row["audio_path"]):
+            continue
+
+        # define effective radius
+        rho = 1.225
+        fom = CT ** (3/2) / (2 ** (1/2) * CQ)
+        reff = prop["rt"] * (fom / reference_FOM)
+
+        #print(f"reff: {reff} m")
+
+        nd_pressure = rho * (reff * speed_rad)**2
+
+        total_channels = 7
+        audio_data = np.fromfile(row["audio_path"], dtype=np.float64).reshape(-1, total_channels)
+        
+        # for each mic channel
+        for i,_ in enumerate(mic_data):
+            angle = int(mic_data[i][2])  # angle from mic state file
+            distance = float(mic_data[i][3])  # distance from mic state file
+            
+            # calculating RMS
+            rms = rms_butter(audio_data[:, i], speed_hz, 51200)
+
+            # spl and ndspl
+            spl = 20 * np.log10(rms / ref_pressure)
+            ndspl = 20 * np.log10(rms / nd_pressure)
+            
+            # Add to records
+            data_records.append({
+                'propeller': propeller_name,
+                'speed': speed,
+                'angle': angle,
+                'distance': distance,
+                'RMS': rms,
+                'SPL': spl,
+                'ndSPL' : ndspl
+            })
+
+        
     
     # Create DataFrame from processed data
     if not data_records:
@@ -488,7 +498,7 @@ if __name__ == "__main__":
     
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
-                            y_var='SPL',
+                            y_var='ndSPL',
                             filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90},
                             #group_by=[],
                             plot_type='scatter',
@@ -496,13 +506,13 @@ if __name__ == "__main__":
                             log_bin_factor=0.01,
                             log_colourbar=True)
     
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    #ax.set_xscale('log')
+    #ax.set_yscale('log')
     ax.grid(True, which='both')
     
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
-                            y_var='SPL',
+                            y_var='ndSPL',
                             filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 180},
                             #group_by=[],
                             plot_type='scatter',
@@ -510,8 +520,8 @@ if __name__ == "__main__":
                             log_bin_factor=0.01,
                             log_colourbar=True)
     
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    #ax.set_xscale('log')
+    #ax.set_yscale('log')
     ax.grid(True, which='both')
 
     plt.show()

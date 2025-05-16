@@ -242,8 +242,8 @@ if __name__ == "__main__":
 
     sweep_comparison_plot(cal_data)
     printed_comparison_plot(cal_data)
-    # diameter_comparison_plot(cal_data)
-    # FoM_comparison_plot(cal_data)
+    diameter_comparison_plot(cal_data)
+    FoM_comparison_plot(cal_data)
     plt.tight_layout()
     plt.show()
 
