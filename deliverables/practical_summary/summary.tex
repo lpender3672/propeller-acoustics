@@ -282,7 +282,6 @@ Comparison of single and symmetrical looped blade designs to evaluate superimpos
     %2025-02-28 - 1660168 - small improvements
     %2025-02-28 - 0ea2d78 - fixed improvements
     %2025-03-01 - 48e07e2 - so the separate calibration gets merged and then a regression gets done. the influence of torque on the thrust load cell is neglible and so that coefficient is set to 0 to help the regession however the regession still struggles to get the , now 5 coefficients, especially for torque because theres only i think 5 datapoints more datapoints are required and will be obtained on monday the thrust coefficient curve is nice and flat up until the top speed. would like to get higher speed points to reach a limit of the motor
-    \item March 1st 
     %2025-03-02 - adffe6e - implemented the swept Hermite tip curve improvements to geometry
     \item March 2nd Implemented the swept Hermite tip curve and improved the geometry.
     %2025-03-02 - fddcdb4 - shifting things around in geometry need to clean up a lot of stuff tomorrow morning then work on 4F2 then work on 4A4 then work on implementing the static BEM and reduced airfoil table
@@ -292,23 +291,24 @@ Comparison of single and symmetrical looped blade designs to evaluate superimpos
     %2025-03-03 - b67f98c - added overhead mic
     %2025-03-04 - 0e2fefa - more audio and also tried doing two seperate calibration regressions which yield similar result need to troubleshoot the data
     %2025-03-04 - 547666d - added rotation direction to software something that probably should have been added sooner
-    \item Improved propeller design software to include generation of clockwise and counterclockwise propellers.
+    \item March 4th Improved propeller design software to include generation of clockwise and counterclockwise propellers.
     %2025-03-04 - d3120c1 - changed graphs in supo data was being loaded incorrectly
     %2025-03-04 - 8e3b84a - corrected the scale for the stratasys objet30 software
-    \item Fixed scaling issue to be compatible with the Stratasys Objet30 software.
+    \item March 4th Fixed scaling issue to be compatible with the Stratasys Objet30 software.
     %2025-03-05 - cc79d1d - some cad work but i didnt like it
     %2025-03-10 - 10eeaaa - fixed issue in hanson that went under the radar. added harmonic plot removed saving to fortran
     %2025-03-12 - f987348 - modifications to casing to pushfit encoder board and mount the load cell the right way round
-    \item Major redesign of the aerodynamic test setup to measure torque. Ceramic bearings and sensitive 200g load cell.
+    \item March 12th Major redesign of the aerodynamic test setup to measure torque. Ceramic bearings and sensitive 200g load cell.
+    \item March 12th Encoder board broken thought ODrive was fried. The 1> MHz clock pin was found to only work with the additional capacitance of an oscilloscope probe. Soldered on a 200pF capacitor to the pin and now it works.
     %2025-03-18 - 4913d3d - lots of data and fixed a few bugs fixed cad of acoustic setup to work with new magnet motor mount
-    \item Shaft extender was sitting on a thread and not concentric. New design sits on motor casing and is shown to be concentric.
+    \item March 18th Shaft extender was sitting on a thread and not concentric. New design sits on motor casing and is shown to be concentric.
     %2025-03-18 - 1f38842 - found that the antivibration foam actually makes it worse
-    \item Comparative testing of vibration isolation foam was found to increase noise levels over rubber foot mounts.
+    \item March 18th Comparative testing of vibration isolation foam was found to increase noise levels over rubber foot mounts.
     %2025-03-18 - 6ae7e5b - big shift today. a lot of audio processing done harmonic and radar sound graphs
     %2025-03-19 - 21f9f83 - designs to be made improved tangents of tip geometry
     %2025-03-24 - 9a3a0d3 - added an audio pyramid for investigating the variance of sound with speed its untested though as mark needed the odrive cable to charge his phone also made a quick microphone mount design
     %2025-03-24 - fc8e691 - improved pyramid to include logarithmic values for improved logging of dimensionless groups
-    \item Pyramids made logarithmic, reducing data required and allowing for more higher speed data to be collected within the motors temperature limits.
+    \item March 24th Pyramids made logarithmic, reducing data required and allowing for more higher speed data to be collected within the motors temperature limits.
     %2025-03-24 - 95d9c2e - more props and aero data!
     %2025-03-25 - 7c15c9a - decent morning going to do some audio pyramids at specific locations
     %2025-03-25 - 4c08784 - speed varying audio data for all the props and all microphones in a fixed arrangement
@@ -317,7 +317,7 @@ Comparison of single and symmetrical looped blade designs to evaluate superimpos
     \item April 1st increased acceleration ramp rate for faster settle time and achievable speeds within the motor temperature limits.
     %2025-04-09 - cc732a9 - finally fixed the microphones
     %2025-04-09 - ee99a22 - Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
-    \item Higher voltage battery introduced allowing higher speeds to be achieved.
+    \item April 9th Higher voltage battery introduced allowing higher speeds to be achieved.
     %2025-04-09 - 9367747 - higher speed data but probably too fast as motor getting really hot now and the off centered spin is getting worse magnet mount fell off actually Joe is remaking the shaft extender with a better connection May also balance the spin will talk to mechanics lab
     %2025-04-11 - c43327f - a lot of data fro different angles
     %2025-04-11 - a8b9e60 - audio for different 2 more radaii at 6 and 8 blade diameters also lots more aero data up to 16000 and 17000 rpm
@@ -341,6 +341,48 @@ Comparison of single and symmetrical looped blade designs to evaluate superimpos
     %2025-05-14 - 31f3dd1 - Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
 
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/aero1.JPG}
+        \caption{}
+        \label{fig:aero1}    
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/aero2.JPG}
+        \caption{}
+        \label{fig:aero2}    
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/aero3.JPG}
+        \caption{}
+        \label{fig:aero3}    
+    \end{subfigure}
+    \caption{Iterations of the aerodynamic test rig}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[t]{0.30\textwidth}
+        \centering
+        \includegraphics[height=5cm]{figures/acoustic1.JPG}
+        \caption{}
+        \label{fig:acoustic1}    
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.60\textwidth}
+        \centering
+        \includegraphics[height=6cm]{figures/acoustic2.JPG}
+        \caption{}
+        \label{fig:acoustic2}    
+    \end{subfigure}
+    \caption{Iterations of the acoustic test rig}
+\end{figure}
+
 
 \section{Key Experimental Challanges}
 

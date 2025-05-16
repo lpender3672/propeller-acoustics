@@ -115,3 +115,4 @@ if __name__ == "__main__":
     #plot_rmsndp_speed_nonlinearity()
     plot_rmsndp_speed_sweeps()
     plt.show()
+
