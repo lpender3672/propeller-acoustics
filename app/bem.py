@@ -138,7 +138,9 @@ def betz_design(av):
         # print(np.max(Re_c) - np.min(Re_c))
 
         # 4,5 determine epsilon and Cl
-        # TODO: find best airfoil at each chord Reynolds number
+        # improvement: find best airfoil at each chord Reynolds number
+        # now out of scope of project
+        
         alpha = alpha
         Cl = Cl
         Cd = Cd

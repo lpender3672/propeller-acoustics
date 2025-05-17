@@ -17,7 +17,6 @@ from app.routines_aero import (
 
 
 def plot_calibration(cal_data, label=None):
-    # TODO: improve these
 
     tcal_data, qcal_data = cal_data
 

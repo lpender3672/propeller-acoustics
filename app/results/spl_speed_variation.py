@@ -15,7 +15,7 @@ FREQUENCY = 51200  # Hz
 TOTAL_CHANNELS = 7
 
 def rmsndp_speed(prop_results_path, microphone_state, mic_idx, ax=None):
-    #TODO: apply microhpone calibration data to the data
+    # TODO: convert this function to use the df based routines
     
     meta, prop = load_meta_data(prop_results_path)
 

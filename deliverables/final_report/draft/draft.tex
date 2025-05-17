@@ -94,20 +94,63 @@ The relevant theory in this report covers acoustic and aerodynamic
 
 \section{Methodology}
 
-Two seperate setups were designed
+% brief explaination of the overall approach
 
-\subsection{}
+\subsection{Experimental}
+% justification for separating acoustic and aerodynamic measurements
+% where was the testing done
 
-\subsection{}
+\subsubsection{Aerodynamic setup}
+% show the setup used and explain the components
+% 200g, 1Kg load cells, hx711@10Hz pi pico. Odrive S1, AS5047p encoder, 10kOhm motor thermistor
+% explain some of the choices made in the setup
+% explaination of calibration procedure
+% control of variables 
+
+\subsubsection{Acoustic setup}
+% show the setup used and explain the components
+% explain some of the choices made in the setup
+% control of variables
+
+
+\subsubsection{Data Collection and Processing}
+% software used, majority python, C++
+% key libraries used numpy, scipy, matplotlib and xfoil
+
+% rms normalised hanning window to prevent spectral leakage
+% frequency domain interpolation of microphone calibration data
+
+% method of integrating harmonics
+% log regression of distance and speed
+
+\subsection{Theoretical}
+
+
 
 \section{Results}
 
 \section{Discussion}
 
+% specific results of the two setups
+
 \section{Conclusion}
 
-\subsection{Future Work}
+\subsection{Improvements}
+
+
 % better experimental setup
-% more radial datapoints
+%% 
+%% 
+
+% better theoretical models
+%% accounting for swirl and tip losses in current solver
+%% interpolating airfoil data with reynolds number in current solver
+%% panel method, wake vortex model
+%% inclusion of volume displacement noise
+
+\subsection{Future Work}
+Alongside the improvements mentioned in the previous section, there are a number of avenues for future work.
+% what questions were left unanswered
+
 
 \end{document}
