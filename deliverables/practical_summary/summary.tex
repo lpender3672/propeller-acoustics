@@ -299,7 +299,7 @@ Comparison of single and symmetrical looped blade designs to evaluate superimpos
     %2025-03-10 - 10eeaaa - fixed issue in hanson that went under the radar. added harmonic plot removed saving to fortran
     %2025-03-12 - f987348 - modifications to casing to pushfit encoder board and mount the load cell the right way round
     \item March 12th Major redesign of the aerodynamic test setup to measure torque. Ceramic bearings and sensitive 200g load cell.
-    \item March 12th Encoder board broken thought ODrive was fried. The 1> MHz clock pin was found to only work with the additional capacitance of an oscilloscope probe. Soldered on a 200pF capacitor to the pin and now it works.
+    \item March 12th Encoder communication broken, thought ODrive was fried. The 1> MHz clock pin was found to only work with the additional capacitance of an oscilloscope probe. Soldered on a 200pF capacitor to the pin and now it works.
     %2025-03-18 - 4913d3d - lots of data and fixed a few bugs fixed cad of acoustic setup to work with new magnet motor mount
     \item March 18th Shaft extender was sitting on a thread and not concentric. New design sits on motor casing and is shown to be concentric.
     %2025-03-18 - 1f38842 - found that the antivibration foam actually makes it worse
@@ -400,6 +400,20 @@ TODO: consider analysing to justify the choice of mount.
 Another possible avenue
 
 
+
+\section{Speed and distance invariance}
+
+\begin{equation}
+    \text{SPL} \propto \frac{\rho (\omega r)^2}{R/r} f(\theta, n, \text{geometry}) 
+\end{equation}
+
+Recordings were then made at different speeds, distances and angles to the propeller.
+
+\begin{equation}
+    \log_{10}(\text{SPL}) \propto 2\log_{10}(\omega) - \log_{10}(r/R) + \log_{10}(f(\theta, n, \text{geometry}))
+\end{equation}
+
+The coefficients of 2 and -1 will now be verified by experimental data.
 
 % key experimental parts to include
 % tone generation

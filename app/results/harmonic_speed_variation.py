@@ -1,1 +1,260 @@
 
+from pathlib import Path
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+from app.results.graphing_tools import (
+    multi_function_plot,
+    filter_df
+)
+
+from app.routines_audio import (
+    parse_lookup_df,
+    parse_harmonic_df
+)
+
+from app.routines_aero import (
+    load_cell_calibration,
+    calc_aero_coefficients
+)
+
+def plot_3d_regression_scatter(df, coeffs):
+
+    speed = df['speed'].values * 2 * np.pi / 60  # rad/s
+    distance = df['distance'].values * 1e-3      # m
+    SPL = df['HSPL'].values
+
+    x = np.log10(speed)
+    y = np.log10(distance)
+    z = np.log10(SPL)
+
+    beta0, beta1, beta2 = coeffs
+    z_fit = beta0 + beta1 * x + beta2 * y
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.scatter(x, y, z, c='k', label='Data')
+
+    ax.plot_trisurf(x, y, z_fit, color='blue', alpha=0.2, linewidth=0, antialiased=True)
+
+    ax.set_xlabel('log10(speed) [rad/s]')
+    ax.set_ylabel('log10(distance) [m]')
+    ax.set_zlabel('log10(SPL)')
+    ax.set_title('3D scatter with fitted regression plane')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+# TODO: filter data by ramp up. need to compare experimental results
+# where the ramp down was excluded because there was hysteresis in the data
+# the effect of this on the current results is unknown.
+
+
+def speed_distance_regression(hdf):
+
+    # proof of concept for the speed-distance regression
+    # group by propeller, angle, harmonic
+    # run 2D regression on log 
+
+    data_rows = []
+
+    for (propeller, angle, harmonic), group_df in hdf.groupby(['propeller', 'angle', 'harmonic']):
+        if len(group_df) < 3:
+            continue  # not enough points
+
+        speed = group_df['speed'].values * 2 * np.pi / 60  # to rad/s
+        distance = group_df['distance'].values * 1e-3 # to m
+        SPL = group_df['HSPL'].values
+
+        logSpeed = np.log10(speed)
+        logDistance = np.log10(distance)
+        logSPL = np.log10(SPL)
+
+        X = np.column_stack((np.ones_like(logSpeed), logSpeed, logDistance))
+        y = logSPL
+
+        # Least squares regression
+        coeffs, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
+        beta0, beta1, beta2 = coeffs
+
+        y_pred = X @ coeffs
+        residual = y - y_pred
+        residual_std = np.std(residual)
+        data_std = np.std(y)
+        residual_std_norm = residual_std / data_std if data_std != 0 else np.inf
+
+        data_rows.append({
+            'propeller': propeller,
+            'angle': angle,
+            'harmonic': harmonic,
+            'beta0': beta0,
+            'beta1': beta1,
+            'beta2': beta2,
+            'r_squared': 1 - np.var(y - X @ coeffs) / np.var(y),
+            'residual_std': residual_std,
+            'residual_std_norm': residual_std_norm,
+        })
+
+ 
+    # make a dataframe from the data rows
+    coeffs_df = pd.DataFrame(data_rows)
+    
+    return coeffs_df
+
+
+def plot_best_coeffs_2D(hdf, coeffs_df):
+    # objective for speed
+    nshow = 3
+
+    speed_obj =  (coeffs_df['residual_std_norm']).abs() + (coeffs_df['beta1'] - 2).abs() #+ (coeffs_df['beta2'] + 1).abs()
+    best_speed_rows = coeffs_df.iloc[speed_obj.argsort()[:nshow]]
+
+    # objective for distance 
+    distance_obj = (coeffs_df['residual_std_norm']).abs() + (coeffs_df['beta2'] + 1).abs()
+    best_distance_rows = coeffs_df.iloc[distance_obj.argsort()[:nshow]]
+
+    print(f'Best speed row: {best_speed_rows}')
+    print(f'Best distance row: {best_distance_rows}')
+
+    # Plot the data
+    speed_harmonic = best_speed_rows.iloc[0]['harmonic']
+    speed_angle = best_speed_rows.iloc[0]['angle']
+    speed_propeller = best_speed_rows.iloc[0]['propeller']
+
+
+    #print(hdf['speed'].unique())
+    
+    # Plot the data
+    fig, ax = multi_function_plot(hdf, 
+                            x_var='speed', 
+                            y_var='HSPL',
+                            filter_dict = {
+                                'propeller': speed_propeller,
+                                'angle': speed_angle,
+                                'harmonic': speed_harmonic,
+                            },
+                            plot_type='scatter',
+                            colour_by='distance',
+                            log_bin_factor=0.01,
+                            log_colourbar=True)
+    
+    xlo,xhi = ax.get_xlim()
+    x_speed = np.linspace(xlo, xhi, 1000)
+    y_speed = 5e-5 * x_speed ** 2
+    ax.plot(x_speed, y_speed, 'r--', label='Speed Fit', linewidth=1)
+    
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.grid(True, which='both')
+
+    distance_harmonic = best_distance_rows.iloc[0]['harmonic']
+    distance_angle = best_distance_rows.iloc[0]['angle']
+    distance_propeller = best_distance_rows.iloc[0]['propeller']
+
+    #print(filter_df(hdf, filter_dict = {
+    #                            'propeller': distance_propeller,
+    #                            'angle': distance_angle,
+    #                            'harmonic': distance_harmonic
+    #                        })['speed'].unique())
+
+    # Plot the data
+    fig, ax = multi_function_plot(hdf, 
+                            x_var='distance', 
+                            y_var='HSPL',
+                            filter_dict = {
+                                'propeller': distance_propeller,
+                                'angle': distance_angle,
+                                'harmonic': distance_harmonic
+                            },
+                            plot_type='scatter',
+                            colour_by='speed',
+                            log_bin_factor=0.01,
+                            log_colourbar=True)
+    
+    xlo,xhi = ax.get_xlim()
+    x_distance = np.linspace(xlo, xhi, 1000)
+    y_distance = 5e6 * x_distance ** -1
+    ax.plot(x_distance, y_distance, 'r--', label='Speed Fit', linewidth=1)
+    
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.grid(True, which='both')
+    
+    plt.show()
+
+def plot_best_coeffs_3D(hdf, coeffs_df):
+
+    best_speed_rows = coeffs_df.iloc[(coeffs_df['beta1'] - 2).abs().argsort()[:3]]
+
+    best_distance_rows = coeffs_df.iloc[(coeffs_df['beta2'] + 1).abs().argsort()[:3]]
+
+    print(f'Best speed row: {best_speed_rows}')
+    print(f'Best distance row: {best_distance_rows}')
+
+    # Plot the data
+    speed_harmonic = best_speed_rows.iloc[0]['harmonic']
+    speed_angle = best_speed_rows.iloc[0]['angle']
+    speed_propeller = best_speed_rows.iloc[0]['propeller']
+    speed_coeffs = [
+        best_speed_rows.iloc[0]['beta0'],
+        best_speed_rows.iloc[0]['beta1'],
+        best_speed_rows.iloc[0]['beta2']
+    ]
+
+    speed_df = filter_df(hdf, {
+        'propeller': speed_propeller,
+        'angle': speed_angle,
+        'harmonic': speed_harmonic
+    })
+
+    distance_harmonic = best_distance_rows.iloc[0]['harmonic']
+    distance_angle = best_distance_rows.iloc[0]['angle']
+    distance_propeller = best_distance_rows.iloc[0]['propeller']
+    distance_coeffs = [
+        best_distance_rows.iloc[0]['beta0'],
+        best_distance_rows.iloc[0]['beta1'],
+        best_distance_rows.iloc[0]['beta2']
+    ]
+
+    dist_df = filter_df(hdf, {
+        'propeller': distance_propeller,
+        'angle': distance_angle,
+        'harmonic': distance_harmonic
+    })
+
+    # 3D plot the data
+
+    plot_3d_regression_scatter(
+        speed_df,
+        speed_coeffs
+    )
+
+    plot_3d_regression_scatter(
+        dist_df,
+        distance_coeffs
+    )    
+
+if __name__ == "__main__":
+    # Load the data
+    lookup_df = parse_lookup_df('app/results')
+
+    cal_data = load_cell_calibration()
+
+    aero_coeffs = calc_aero_coefficients(
+        'app/results',
+        cal_data
+    )
+
+    hdf = parse_harmonic_df(lookup_df, aero_coeffs)
+
+    hdf_filtered = filter_df(hdf,
+                    { 'propeller' : 'dalprop5045'})
+    
+    coeff_df = speed_distance_regression(hdf_filtered)
+    plot_best_coeffs_2D(hdf_filtered, coeff_df)
+    
+    plt.show()
+    
+    

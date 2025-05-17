@@ -141,6 +141,8 @@ report.out
 *.bbl
 *.blg
 *.out
+*.toc
+*.bcf
 
 # Require coversheets
 !coversheet.pdf

@@ -15,6 +15,31 @@ from app.routines_aero import (
     load_cell_calibration
 )
 
+def filter_df(df, filter_dict):
+
+    for key, value in filter_dict.items():
+            if key in df.columns:
+                if isinstance(value, tuple) and len(value) == 2:
+                    # range filter (min, max)
+                    df = df[(df[key] >= value[0]) & 
+                                (df[key] <= value[1])]
+                elif isinstance(value, list):
+                    # list of values
+                    df = df[df[key].isin(value)]
+                elif isinstance(value, float):
+                    if key == 'speed':
+                        atol = 10
+                    else:
+                        atol = 0
+                        
+                    df = df[np.isclose(
+                        df[key], value, rtol=0.01, atol=atol)] # 1% probably a bit too much
+                
+                else:
+                    df = df[df[key] == value]
+    
+    return df
+
 # TODO: raw spectrum plotting windows of key harmonics
 
 def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_polar=False, alpha=0.7, 
@@ -154,22 +179,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     
     # Apply filters if provided
     if filter_dict:
-        for key, value in filter_dict.items():
-            if key in processed_df.columns:
-                if isinstance(value, tuple) and len(value) == 2:
-                    # range filter (min, max)
-                    processed_df = processed_df[(processed_df[key] >= value[0]) & 
-                                            (processed_df[key] <= value[1])]
-                elif isinstance(value, list):
-                    # list of values
-                    processed_df = processed_df[processed_df[key].isin(value)]
-                elif isinstance(value, float):
-                    processed_df = processed_df[np.isclose(
-                        processed_df[key], value, rtol=0.01)] # 1% probably a bit too much
-                
-                else:
-                    # int or string probably
-                    processed_df = processed_df[processed_df[key] == value]
+        processed_df = filter_df(processed_df, filter_dict)
     
     if processed_df.empty:
         print("No data left after applying filters.")
@@ -318,11 +328,11 @@ if __name__ == "__main__":
         cal_data
     )
 
-    df = parse_lookup_df("app/results/")
+    lookup_df = parse_lookup_df("app/results/")
 
-    pdf = parse_spl_df(df, aero_coeffs)
+    pdf = parse_spl_df(lookup_df, aero_coeffs)
 
-    hdf = parse_harmonic_df(df, aero_coeffs, harmonics=10)
+    hdf = parse_harmonic_df(lookup_df, aero_coeffs, harmonics=10)
 
  
     fig, ax = multi_function_plot(pdf, 
