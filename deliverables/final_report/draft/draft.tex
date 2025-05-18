@@ -102,13 +102,19 @@ It will be shown in this section that the two are linked...
 
 % brief explaination of the overall approach
 % propellers designed using the theoretical model
-
+% hover conditions used throughout. justify this
 
 \subsection{Experimental}
-% justification for separating acoustic and aerodynamic measurements
 % where was the testing done
+The experimental work was carried out in the acoustics lab at University of Cambridge's Department of Engineering.
+% justification for separating acoustic and aerodynamic measurements
+Two separate setups were used to measure the aerodynamic and acoustic performance of the propellers.
+The primary reason for this separation was to ensure better measurements in each domain.
+The setups were designed to have near identical propeller and motor conditions, allowing for a direct comparison of the results.
 
 \subsubsection{Aerodynamic setup}
+The aerodynamic setup is required to measure angular speed, thrust and torque for a range of angular speeds.
+A drone motor, specifically the Emax ECO II Series 2207 1700KV, was used to drive the propellers with an Odrive S1 motor controller.
 % show the setup used and explain the components
 % 200g, 1Kg load cells, hx711@10Hz pi pico. Odrive S1, AS5047p encoder, 10kOhm motor thermistor
 % explain some of the choices made in the setup
@@ -149,11 +155,35 @@ It will be shown in this section that the two are linked...
 
 % figure of merit graphs
 
+% microphone calibration graphs?
+
+% spectrum of 2 and 3 blades
+% identify bpf harmonics, 50hz electrical noise, motor ppf, broadband turbulence
+
+% speed varying graphs
+% distance varying graphs
+
+% coefficient graphs?
+% f graph
+
 \section{Discussion}
 
-% specific results of the two setups
+% paragraph for every graph explaining every feature
+% explain theoretical results and how they compare to experimental results
+
+% discuss in great detail errors sources and uncertainties
+% differences between aero and acoustic setups?
+% poor load cell calibration
+% microphone interference sources
+% microphone position uncertainty (very large)
 
 \section{Conclusion}
+
+% a lot of testing was done
+% software tools and experimental apparatus were developed
+% results show ... ?
+% agreement between theory and experiment
+% 
 
 \subsection{Improvements}
 
