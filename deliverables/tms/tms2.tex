@@ -21,6 +21,9 @@
 \usepackage{mathrsfs}
 \usepackage{savetrees}
 
+\usepackage[backend=biber,style=numeric]{biblatex}
+\addbibresource{../allrefs.bib}
+
 \usetikzlibrary{calc}
 \usetikzlibrary{angles,quotes} % for pic
 \usetikzlibrary{patterns,snakes}
@@ -495,7 +498,6 @@ A propeller with optimised sweep profile to maximise destructive interference fo
 Four seperate airfoil sections for an unswept propeller design to investigate chordwise destructive interference.
 Comparison of single and symmetrical looped blade designs to evaluate superimposed model.
 % bibliography
-\bibliographystyle{plain} % or any other style like 'ieeetr', 'abbrv', 'apalike', etc.
-\bibliography{allrefs}
+\printbibliography
 
 \end{document}

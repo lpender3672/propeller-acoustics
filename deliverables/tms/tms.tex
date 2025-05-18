@@ -21,6 +21,9 @@
 \usepackage{mathrsfs}
 \usepackage{savetrees}
 
+\usepackage[backend=biber,style=numeric]{biblatex}
+\addbibresource{../allrefs.bib}
+
 \usetikzlibrary{calc}
 \usetikzlibrary{angles,quotes} % for pic
 \usetikzlibrary{patterns,snakes}
@@ -91,7 +94,6 @@
 \tikzstyle{arrow} = [thick,->,>=stealth]
 
 \begin{document}
-\immediate\write18{py mergebib.py}
 
 \title{Acoustic Signatures of Quadcopter Propellers}
 \author{lwp26}
@@ -536,7 +538,6 @@ Reducing the harmonic noise of quadcopter propellers would
 
 % bibliography
 
-\bibliographystyle{plain} % or any other style like 'ieeetr', 'abbrv', 'apalike', etc.
-\bibliography{allrefs}
+\printbibliography
 
 \end{document}

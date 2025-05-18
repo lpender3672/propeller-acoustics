@@ -1,30 +1,21 @@
 \documentclass[12pt,a4paper]{article}
-
-% Page formatting
 \usepackage[margin=25mm]{geometry}
 \usepackage{setspace}
 \onehalfspacing
-
-% Font and encoding
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{lmodern}  % Clean, scalable font
-
-% Section formatting
+\usepackage{lmodern}  
 \usepackage{titlesec}
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 
-% Header/footer
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \fancyfoot[C]{\thepage}
 
-% Hyperlinks
 \usepackage[hidelinks]{hyperref}
 
-% Figures and graphics
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -32,7 +23,7 @@
 \usepackage{amsmath,amssymb}
 
 \usepackage[backend=biber,style=numeric]{biblatex}
-\addbibresource{references.bib}
+\addbibresource{../allrefs.bib}
 
 \title{\vspace{-2cm}Technical Abstract: \textit{Acoustics of Quadcopter Propellers}}
 \author{Louis Pender \\
@@ -62,10 +53,16 @@
 
 \subsection{Objectives}
 
+% study the noise of quadcopter propellers
+
+
 \section{Theory}
 % sentence about the theory of this report not going into a lot of detail because
 % of the broad scope of the report but will be crucial nevertheless
-The relevant theory in this report covers acoustic and aerodynamic
+The relevant theory in this report covers acoustic and aerodynamic propeller performance.
+The objective to reduce the noise for a given efficiency, or to increase the efficiency for a given noise level
+requires the definitions of noise and efficiency.
+It will be shown in this section that the two are linked...
 
 % aero side
 
@@ -90,11 +87,22 @@ The relevant theory in this report covers acoustic and aerodynamic
 % explain why the integral of many helically convected sources models the propeller
 % explain how changing location of sources can cause destructive interference for some wavenumbers
 
+%% now ready to explain why a spectrum looks the way it does?
+
 % implementation of the model, extension to looped propellers
+
+%%%%
+% relate the two sides of theory and explain how they are linked
+% reiterate the objective of reducing noise for a given efficiency
+% explain the effective radius that equates the figures of merit for different propellers
+% this effective radius non dimensionalises the sound pressure level
+% allowing us to compare the acoustic to efficiency of different propellers 
 
 \section{Methodology}
 
 % brief explaination of the overall approach
+% propellers designed using the theoretical model
+
 
 \subsection{Experimental}
 % justification for separating acoustic and aerodynamic measurements
@@ -105,6 +113,7 @@ The relevant theory in this report covers acoustic and aerodynamic
 % 200g, 1Kg load cells, hx711@10Hz pi pico. Odrive S1, AS5047p encoder, 10kOhm motor thermistor
 % explain some of the choices made in the setup
 % explaination of calibration procedure
+% extrapolation of thrust and torque coefficients
 % control of variables 
 
 \subsubsection{Acoustic setup}
@@ -115,19 +124,30 @@ The relevant theory in this report covers acoustic and aerodynamic
 
 \subsubsection{Data Collection and Processing}
 % software used, majority python, C++
-% key libraries used numpy, scipy, matplotlib and xfoil
+% key libraries used numpy, scipy, matplotlib
 
 % rms normalised hanning window to prevent spectral leakage
 % frequency domain interpolation of microphone calibration data
 
-% method of integrating harmonics
+% method of integrating harmonics and definition pf HSPL
 % log regression of distance and speed
 
 \subsection{Theoretical}
 
+% available propeller design tool input
+% python implementation of the nonlinear solver and acoustic model
+% airfoil coefficient interpolation and extrapolation
+% explain the propeller mesh generation algorithm and minimum airfoil thickness
 
+% explain choice of simple linear swept blade designs
 
 \section{Results}
+
+% load cell calibration graphs
+
+% aerodynamic coefficient graphs
+
+% figure of merit graphs
 
 \section{Discussion}
 
@@ -152,5 +172,6 @@ The relevant theory in this report covers acoustic and aerodynamic
 Alongside the improvements mentioned in the previous section, there are a number of avenues for future work.
 % what questions were left unanswered
 
+\printbibliography
 
 \end{document}
