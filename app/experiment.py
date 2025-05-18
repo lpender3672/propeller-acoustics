@@ -107,8 +107,13 @@ class ControlWidget(QWidget):
             pen=pg.mkPen(color="b", width=2)
         )
 
-        self.sample_rate = 200
-        self.sample_buffer_size = 10
+        # settings for cogging recording
+        #self.sample_rate = 2000
+        #self.sample_buffer_size = 100
+
+        # standard settings
+        self.sample_rate = 200 # Hz
+        self.sample_buffer_size = 10  # 5 seconds
         self.graph_buffer_size = 10 * self.sample_rate  # 10 seconds
         self.motor_data = np.zeros((self.graph_buffer_size, 4))
         self.motor_data[:, 1:] = np.nan
@@ -677,6 +682,11 @@ class TestWidget(QWidget):
         )
         self.parent().control_widget.controller.startLogging.emit(self.nspbufs)
 
+        # the following was added to record high rate speed samples for cogging
+        #self.parent().control_widget.controller.finishedLogging.connect(
+        #    self.finished_recording
+        #)
+
         self.audio_start_time = time.time()
 
     def finished_recording(self, fname):
@@ -686,12 +696,22 @@ class TestWidget(QWidget):
             self.motor_data[0, :, :], axis=0
         )  # [thetime, vel, current, temperature]
 
+
+        # the following was added to save high rate speed samples for cogging
+        #np.save('speed_test', self.motor_data[0, :, :])
+        #print(f"Saved motor data to speed_test")
+
         micpath = str(Path(self.microphone_layout_path.text()))
         append_audiof_to_metaf(fname, metaf, [speed, current, temp, micpath])
 
         self.parent().audio_widget.daq_thread.finishedLogging.disconnect(
             self.finished_recording
         )
+
+        # the following was added to record high rate speed samples for cogging
+        #self.parent().control_widget.controller.finishedLogging.disconnect(
+        #    self.finished_recording
+        #)
 
         finished_dialog = QMessageBox()
         finished_dialog.setText(f"Finished recording audio in f{dt}")
