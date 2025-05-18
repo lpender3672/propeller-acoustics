@@ -161,7 +161,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     log_colourbar : bool, optional
         Whether to use a logarithmic scale for the colourbar (default: False)
     units : dict, optional
-        Dictionary mapping variable names to their units (e.g., {'speed': 'RPM', 'SPL': 'dB'})
+        Dictionary mapping variable names to their units (e.g., {'speed': 'rad/s', 'SPL': 'dB'})
         If None, default units will be used.
         
     Returns:
@@ -170,7 +170,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     """
     # Default units dictionary
     units = {
-        'speed': 'RPM',
+        'speed': 'rad/s',
         'SPL': 'dB',
         'angle': '°',
         'distance': 'mm',
@@ -186,11 +186,12 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
         return None, None
     
     # this is chatgpts idea to bin the speed values to help grouping
-    with np.errstate(divide='ignore'):  # Ignore log10(0) warnings
-        log_speed = np.log10(processed_df['speed'])
-        log_speed[np.isneginf(log_speed)] = 0  # Handle log(0) = -inf
-        log_speed_binned = np.round(log_speed / log_bin_factor) * log_bin_factor
-        processed_df['speed_bin'] = np.power(10, log_speed_binned)
+    if group_by and 'speed' in group_by:
+        with np.errstate(divide='ignore'):  # Ignore log10(0) warnings
+            log_speed = np.log10(processed_df['speed'])
+            log_speed[np.isneginf(log_speed)] = 0  # Handle log(0) = -inf
+            log_speed_binned = np.round(log_speed / log_bin_factor) * log_bin_factor
+            processed_df['speed_bin'] = np.power(10, log_speed_binned)
     
 
     fig, ax = plt.subplots(figsize=fig_size)

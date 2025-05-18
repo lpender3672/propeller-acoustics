@@ -120,8 +120,35 @@ def rebase_path(path):
 def rebase_pathlist(pathlist):
     return [rebase_path(path) for path in pathlist]
 
+def extract_datetime(filename):
 
-def parse_lookup_df(results_folder):
+    datetime_str = filename.split('_')[-1].replace('-', ' ').split('.')[0]
+    
+    return pd.to_datetime(datetime_str, format=r'%Y %m %d %H %M %S')
+
+
+def clean_lookup_df(lookup_df):
+
+    lookup_df = lookup_df.sort_values(by='datetime')
+    lookup_df['time_diff'] = lookup_df['datetime'].diff().fillna(pd.Timedelta(seconds=0))
+    lookup_df['group'] = (lookup_df['time_diff'] > pd.Timedelta(seconds=5)).cumsum()
+    # starts a new group if the time difference is greater than 5 seconds
+
+    new_df = pd.DataFrame(columns=lookup_df.columns)
+
+    for _, group_df in lookup_df.groupby(['prop_path', 'group']):
+
+        if np.isclose(group_df['speed'].iloc[0], 0):
+
+            group_df['speed'] = group_df['speed'].shift(-1) # shift
+            group_df = group_df[:-1]  # remove last row
+
+            new_df = pd.concat([new_df, group_df])
+
+    return new_df
+
+
+def parse_lookup_df(results_folder, clean=True):
 
     # Base directory
     base_dir = Path(results_folder)
@@ -129,6 +156,10 @@ def parse_lookup_df(results_folder):
     df_list = []
 
     for meta_path in base_dir.glob("**/*.prop/meta_data.npy"):
+
+        if 'old' in meta_path.parts:
+            continue
+
         try:
 
             prop_fname = meta_path.parent.name  # .replace(".prop", "")
@@ -139,12 +170,17 @@ def parse_lookup_df(results_folder):
 
             prop_path = base_dir.parent / "props" / prop_fname
 
-            df["audio_path"] = rebase_pathlist(meta_array[:, 0])
+            audio_path = rebase_pathlist(meta_array[:, 0])
+            
+            date_time = [extract_datetime(path) for path in audio_path]
+
+            df["audio_path"] = audio_path
             df["speed"] = meta_array[:, 1]
             df["current"] = meta_array[:, 2]
             df["temperature"] = meta_array[:, 3]
             df["prop_path"] = prop_path
             df["mic_path"] = rebase_pathlist(meta_array[:, 4])
+            df['datetime'] = date_time
 
             df_list.append(df)
 
@@ -155,6 +191,9 @@ def parse_lookup_df(results_folder):
         return pd.DataFrame()
 
     combined_df = pd.concat(df_list, ignore_index=True)
+
+    if clean:
+        combined_df = clean_lookup_df(combined_df)
     
     return combined_df
 
@@ -513,7 +552,7 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
         for i in range(num_mics):
             # now store in the allocated arrays
             propellers[row_idx] = propeller_name
-            speeds[row_idx] = speed
+            speeds[row_idx] = speed_rad
             angles[row_idx] = float(mic_data[i][2])  # angle from mic state file
             distances[row_idx] = float(mic_data[i][3])  # distance from mic state file
             

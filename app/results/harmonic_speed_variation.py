@@ -45,7 +45,7 @@ def plot_3d_regression_scatter(df, coeffs):
     ax.set_title('3D scatter with fitted regression plane')
     plt.legend()
     plt.tight_layout()
-    plt.show()
+
 
 # TODO: filter data by ramp up. need to compare experimental results
 # where the ramp down was excluded because there was hysteresis in the data
@@ -182,7 +182,6 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
     ax.set_yscale('log')
     ax.grid(True, which='both')
     
-    plt.show()
 
 def plot_best_coeffs_3D(hdf, coeffs_df):
 
@@ -250,10 +249,38 @@ if __name__ == "__main__":
     hdf = parse_harmonic_df(lookup_df, aero_coeffs)
 
     hdf_filtered = filter_df(hdf,
-                    { 'propeller' : 'dalprop5045'})
+                    { 'propeller' : '5045_s15'})
     
     coeff_df = speed_distance_regression(hdf_filtered)
     plot_best_coeffs_2D(hdf_filtered, coeff_df)
+
+    # closeness metric for beta1 and beta2
+    coeff_df['dbeta1'] = np.exp(- np.abs(coeff_df['beta1'] - 2) / 2)
+
+    multi_function_plot(coeff_df,
+                        x_var='angle',
+                        y_var='harmonic',
+                        filter_dict={
+                            'propeller': '5045_s15',
+                        },
+                        #group_by='harmonic',
+                        colour_by='dbeta1',
+                        plot_type='scatter',
+                        cmap='viridis')
+    
+    coeff_df['dbeta2'] = np.exp(- np.abs(coeff_df['beta2'] + 1) / 1)
+    
+    multi_function_plot(coeff_df,
+                        x_var='angle',
+                        y_var='harmonic',
+                        filter_dict={
+                            'propeller': '5045_s15',
+                        },
+                        #group_by='harmonic',
+                        colour_by='dbeta2',
+                        plot_type='scatter',
+                        cmap='viridis')
+
     
     plt.show()
     
