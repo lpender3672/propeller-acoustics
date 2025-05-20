@@ -60,7 +60,14 @@ def speed_distance_regression(hdf):
 
     data_rows = []
 
-    for (propeller, angle, harmonic), group_df in hdf.groupby(['propeller', 'angle', 'harmonic']):
+    angle_tolerance = 22.5  # degrees
+    half_width = angle_tolerance / 2
+    angle_centers = np.arange(0, 181, angle_tolerance)
+    angle_bin_edges = np.arange(-half_width, 181 + half_width + 1e-6, angle_tolerance)
+
+    hdf['angle_bin'] = pd.cut(hdf['angle'], bins=angle_bin_edges, labels=False) * angle_tolerance
+
+    for (propeller, angle, harmonic), group_df in hdf.groupby(['propeller', 'angle_bin', 'harmonic']):
         if len(group_df) < 3:
             continue  # not enough points
 
@@ -87,7 +94,7 @@ def speed_distance_regression(hdf):
 
         data_rows.append({
             'propeller': propeller,
-            'angle': angle,
+            'angle_bin': angle,
             'harmonic': harmonic,
             'beta0': beta0,
             'beta1': beta1,
@@ -120,7 +127,7 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
 
     # Plot the data
     speed_harmonic = best_speed_rows.iloc[0]['harmonic']
-    speed_angle = best_speed_rows.iloc[0]['angle']
+    speed_angle = best_speed_rows.iloc[0]['angle_bin']
     speed_propeller = best_speed_rows.iloc[0]['propeller']
 
 
@@ -132,7 +139,7 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
                             y_var='HSPL',
                             filter_dict = {
                                 'propeller': speed_propeller,
-                                'angle': speed_angle,
+                                'angle_bin': speed_angle,
                                 'harmonic': speed_harmonic,
                             },
                             plot_type='scatter',
@@ -150,7 +157,7 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
     ax.grid(True, which='both')
 
     distance_harmonic = best_distance_rows.iloc[0]['harmonic']
-    distance_angle = best_distance_rows.iloc[0]['angle']
+    distance_angle = best_distance_rows.iloc[0]['angle_bin']
     distance_propeller = best_distance_rows.iloc[0]['propeller']
 
     #print(filter_df(hdf, filter_dict = {
@@ -165,7 +172,7 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
                             y_var='HSPL',
                             filter_dict = {
                                 'propeller': distance_propeller,
-                                'angle': distance_angle,
+                                'angle_bin': distance_angle,
                                 'harmonic': distance_harmonic
                             },
                             plot_type='scatter',
@@ -258,7 +265,7 @@ if __name__ == "__main__":
     coeff_df['dbeta1'] = np.exp(- np.abs(coeff_df['beta1'] - 2) / 2)
 
     multi_function_plot(coeff_df,
-                        x_var='angle',
+                        x_var='angle_bin',
                         y_var='harmonic',
                         filter_dict={
                             'propeller': '5045_s15',
@@ -266,12 +273,15 @@ if __name__ == "__main__":
                         #group_by='harmonic',
                         colour_by='dbeta1',
                         plot_type='scatter',
-                        cmap='viridis')
+                        cmap='viridis',
+                        colourbar_label='Speed coefficient closeness metric',
+                        #marker = lambda df: ['o' if row['beta1'] > 2 else 'x' for _, row in df.iterrows()]
+                        )
     
     coeff_df['dbeta2'] = np.exp(- np.abs(coeff_df['beta2'] + 1) / 1)
     
     multi_function_plot(coeff_df,
-                        x_var='angle',
+                        x_var='angle_bin',
                         y_var='harmonic',
                         filter_dict={
                             'propeller': '5045_s15',
@@ -279,7 +289,10 @@ if __name__ == "__main__":
                         #group_by='harmonic',
                         colour_by='dbeta2',
                         plot_type='scatter',
-                        cmap='viridis')
+                        cmap='viridis',
+                        colourbar_label='Distance coefficient closeness metric',
+                        #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
+                        )
 
     
     plt.show()

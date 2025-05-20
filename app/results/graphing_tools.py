@@ -3,7 +3,11 @@ import numpy as np
 import pandas as pd
 
 from pathlib import Path
-from matplotlib.colors import LogNorm
+from matplotlib.colors import (
+    LogNorm,
+    LinearSegmentedColormap,
+    TwoSlopeNorm
+)
 
 from app.routines_audio import (
     parse_lookup_df,
@@ -42,8 +46,15 @@ def filter_df(df, filter_dict):
 
 # TODO: raw spectrum plotting windows of key harmonics
 
+def create_3point_colormap(name='custom_cmap', color_min='blue', color_mid='white', color_max='red'):
+
+    colors = [color_min, color_mid, color_max]
+    cmap = LinearSegmentedColormap.from_list(name, colors, N=256)
+    return cmap
+
+
 def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_polar=False, alpha=0.7, 
-             colour_by=None, cmap='viridis'):
+             colour_by=None, cmap='viridis', two_slope_normalize=False, **kwargs):
     """
     Helper function to plot data with various plot types.
     
@@ -75,6 +86,17 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
     scatter : matplotlib scatter plot object or None
         The scatter plot object (only when scatter plot with colour_by is used)
     """
+
+    # Evaluate kwargs if custom lambda function is provided
+        # Evaluate kwargs if provided
+    evaluated_kwargs = {}
+    for key, value in kwargs.items():
+        if callable(value):
+            evaluated_kwargs[key] = value(group_df)
+        else:
+            evaluated_kwargs[key] = value
+
+
     # Sort data if x_var is distance or angle for better line plots
     if x_var in ['distance', 'angle']:
         group_df = group_df.sort_values(by=x_var)
@@ -92,13 +114,17 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
         if colour_by is not None and colour_by in group_df.columns:
             # Use the specified variable for colouring points
             c_data = group_df[colour_by]
-            scatter = ax.scatter(x_data, y_data, c=c_data, cmap=cmap, label=label, alpha=alpha)
+            c_norm = None
+            if two_slope_normalize:
+                #c_norm = TwoSlopeNorm(vmin=c_data.min(), vcenter=0, vmax=c_data.max())
+                c_norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
+            scatter = ax.scatter(x_data, y_data, c=c_data, cmap=cmap, label=label, alpha=alpha, norm=c_norm, **evaluated_kwargs)
         else:
-            ax.scatter(x_data, y_data, label=label, alpha=alpha)
+            ax.scatter(x_data, y_data, label=label, alpha=alpha, **evaluated_kwargs)
     elif plot_type == 'bar':
-        ax.bar(x_data, y_data, label=label, alpha=alpha)
+        ax.bar(x_data, y_data, label=label, alpha=alpha, **evaluated_kwargs)
     else:  # default to line plot
-        ax.plot(x_data, y_data, 'o-', label=label)
+        ax.plot(x_data, y_data, 'o-', label=label, alpha=alpha, **evaluated_kwargs)
         
     return scatter
 
@@ -122,7 +148,7 @@ def _format_group_name(name, modified_group_by, original_group_by, units):
 def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=None, plot_type='line', 
                   title=None, fig_size=(10, 6), log_bin_factor=0.05,
                   max_groups=10, colour_by=None, cmap='viridis', colourbar_label=None,
-                  log_colourbar=False, units=None):
+                  log_colourbar=False, units=None, **kwargs):
     """
     AI generated docstring to help me remember what this function does.
 
@@ -199,6 +225,10 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     is_polar = plot_type == 'polar' #or (x_var == 'angle' and plot_type == 'line')
     if is_polar:
         fig, ax = plt.subplots(figsize=fig_size, subplot_kw=dict(polar=True))
+
+    two_slope_normalize = cmap == '3point'
+    if two_slope_normalize:
+        cmap = create_3point_colormap(name='custom_cmap', color_min='purple', color_mid='blue', color_max='red')
     
     # only used if colour bar
     scatter_with_colourbar = None
@@ -245,7 +275,8 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
                 label = _format_group_name(name, modified_group_by, group_by, units)
                 
                 scatter = _plot_data(ax, group, x_var, y_var, label=label, plot_type=plot_type, 
-                                   is_polar=is_polar, colour_by=colour_by, cmap=cmap)
+                                   is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
+                                   **kwargs)
                 
                 if scatter is not None:
                     scatter_with_colourbar = scatter
@@ -256,14 +287,16 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
                 label = _format_group_name(name, modified_group_by, group_by, units)
                 
                 scatter = _plot_data(ax, group, x_var, y_var, label=label, plot_type=plot_type, 
-                                   is_polar=is_polar, colour_by=colour_by, cmap=cmap)
+                                   is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
+                                   **kwargs)
                 
                 if scatter is not None:
                     scatter_with_colourbar = scatter
     else:
         # no grouping, plot all data
         scatter_with_colourbar = _plot_data(ax, processed_df, x_var, y_var, plot_type=plot_type, 
-                                         is_polar=is_polar, colour_by=colour_by, cmap=cmap)
+                                         is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
+                                         **kwargs)
         
     # now plotting done maybe add colourbar
     # add labels and title
