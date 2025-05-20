@@ -1,0 +1,25 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usetikzlibrary{arrows.meta, decorations.pathmorphing, positioning}
+
+\tikzset{cg/.style={circle,fill=black,inner sep=1.5pt}}
+
+\begin{document}
+
+\begin{tikzpicture}
+    \begin{scope}[rotate=225, xshift=-2.5cm, yshift=-1cm]
+        \draw[scale=3,thick=3] plot file{../../../app/foils/NACA2412.surf} -- cycle;
+    \end{scope}
+    \draw[thick, dashed] (0,-1) -- (0, 3) node[above] {Rotation Plane};
+    \draw[->] (0,0) -- (1,0) node[right] {$x$};
+    \draw[->] (0,0) -- (1,-1) node[above] {$\xi_0$};
+    \draw[->] (0,0) -- (-1,-1) node[left] {$\gamma_0$};
+    \node[cg] at (0.3,1.64) {};
+    \draw[dashed] (0,0) -- (1,1);
+    \draw[->] (0,0) -- (1,1) node[right, midway] {$MCA$};
+    \draw[->] (1,1) -- (0.4,1.6) node[right, midway] {$FA$};
+    \draw[<->] (-1.4,0.6) -- (0.8,2.8) node[above, midway] {$b$};
+\end{tikzpicture}
+
+\end{document}

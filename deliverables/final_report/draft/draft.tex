@@ -6,6 +6,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}  
 \usepackage{titlesec}
+\usepackage{float}
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 
 \usepackage{fancyhdr}
@@ -24,6 +25,11 @@
 
 \usepackage[backend=biber,style=numeric]{biblatex}
 \addbibresource{../allrefs.bib}
+
+\graphicspath{{figures/}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \title{\vspace{-2cm}Technical Abstract: \textit{Acoustics of Quadcopter Propellers}}
 \author{Louis Pender \\
@@ -44,6 +50,19 @@
 \newpage
 \tableofcontents
 
+\section*{Nomenclature}
+\begin{tabular}{ll}
+    $r$        & Propeller radius [m] \\
+    $B$        & Blade count [-] \\
+    $T$        & Thrust [N] \\
+    $Q$        & Torque [Nm] \\
+    $C_T$      & Thrust coefficient [-] \\
+    $C_Q$      & Torque coefficient [-] \\
+    $R$        & Observer distance [m] \\
+    $\theta$   & Angle of observation [rad] \\
+    $\rho$     & Density of fluid [kg/m\textsuperscript{3}] \\
+\end{tabular}
+
 \newpage
 \section{Introduction}
 
@@ -55,8 +74,12 @@
 
 % study the noise of quadcopter propellers
 
+% hover conditions used throughout. justify this
 
 \section{Theory}
+
+
+
 % sentence about the theory of this report not going into a lot of detail because
 % of the broad scope of the report but will be crucial nevertheless
 The relevant theory in this report covers acoustic and aerodynamic propeller performance.
@@ -65,44 +88,160 @@ requires the definitions of noise and efficiency.
 It will be shown in this section that the two are linked...
 
 % aero side
+\subsection{Actuator Disk Theory}
 
 % explain the origin of thrust and torque
+The thrust of a propeller is the axial force exerted by the air on the propeller due to imparted momentum and profile losses.
+The torque is the rotational force exerted by the air on the propeller and is a result of imparted angular momentum to the air and profile losses.
+% actuator theory
+The propeller can be modelled is a thin disk with a uniform pressure distribution...
 % dependence of these aeroydynamic forces with speed, diameter, introduce invarient coefficients
+% thrust and torque coefficients
+
+\subsection{Blade Element Theory}
 % its more complicated than that, BET: nonlinear version of airfoil theory
 % justify why its more complicated than that. we dont want to overcomplicate things
+Blade element theory (BET) divides blades into annular airfoil elements.
+This allows for the design of twist and chord distributions.
+The lift and drag coefficients of the airfoil sections can be found from angle of attack and Reynolds number.
+Momentum theory applied to the stream annulus, similar to actuator disk theory, calculates the induced velocities from thrust and torque coefficients.
+From these induced velocities, a new angle of attack and Reynolds number can be calculated.
+This process is repeated until a convergence criteria is reached.
+However, a number of simplifications were made in the implementation.
+The airfoil coefficients were assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
+For now, exit swirl velocity is assumed negligible for simplicity. % TODO: include this later
+Tip losses were also neglected, where the blade element theory breaks down.
 
 % derivation of nonlinear solver used to predict aerodynamic performance of propellers
 % extension to swept blades
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../tikz/bem.pdf}
+    \caption{Blade element theory diagram TODO}
+    \label{fig:airfoil}
+\end{figure}
+
+
 % explain that this doesnt include swirl or tip losses where the blade element theory breaks down
 
-% acoustic side
 
-% explain origin of aerodynamic noise, maybe an acoustic analogy
+\subsection{Acoustics}
+
+% acoustic side
+Sound is a pressure fluctuation in a medium.
+The sound pressure level (SPL) is defined as the root mean square of the sound pressure, normalised to a reference pressure.
+Its often expressed logarithmically in decibels.
+
+\begin{equation}
+    SPL = 20 \log_{10} \left( \frac{p'}{p_0} \right)
+\end{equation}
+
 % introduce intuitively how the sound pressure level would be expected to vary with speed, diameter, distance
+Intuitively the SPL of propeller noise would vary with the pressure difference accross the blade.
+It is then expected that the SPL would vary with tip speed squared, where the pressure differential is greatest.
+The pressure differential will also depend on local aerodynamic coefficients but this effect is secondary.
+From conservation of energy the sound intensity must be an inverse square law with distance.
+The sound energy can be shown to be proportional to the square of the sound pressure level...
+This means that the sound pressure level will vary with distance in an inverse law.
+Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
+
+\begin{equation}
+    p' = \frac{\rho (r \Omega)^2}{R/r} g(\theta, \text{geometry}) \label{eq:expected_plaw}
+\end{equation}
+
+Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
+The dependence on $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
+This means sound generated from different pressure differentials along the blade span, or chord, will interfere.
+To build a picture of the function $g()$ its required to model the sound generated over the entire surface of the propeller.
+
 % justify the focus on lift being the primary source of propeller noise
 % introduce concepts of interference with definition of wavenumber to explain directivity.
+% why do we model objects as surface integrals of point sources?
 
-% explain model of dipole point sources (simplest model )
+% how do we model our designs?
+% generalised function of fluid domain, define surface from source distribution
+% explain why these are modelled as monopole, dipole and quadrupole sources respectively
+Ffowcs Williams, following from the work of Lighthill \cite{}, rearranged the Navier stokes equations to account for sound generation by surfaces in motion \cite{}.
+He demonstrated that noise arises from three mechanisms: unsteady displacement, unsteady loading and turbulence.
+For the benefit of understanding, an intuitive explaination is given here.
+Consider a general flow field with a surface in unsteady motion.
+To enforce the 0 surface normal velocity boundary condition on the surrounding fluid, a mass flow source is required.
+This is a monopole source, which is a point source of sound that radiates equally in all directions.
+To balance the rate of momentum imparted to the surface, a momentum source is required in the direction of the force.
+This dipole source is equivilent to a pair of monopole mass flow sources, with opposing strengths, infitisesimally close together.
+A third type of source, called a quadrupole, can originate from turbulence within the flow field and interact with the surface.
+Calculation of the quadrupole source is more involved and outside the scope of this report.
+
+
+
+%To enforce shear and normal stress originating from turbulence, a quadrupole source is required.
+%This forms a tensor with one dimension being direction of force and the other being the direction of fluctuation.
+
 % explain why the integral of many helically convected sources models the propeller
 % explain how changing location of sources can cause destructive interference for some wavenumbers
+
+\begin{figure}[H]
+    \centering 
+        \begin{subfigure}[t]{0.32\textwidth}
+            \centering
+            \includegraphics[height=4cm]{../tikz/topdownblade.pdf}
+            \caption{}
+            \label{fig:topdownblade}    
+        \end{subfigure}
+        \begin{subfigure}[t]{0.32\textwidth}
+            \centering
+            \includegraphics[height=6cm]{../tikz/single_blade_section.pdf}
+            \caption{}
+            \label{fig:single_blade_section}    
+        \end{subfigure}
+        \begin{subfigure}[t]{0.32\textwidth}
+            \centering
+            \includegraphics[height=6cm]{../tikz/superimposed_blade_sections.pdf}
+            \caption{}
+            \label{fig:superimposed_blade_sections}    
+        \end{subfigure}
+        \caption{}
+\end{figure}
+
+\begin{equation}
+    \begin{aligned}
+        \begin{bmatrix}
+            P_{Vm} \\
+            P_{Dm} \\
+            P_{Lm}
+        \end{bmatrix} = - \frac{\rho_0 c_0^2 \sin(\theta )\exp\left(jmB \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right)}{4\pi r} \\
+        \times \int M_r^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB\Omega r_0}{c_0} \sin \theta \right) \begin{bmatrix}
+            k_x^2 t_b \Psi_V(k_x) \\
+            jk_x (C_D / 2) \Psi_D(k_x) \\
+            -jk_y (C_L / 2) \Psi_L(k_x)
+        \end{bmatrix}dz
+    \end{aligned}
+    \label{eq:hansons_result}
+\end{equation}
 
 %% now ready to explain why a spectrum looks the way it does?
 
 % implementation of the model, extension to looped propellers
 
 %%%%
+\subsection{Comparison of propeller geometries}
 % relate the two sides of theory and explain how they are linked
 % reiterate the objective of reducing noise for a given efficiency
+Following previous definitions, the objective can now be better defined to reduce the SPL for a given FOM.
+A propeller of any design can be scaled to have the same FOM as another propeller.
+However, due to practical limitations this is not always possible. 
+This means that a clever way to normalise the SPL relative to the FOM is required.
 % explain the effective radius that equates the figures of merit for different propellers
 % this effective radius non dimensionalises the sound pressure level
-% allowing us to compare the acoustic to efficiency of different propellers 
+% allowing us to compare the acoustic to efficiency of different propellers
+
+A definition of the effective radius
 
 \section{Methodology}
 
 % brief explaination of the overall approach
 % propellers designed using the theoretical model
-% hover conditions used throughout. justify this
 
 \subsection{Experimental}
 % where was the testing done
@@ -111,11 +250,47 @@ The experimental work was carried out in the acoustics lab at University of Camb
 Two separate setups were used to measure the aerodynamic and acoustic performance of the propellers.
 The primary reason for this separation was to ensure better measurements in each domain.
 The setups were designed to have near identical propeller and motor conditions, allowing for a direct comparison of the results.
+The drone motor, Emax ECO II Series 2207 1700KV, was used to drive the propellers with an Odrive S1 motor controller.
+This controller allowed for precise measurement and control of both motor speed and torque.
+A high speed AS5047P encoder was used to measure the angular speed of the motor.
+The same 6 cell, 3300 mAh lithium polymer battery was also used to power the motor for both setups.
 
 \subsubsection{Aerodynamic setup}
 The aerodynamic setup is required to measure angular speed, thrust and torque for a range of angular speeds.
-A drone motor, specifically the Emax ECO II Series 2207 1700KV, was used to drive the propellers with an Odrive S1 motor controller.
+Load cells to measure induced strain were chosen over null balance scales due to the complexity of setup required to measure both thrust and torque simultaneously.
+The speed is measured by the Odrive S1 controller using a luenberger observer, which estimates the speed from a combination of encoder and current measurements.
+Even Measuring the small torque produced by the motor proved to be a challenge with 3 setups being designed, built and tested before a suitable solution was found.
+This originated from a misunderstanding of the load cells that were purchased for the project.
+The first setup shown in figure \ref{fig:aero1} used two 1kg load cells in series, the second setup \ref{fig:aero2} used a 200g torque cell for increased sensitivity.
+The final setup consisted of a moving platform with ceramic bearings to reduce friction, and the 200g load cell positioned 3cm from the motor shaft.
+The load cells were sampled at 10Hz using a HX711 ADC and a Raspberry Pi Pico.
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[t]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../figures/aero1.pdf}
+            \caption{}
+            \label{fig:aero1}    
+        \end{subfigure}
+        \begin{subfigure}[t]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../figures/aero2.pdf}
+            \caption{}
+            \label{fig:aero2}    
+        \end{subfigure}
+        \begin{subfigure}[t]{0.32\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../figures/aero3.pdf}
+            \caption{}
+            \label{fig:aero3}    
+        \end{subfigure}
+        \caption{Iterations of the aerodynamic test rig}
+\end{figure}
+
+
 % show the setup used and explain the components
+
 % 200g, 1Kg load cells, hx711@10Hz pi pico. Odrive S1, AS5047p encoder, 10kOhm motor thermistor
 % explain some of the choices made in the setup
 % explaination of calibration procedure
@@ -131,6 +306,15 @@ A drone motor, specifically the Emax ECO II Series 2207 1700KV, was used to driv
 \subsubsection{Data Collection and Processing}
 % software used, majority python, C++
 % key libraries used numpy, scipy, matplotlib
+The data collection software was written in Python and has been made publicly available.
+Odrive and NI-DAQmx libraries are required to interface with the hardware,
+which is done on separate data collection threads to ensure concurrent data collection.
+Audio data was written directly to file to prevent data loss at the high data rates required.
+Motor and load cell data were collected at much lower rates and so were buffered and transferred to the main thread for plotting in the GUI.
+The GUI was built using PyQt6 
+% nidaqmx had to write to file to prevent data loss
+% buffers were filled in each thread, and transferred to the main thread for plotting in the GUI.
+% control saftey features were implemented such watchdog timers, speed and current limits.
 
 % rms normalised hanning window to prevent spectral leakage
 % frequency domain interpolation of microphone calibration data
@@ -201,6 +385,17 @@ A drone motor, specifically the Emax ECO II Series 2207 1700KV, was used to driv
 \subsection{Future Work}
 Alongside the improvements mentioned in the previous section, there are a number of avenues for future work.
 % what questions were left unanswered
+
+\section{Appendix}
+
+\subsection{Ffowcs Williams Equation}
+
+For a function $f(\mathbf{x}, t)$ that defines a surface $ S(t) = \{\mathbf{x} \in \mathbb{R}^3 : f(\mathbf{x}, t) = 0\}$ the density purturbation $\rho$ from the motion of the surface satisfies the wave equation:
+\begin{equation}
+    c_0^2 \square \rho = \frac{\partial^2}{\partial x_i \partial x_j} T_{ij} + \frac{\partial}{\partial t} \left( \rho_0 v_n |\nabla f| \delta(f) \right) - \frac{\partial}{\partial x_i} \left( p_{ij} n_j |\nabla f| \delta(f) \right)
+\end{equation}
+This result is a direct re-arrangement of the Navier-Stokes equations, where $T_{ij}$ is the stress tensor, $p_{ij}$ is the pressure tensor, and $n_j$ is the normal vector to the surface.
+
 
 \printbibliography
 

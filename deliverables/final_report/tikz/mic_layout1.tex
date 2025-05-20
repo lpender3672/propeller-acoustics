@@ -1,0 +1,32 @@
+
+\begin{tikzpicture}
+    \def\radius{3cm}
+    \def\micSize{0.5}
+
+    %\node[draw, circle, fill=blue!20, minimum size=1cm] at (0, 0) {Center};
+
+    \foreach \i in {150,165,180} {
+        \path
+            (\i:\radius) pic[scale=\micSize, transform shape] {microph};
+    }
+
+    \draw[dashed, gray] (120:\radius) arc[start angle=120, end angle=240, radius=\radius];
+    
+    % prop
+    \begin{scope}[rotate=225,  xshift=-0.45cm]
+        \draw[scale=1,thick=3, xscale=0.5] node[left=0.5cm] {}
+            plot file{../../app/foils/NACA0012.surf} -- cycle;
+    \end{scope}
+    \begin{scope}[rotate=225-180, xshift=-0.45cm]
+        \draw[scale=1,thick=3, xscale=0.5] node[left=0.5cm] {}
+            plot file{../../app/foils/NACA0012.surf} -- cycle;
+    \end{scope}
+
+    \draw[dashed] (0,0) -- (165:\radius) node[right, xshift=0.2cm] {Observer};
+    \draw[->] (0,0) -- (225:\radius) node[midway, below, xshift=0.5cm] {$r = 10r_T$};
+
+    \draw[->] (0,0) -- (315:0.4*\radius) node[midway, below, xshift=0.5cm] {$\Omega$};
+    \draw[->] (315:0.2*\radius) arc[start angle=315, end angle=165, radius=0.2*\radius] node[left] {$\theta$};
+
+
+\end{tikzpicture}

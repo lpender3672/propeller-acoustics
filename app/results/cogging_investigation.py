@@ -10,7 +10,7 @@ from app.routines import (
 
 # ok so open aero data of dalprop5045
 
-def get_speed_time_data(
+def get_prop_speed_time_data(
     prop_result_path,
     speed_index
     ):
@@ -41,7 +41,7 @@ def plot_rfft_speed(
     ax=None,
     label=None,
 ):
-    time_data, speed_data = get_speed_time_data(prop_result_path, speed_index)
+    time_data, speed_data = get_prop_speed_time_data(prop_result_path, speed_index)
 
     hanning = np.hanning(len(time_data))
     hanning = hanning / np.mean(hanning)
@@ -62,13 +62,13 @@ def plot_rfft_speed(
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("Amplitude")
 
-if __name__ == "__main__":
+def plot_prop_freq():
 
     prop_result_path = Path("app/results/dalprop5045.prop/")
     speed_index = 1
     # identified a problem with the speed index
 
-    time_data, speed_data = get_speed_time_data(prop_result_path, speed_index)
+    time_data, speed_data = get_prop_speed_time_data(prop_result_path, speed_index)
     
     print(time_data.shape)
 
@@ -77,4 +77,45 @@ if __name__ == "__main__":
     plot_rfft_speed(prop_result_path, speed_index)
 
     plt.show()
-    
+
+
+def specific_test_speed_time_data(fpath):
+    # this loads the the specific cogging test data
+    fpath = Path(fpath).resolve()
+
+    motor_data = np.load(fpath)
+    time_data = motor_data[:, 0]
+    speed_data = motor_data[:, 1] * 2 * np.pi / 60
+
+    #
+    sample_freq = np.mean( 1 / np.diff(time_data) )
+    #sample_freq = np.max( 1 / np.diff(time_data))
+
+
+    print("Average sample frequency: ", sample_freq)
+
+    ft_data = np.fft.rfft(speed_data)
+    freq = np.fft.rfftfreq(len(speed_data), 1 / sample_freq)
+
+    fig, ax = plt.subplots()
+    ax.plot(time_data, speed_data)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Speed (rad/s)")
+    ax.set_title(fpath.name)
+
+
+    fig, ax = plt.subplots()
+    ax.plot(freq, np.abs(ft_data))
+    ax.set_xlabel("Frequency (Hz)")
+    ax.set_ylabel("Amplitude")
+    ax.set_ylim(0, 600)
+    ax.set_title(fpath.name)
+
+if __name__ == "__main__":
+
+    specific_test_speed_time_data("app/results/cogging/0speed.npy")
+    specific_test_speed_time_data("app/results/cogging/3000speed.npy")
+    specific_test_speed_time_data("app/results/cogging/6000speed.npy")
+    specific_test_speed_time_data("app/results/cogging/12000speed.npy")
+
+    plt.show()

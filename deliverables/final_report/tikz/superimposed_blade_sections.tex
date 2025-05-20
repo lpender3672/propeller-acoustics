@@ -1,0 +1,29 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, decorations.pathmorphing, positioning}
+
+\tikzset{cg/.style={circle,fill=black,inner sep=1.5pt}}
+
+
+\begin{document}
+
+\begin{tikzpicture}
+    \begin{scope}[rotate=225, xshift=-1cm, yshift=-1cm]
+        \draw[scale=3,thick=3] plot file{../../../app/foils/NACA2412.surf} -- cycle;
+    \end{scope}
+    \begin{scope}[rotate=225, xshift=1cm, yshift=1cm]
+        \draw[scale=3,thick=3] plot file{../../../app/foils/NACA2412.surf} -- cycle;
+    \end{scope}
+    \draw[thick, dashed] (0,-3) -- (0, 2);
+    \draw[->] (0,0) -- (1,0) node[right] {$x$};
+    \draw[->] (0,0) -- (2,-2) node[above] {$\xi_0$};
+    \draw[->] (0,0) -- (-3,-3) node[left] {$\gamma_0$};
+    \node[cg] at (-0.75,0.59) {};
+    \node[cg] at (-0.75,-2.26) {};
+    \draw[dashed] (0,0) -- (1,1);
+    \draw[->] (-1.5,-1.5) -- (-2.3,-0.7) node[left] {$FA_1$};
+    \draw[->] (-2,-2) -- (-1.3,-2.7) node[left, xshift=-0.1cm] {$FA_2$};
+    \draw[->] (1.5,-1.5) -- (0,-1.5) node[right, midway] {$MCA_2$};
+\end{tikzpicture}
+
+\end{document}
