@@ -264,7 +264,7 @@ if __name__ == "__main__":
     # closeness metric for beta1 and beta2
     coeff_df['dbeta1'] = np.exp(- np.abs(coeff_df['beta1'] - 2) / 2)
 
-    multi_function_plot(coeff_df,
+    fig, ax = multi_function_plot(coeff_df,
                         x_var='angle_bin',
                         y_var='harmonic',
                         filter_dict={
@@ -280,7 +280,7 @@ if __name__ == "__main__":
     
     coeff_df['dbeta2'] = np.exp(- np.abs(coeff_df['beta2'] + 1) / 1)
     
-    multi_function_plot(coeff_df,
+    fig, ax = multi_function_plot(coeff_df,
                         x_var='angle_bin',
                         y_var='harmonic',
                         filter_dict={
@@ -294,6 +294,7 @@ if __name__ == "__main__":
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
 
+    fig.savefig('deliverables/')
     
     plt.show()
     

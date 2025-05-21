@@ -2371,6 +2371,7 @@
     <bcf:citekey order="8" intorder="1">lighthill_1952</bcf:citekey>
     <bcf:citekey order="9" intorder="1">ffowcs_1969</bcf:citekey>
     <bcf:citekey order="10" intorder="1">hanson_theory</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">endail_hx711_pico_c</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nty">

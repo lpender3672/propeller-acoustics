@@ -116,8 +116,9 @@ The propeller can be modelled is a thin disk with a uniform pressure distributio
 % torque, thrust coefficients and FoM definition
 
 \begin{equation}
-    3x
+    FM = \frac{C_T^{2/3}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{2/3}}{Q} \frac{1}{R}
 \end{equation}
+
 
 \subsection{Blade Element Theory}
 % its more complicated than that, BET: nonlinear version of airfoil theory
@@ -280,6 +281,18 @@ This controller allowed for precise measurement and control of both motor speed 
 A high speed AS5047P encoder was used to measure the angular speed of the motor.
 The same 6 cell, 3300 mAh lithium polymer battery was also used to power the motor for both setups.
 
+
+\subsection{Saftey}
+The safety of the experimental setup was a key consideration throughout the project.
+The testing required high speed rotating propellers which could cause serious injury.
+The custom 3D printed propellers were expected to be pushed to their material limits and so the risk of failure was high.
+For these reasons, 3D printed propellers were tested soley in the foam anechoic chamber with the door closed and the operator outside.
+The
+
+For this reason, the operater 
+A watchdog timer was enabled with the controller to ensure safe shutdown if communication was lost.
+
+
 \subsubsection{Aerodynamic setup}
 The aerodynamic setup is required to measure angular speed, thrust and torque for a range of angular speeds.
 Load cells to measure induced strain were chosen over null balance scales due to the complexity of setup required to measure both thrust and torque simultaneously.
@@ -288,7 +301,6 @@ Even Measuring the small torque produced by the motor proved to be a challenge w
 This originated from a misunderstanding of the load cells that were purchased for the project.
 The first setup shown in figure \ref{fig:aero1} used two 1kg load cells in series, the second setup \ref{fig:aero2} used a 200g torque cell for increased sensitivity.
 The final setup consisted of a moving platform with ceramic bearings to reduce friction, and the 200g load cell positioned 3cm from the motor shaft.
-The load cells were sampled at 10Hz using a HX711 ADC and a Raspberry Pi Pico.
 
 \begin{figure}[H]
         \centering
@@ -328,18 +340,39 @@ The load cells were sampled at 10Hz using a HX711 ADC and a Raspberry Pi Pico.
 % control of variables
 
 
-\subsubsection{Data Collection and Processing}
+\subsubsection{Data Collection}
 % software used, majority python, C++
 % key libraries used numpy, scipy, matplotlib
-The data collection software was written in Python and has been made publicly available.
+
+For saftey reasons discussed, the data collection had to be done remotely from outside the chamber.
+This required responsive control and monitoring of the setup.
+A sophisticated data collection tool was therefore developed to meet these requirements.
+This also allowed for automation of variable speed measurements, improving repeatability and the amount of data collected.
+
+The tool is written as a Python application and has been made publicly available.
+Graphs of motor temperature, current and speed are displayed in real time.
+If the load cells are connected, the uncalibrated values are plotted in real time.
+If the microphone DAQ is connected the real time spectrum is displayed.
+A speed setpoint can be entered and upon pressing start, the motor will ramp up to the setpoint.
+There are buttons for a single audio recording, audio pyramid and aero pyramid.
+% aero pyramid
+% audio pyramid
+
+% figure
+
+
 Odrive and NI-DAQmx libraries are required to interface with the hardware,
 which is done on separate data collection threads to ensure concurrent data collection.
 Audio data was written directly to file to prevent data loss at the high data rates required.
-Motor and load cell data were collected at much lower rates and so were buffered and transferred to the main thread for plotting in the GUI.
-The GUI was built using PyQt6 
+Motor and load cell data were collected at much lower rates and so were buffered and transferred to the main thread for plotting.
+Load cell voltages were amplified by 128 and then converted to a 24 bit integer by HX711 chips.
+The data was read by a Raspberry Pi Pico microcontroller and transmitted over serial using a C program based on a public library \cite{endail_hx711_pico_c}.
+
 % nidaqmx had to write to file to prevent data loss
 % buffers were filled in each thread, and transferred to the main thread for plotting in the GUI.
 % control saftey features were implemented such watchdog timers, speed and current limits.
+
+\subsubsection{Data Processing}
 
 % rms normalised hanning window to prevent spectral leakage
 % frequency domain interpolation of microphone calibration data
