@@ -48,8 +48,7 @@ def calc_mean_forces(aero_data, tcal_data, qcal_data):
     force_data = aero_data["force_data"]
     motor_data = aero_data["motor_data"]
 
-    mean_speed = np.mean(motor_data[:, :, 1], axis=1) * 2 * np.pi / 60
-    mean_speed = np.abs(mean_speed)
+    mean_speed = np.mean(motor_data[:, :, 1], axis=1) * -2 * np.pi / 60
 
     mean_raw_forces = np.mean(force_data[:, :, 1:], axis=1)
 
