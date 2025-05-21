@@ -2358,9 +2358,19 @@
   <!-- CITATION DATA -->
   <!-- SECTION 0 -->
   <bcf:bibdata section="0">
-    <bcf:datasource type="file" datatype="bibtex" glob="false">../allrefs.bib</bcf:datasource>
+    <bcf:datasource type="file" datatype="bibtex" glob="false">../../allrefs.bib</bcf:datasource>
   </bcf:bibdata>
   <bcf:section number="0">
+    <bcf:citekey order="1" intorder="1">shima_toroidal</bcf:citekey>
+    <bcf:citekey order="2" intorder="1">ijerph20031955</bcf:citekey>
+    <bcf:citekey order="3" intorder="1">ijerph20031955</bcf:citekey>
+    <bcf:citekey order="4" intorder="1">hanson_influence</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">DOBRZYNSKI1993123</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">doi:10.2514/3.22938</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">shima_toroidal</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">lighthill_1952</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">ffowcs_1969</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">hanson_theory</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nty">
