@@ -402,8 +402,8 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
         'distance': distances,
         'harmonic': harmonic_values,
         'RMS' : hrms_values,
-        'HSPL': hspl_values,
-        'ndHSPL': ndhspl_values
+        'SPL': hspl_values,
+        'ndSPL': ndhspl_values
     })
 
     # Save processed data to cache if caching is enabled
@@ -581,8 +581,8 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
         'angle': angles,
         'distance': distances,
         'RMS': rms_values,
-        'SPL': spl_values,
-        'ndSPL': ndspl_values
+        'OASPL': spl_values,
+        'ndOASPL': ndspl_values
     })
 
     # Save processed data to cache if caching is enabled

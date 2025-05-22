@@ -28,14 +28,14 @@ from app.routines import (
 
 from app.bem import (
     betz_off_design, 
-    guaranteed_convergence_BEM
+    guaranteed_convergence_BEM,
+    static_bem
 )
 from app.geometry import (
     generate_and_save_propeller_mesh, 
     generate_propeller_mesh
 )
 from app.hanson import (
-    calc_noise_components, 
     hanson, 
     hanson_secondary_variables
 )
@@ -929,6 +929,74 @@ def main():
 
     plt.show()
 
+def quick_plot(oper, prop, ms=np.arange(1, 10), ax = None):
+
+    totals = np.zeros(ms.shape)
+    for i, m in enumerate(ms):
+        PVm, PLm, PDm = get_radial_magnitudes(oper, prop, m)
+        csum = PVm + PLm + PDm
+        total = 20 * np.log10(np.sqrt(np.sum(2 * csum * np.conj(csum))) / 2e-5)
+        totals[i] = total
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+
+    ax.plot(ms, totals, label="total sound")
+
+    return ax
+
+
+
+def main2():
+
+    av = AppVars()
+
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+
+    propfiles = [
+        "app/props/printed5045.prop",
+        "app/props/5045_s15.prop",
+        "app/props/5045_s30.prop",
+        "app/props/5045_s45.prop",
+    ]
+    av.airfoil_data = load_foil("app/foils/naca0018.surf")
+    av.xfoil_data = run_xfoil(av.airfoil_data)
+
+    for fname in propfiles:
+
+        av.prop, av.dist = load_prop_from_file(fname, True)
+        av.oper = load_oper_from_file("app/app_vars.json")
+        # airfoil_data = load_foil(prop['foil_path'])
+        # takes forever running xfoil in the loop
+        
+        av = static_bem(av)
+
+        av.res["alpha"] = 5 * np.ones(av.prop["nr"])
+
+        if not av.res["converged"]:
+            print("BEM failed")
+            return
+
+        oper, prop, _ = hanson_secondary_variables(av)
+
+        #plot_harmonic_components(
+        #    oper,
+        #    prop,
+        #    ms=np.arange(1, 10),
+        #    ax=ax
+        #)
+
+        quick_plot(
+            oper,
+            prop,
+            ms=np.arange(1, 10),
+            ax=ax,
+        )
+
+    plt.show()
+
+    
+
 
 if __name__ == "__main__":
-    main()
+    main2()

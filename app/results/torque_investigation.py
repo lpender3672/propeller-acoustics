@@ -23,7 +23,10 @@ def torque_from_motor_data(prop_result_path='app/results/dalprop5045.prop', plot
     noload_motor_data = np.load(noloadf)["motor_data"]
     load_motor_data = np.load(loadf)["motor_data"]
 
-    kt = 0.004864705882352941 # torque constant
+    kt = 3/2 * 1/np.sqrt(3) * 60 / (2*np.pi) * 1/1700 # torque constant
+    # conflicting information on the current measurement
+    # confirmed to be current ampltude, not RMS so to get rms, dividing by sqrt(2) is correct
+    kt /= np.sqrt(2)
 
     load_speeds = np.mean(load_motor_data[:, :, 1], axis=1) * -2 * np.pi / 60
     noload_speeds = np.mean(noload_motor_data[:, :, 1], axis=1) * -2 * np.pi / 60
@@ -117,7 +120,9 @@ def compare_torque(prop_result_path):
 
     xlo, xhi = ax.get_xlim()
     x = np.linspace(xlo, xhi, 100)
-    ax.plot(x, 1e-8 * x**2, label="x^2")
+    k = mtq[0] / msp[0]**2
+
+    ax.plot(x, k * x**2, label="x^2")
     ax.legend()
     ax.grid(True, which="both")
 

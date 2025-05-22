@@ -159,9 +159,9 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     processed_df : pandas DataFrame
         DataFrame containing the propeller acoustics data
     x_var : str
-        Variable to plot on x-axis ('angle', 'speed', 'distance', 'propeller', 'SPL')
+        Variable to plot on x-axis ('angle', 'speed', 'distance', 'propeller', 'OASPL')
     y_var : str
-        Variable to plot on y-axis ('angle', 'speed', 'distance', 'propeller', 'SPL')
+        Variable to plot on y-axis ('angle', 'speed', 'distance', 'propeller', 'OASPL')
     filter_dict : dict, optional
         Dictionary of filters to apply, e.g., {'speed': (1000, 2000), 'angle': [0, 90, 180]}
     group_by : str or list, optional
@@ -179,7 +179,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     max_groups : int, optional
         Maximum number of groups to plot (default: 10). If more groups are found, only the most interesting ones are plotted.
     colour_by : str, optional
-        Variable to use for colour mapping in scatter plots (e.g., 'speed', 'SPL')
+        Variable to use for colour mapping in scatter plots (e.g., 'speed', 'OASPL')
     cmap : str, optional
         colourmap name to use for colour mapping (default: 'viridis')
     colourbar_label : str, optional
@@ -187,7 +187,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     log_colourbar : bool, optional
         Whether to use a logarithmic scale for the colourbar (default: False)
     units : dict, optional
-        Dictionary mapping variable names to their units (e.g., {'speed': 'rad/s', 'SPL': 'dB'})
+        Dictionary mapping variable names to their units (e.g., {'speed': 'rad/s', 'OASPL': 'dB'})
         If None, default units will be used.
         
     Returns:
@@ -197,7 +197,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
     # Default units dictionary
     units = {
         'speed': 'rad/s',
-        'SPL': 'dB',
+        'OASPL': 'dB',
         'angle': '°',
         'distance': 'mm',
         'RMS': 'Pa'
@@ -368,18 +368,19 @@ if __name__ == "__main__":
 
     hdf = parse_harmonic_df(lookup_df, aero_coeffs, harmonics=10)
 
- 
+    print(hdf.columns)
+
+    pis = 2*np.pi/60
     fig, ax = multi_function_plot(pdf, 
                             x_var='angle', 
-                            y_var='SPL',
-                            filter_dict={'distance' : 1270, 'speed' : (9500, 10500)},
+                            y_var='OASPL',
+                            filter_dict={'distance' : 1270, 'speed' : (9500*pis, 10500*pis)},
                             group_by=['propeller'],
                             plot_type='line')
-    
 
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
-                            y_var='ndSPL',
+                            y_var='ndOASPL',
                             filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90},
                             #group_by=[],
                             plot_type='scatter',
@@ -392,8 +393,8 @@ if __name__ == "__main__":
     
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
-                            y_var='ndSPL',
-                            filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90, 'speed' : (10000, 13000)},
+                            y_var='ndOASPL',
+                            filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90, 'speed' : (10000*pis, 13000*pis)},
                             group_by=['speed'],
                             plot_type='line',
                             #colour_by='speed',

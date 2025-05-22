@@ -114,6 +114,12 @@ def calc_aero_coefficients(
     for prop_result_path in results_path.glob("**/*.prop/"):
 
         full_path = Path(prop_result_path).resolve()
+
+        if 'old' in full_path.parts:
+            continue
+        if 'noprop.prop' in full_path.parts:
+            continue
+
         fprop = full_path.parent.parent / "props" / full_path.name
         if not fprop.exists():
             print("Warning: No prop file found for", prop_result_path)

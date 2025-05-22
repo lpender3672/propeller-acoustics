@@ -23,7 +23,7 @@ def plot_3d_regression_scatter(df, coeffs):
 
     speed = df['speed'].values * 2 * np.pi / 60  # rad/s
     distance = df['distance'].values * 1e-3      # m
-    SPL = df['HSPL'].values
+    SPL = df['SPL'].values
 
     x = np.log10(speed)
     y = np.log10(distance)
@@ -73,7 +73,7 @@ def speed_distance_regression(hdf):
 
         speed = group_df['speed'].values * 2 * np.pi / 60  # to rad/s
         distance = group_df['distance'].values * 1e-3 # to m
-        SPL = group_df['HSPL'].values
+        SPL = group_df['SPL'].values
 
         logSpeed = np.log10(speed)
         logDistance = np.log10(distance)
@@ -136,7 +136,7 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
     # Plot the data
     fig, ax = multi_function_plot(hdf, 
                             x_var='speed', 
-                            y_var='HSPL',
+                            y_var='SPL',
                             filter_dict = {
                                 'propeller': speed_propeller,
                                 'angle_bin': speed_angle,
@@ -169,7 +169,7 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
     # Plot the data
     fig, ax = multi_function_plot(hdf, 
                             x_var='distance', 
-                            y_var='HSPL',
+                            y_var='SPL',
                             filter_dict = {
                                 'propeller': distance_propeller,
                                 'angle_bin': distance_angle,
