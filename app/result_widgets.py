@@ -4,14 +4,14 @@ import sounddevice as sd
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QGridLayout,
     QPushButton,
     QTabWidget,
-    QVBoxLayout,
     QWidget,
+    QLabel,
 )
 
 from app.bem import (
@@ -53,6 +53,8 @@ class PlotCanvas(FigureCanvas, QWidget):
 
         if hideaxes:
             self.ax.axis("off")
+
+        self.fig.tight_layout()
 
     def add_lines(self, line_data, linestyle=None, label=None):
         if isinstance(line_data, list):
@@ -298,13 +300,15 @@ class ResultsTable(OutputTable):
 
 
 class AudioPlayerThread(QThread):
+    finished = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.audio_data = None
 
         # play 5s of audio
-        self.play_time = 5
+        self.sample_rate = 44100
         self.playback_rate = 1.0
+        self.play_time = 1.0
 
     def run(self):
         if self.audio_data is not None:
@@ -315,9 +319,13 @@ class AudioPlayerThread(QThread):
 
                 stream.write(self.audio_data)
                 sd.sleep(int(self.play_time * 1000))
+            
+        self.finished.emit()
 
     def set_audio_data(self, audio_data):
         self.audio_data = audio_data
+        if audio_data is not None:
+            self.play_time = len(audio_data) / self.sample_rate
 
 
 def synthesise(f0, harmonic_db, fs=44100, duration=1.0):
@@ -359,8 +367,7 @@ class NoiseResultsWidget(QWidget):
 
         self.hmonic_plot = PlotCanvas(self, hideaxes=True)
 
-        self.layout.addWidget(self.directivity, 0, 0, 2, 2)
-        self.layout.addWidget(self.directivity_toolbar)
+        
 
         self.interference_tab = QTabWidget(self)
         interference_tab_widget = QWidget(self)
@@ -368,12 +375,11 @@ class NoiseResultsWidget(QWidget):
 
         self.harmonic_select = QComboBox(self)
         self.harmonic_select.addItems([str(i) for i in range(1, 30)])
-        interference_tab_layout.addWidget(self.harmonic_select, 0, 0)
 
-        self.thickness_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
-        self.lift_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
-        self.drag_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
-        self.total_interference = PlotCanvas(interference_tab_widget, hideaxes=True)
+        self.thickness_interference = PlotCanvas(interference_tab_widget, hideaxes=False)
+        self.lift_interference = PlotCanvas(interference_tab_widget, hideaxes=False)
+        self.drag_interference = PlotCanvas(interference_tab_widget, hideaxes=False)
+        self.total_interference = PlotCanvas(interference_tab_widget, hideaxes=False)
 
         self.thickness_interference.line_colors = ["blue"]
         self.lift_interference.line_colors = ["red"]
@@ -383,26 +389,53 @@ class NoiseResultsWidget(QWidget):
         self.directivity.line_colors = ["blue", "red"]
 
         interference_tab_layout.addWidget(self.thickness_interference, 0, 0)
-        interference_tab_layout.addWidget(self.lift_interference, 0, 1)
-        interference_tab_layout.addWidget(self.drag_interference, 1, 0)
-        interference_tab_layout.addWidget(self.total_interference, 1, 1)
+        interference_tab_layout.addWidget(self.lift_interference, 1, 0)
+        interference_tab_layout.addWidget(self.drag_interference, 1, 1)
+        interference_tab_layout.addWidget(self.total_interference, 0, 1)
 
+        
         interference_tab_widget.setLayout(interference_tab_layout)
         self.interference_tab.addTab(interference_tab_widget, "Interference")
         self.interference_tab.addTab(self.hmonic_plot, "Harmonics")
 
-        self.layout.addWidget(self.interference_tab, 2, 0, 2, 2)
-
         self.directivity.setMinimumHeight(400)
-
-        self.harmonic_select.currentIndexChanged.connect(self.internal_update)
 
         # audio play
         self.audio_player = AudioPlayerThread(self)
         self.audio_player.set_audio_data(None)
 
         self.play_audio_button = QPushButton("Play Audio", self)
-        self.play_audio_button.clicked.connect(self.audio_player.run)
+        
+        self.layout.addWidget(QLabel("Harmonic"), 0, 0, 1, 1)
+        self.layout.addWidget(self.harmonic_select, 0, 1, 1, 1)
+        self.layout.addWidget(self.play_audio_button, 3, 0, 1, 2)
+
+        self.layout.addWidget(self.directivity, 1, 0, 2, 2)
+        self.layout.addWidget(self.directivity_toolbar, 2, 0, 1, 2)
+        self.layout.addWidget(self.interference_tab, 4, 0, 2, 2)
+
+        self.harmonic_select.currentIndexChanged.connect(self.internal_update)
+        self.play_audio_button.clicked.connect(self.on_audio_play)
+        self.audio_player.finished.connect(self.on_audio_stop)
+
+    def on_audio_play(self):
+        # change name, remove old signal
+        self.play_audio_button.setText("Stop Audio")
+        self.play_audio_button.clicked.disconnect()
+        self.play_audio_button.clicked.connect(self.on_audio_stop)
+        self.audio_player.start()
+
+    def on_audio_stop(self):
+        self.play_audio_button.setText("Play Audio")
+        self.play_audio_button.clicked.disconnect()
+        self.play_audio_button.clicked.connect(self.on_audio_play)
+        audio_data = self.audio_player.audio_data.copy()
+
+        self.audio_player.terminate()
+        self.audio_player = AudioPlayerThread(self)
+        self.audio_player.set_audio_data(audio_data)
+        self.audio_player.finished.connect(self.on_audio_stop)
+
 
     def internal_update(self):
         self.update_results(self.avs)
@@ -417,7 +450,8 @@ class NoiseResultsWidget(QWidget):
         oper, prop, obs = hanson_secondary_variables(avs)
         theta = obs["theta"]
 
-        ms = np.arange(1, 30)
+        ms = np.arange(1, 5)
+        
         PVm, PDm, PLm = hanson(oper, prop, obs, ms, False)
         # V, L, D, total = sum_harmonics(PVm, PDm, PLm, avs.oper['pref'])
 
@@ -433,8 +467,8 @@ class NoiseResultsWidget(QWidget):
         # hmonics = calc_harmonics(HVm, HDm, HLm, avs.oper['pref'])
 
         f0 = oper["Omega"] * prop["B"] / (2 * np.pi)
-        # synthesised_signal = synthesise(f0, hmonics, duration=1.0)
-        # self.audio_player.set_audio_data(synthesised_signal)
+        synthesised_signal = synthesise(f0, np.arange(1, 20), duration=1.0)
+        self.audio_player.set_audio_data(synthesised_signal)
 
         self.directivity.clear_plot()
 

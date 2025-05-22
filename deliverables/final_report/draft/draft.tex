@@ -92,18 +92,80 @@ A fast method to predict the tonal noise would enable iterative design methods t
 % hover conditions used throughout. justify this
 
 \section{Theory}
-
-
-
 % sentence about the theory of this report not going into a lot of detail because
 % of the broad scope of the report but will be crucial nevertheless
-The relevant theory in this report covers acoustic and aerodynamic propeller performance.
-The objective to reduce the noise for a given efficiency, or to increase the efficiency for a given noise level
-requires the definitions of noise and efficiency.
-It will be shown in this section that the two are linked...
+
+This section outlines theory behind aerodynamic and acoustic performance of propellers.
+Due to the broad scope of this report, only the most relevant principles will be briefly introduced.
+Despite this brevity, these concepts are central to the objective of reducing noise for a given efficiency, or increasing efficiency for a given noise level.
+The theory will show how noise and efficiency are inherently coupled, providing a foundation for comparing different propeller designs.
+
+\subsection{Acoustic definitions and relationships}
+% acoustic side
+Sound is a pressure fluctuation in a medium.
+The overall sound pressure level (OASPL) is defined as the root mean square of the sound pressure, normalised to a reference pressure.
+Its expressed logarithmically, as shown in equation \ref{eq:OASPL}.
+Noise at discrete frequency intervals will later be shown to be of importance and so a definition of this frequency dependent sound pressure level (SPL) is provided in equation \ref{eq:SPL}.
+
+\begin{equation}
+    OASPL = 20 \log_{10} \left( \frac{p_\text{rms}}{p_\text{ref}} \right) \label{eq:OASPL}
+\end{equation}
+
+\begin{equation}
+    SPL(m) = 10 \log_{10} \frac{\int^{m f_0 + \varepsilon}_{m f_0 - \varepsilon} PSD(f) df }{p^2_\text{ref}} \label{eq:SPL}
+\end{equation}
+
+% introduce intuitively how the sound pressure level would be expected to vary with speed, diameter, distance
+Intuitively the SPL of propeller noise would vary with the pressure difference accross the blade.
+It is then expected that the SPL would vary with tip speed squared, where the pressure differential is greatest.
+The pressure differential will also depend on local aerodynamic coefficients but this effect is secondary.
+From conservation of energy the sound intensity must be an inverse square law with distance.
+The sound energy can be shown to be proportional to the square of the sound pressure level...
+This means that the sound pressure level will vary with distance in an inverse law.
+Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
+
+\begin{equation}
+    p_\text{rms} = \frac{\rho (r \Omega)^2}{R/r} g(\theta, \text{geometry}) \label{eq:expected_plaw}
+\end{equation}
+
+Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
+The dependence on $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
+This means sound generated from different pressure differentials along the blade span, or chord, will interfere.
+To build a picture of the function $g()$ its required to model the sound generated over the entire surface of the propeller.
+
+% justify the focus on lift being the primary source of propeller noise
+% introduce concepts of interference with definition of wavenumber to explain directivity.
+% why do we model objects as surface integrals of point sources?
+\subsection{Noise from arbitrary rotating surfaces}
+% how do we model our designs?
+% generalised function of fluid domain, define surface from source distribution
+% explain why these are modelled as monopole, dipole and quadrupole sources respectively
+Ffowcs Williams, following from the work of Lighthill \cite{lighthill_1952}, rearranged the Navier stokes equations to account for sound generation by surfaces in motion \cite{ffowcs_1969}.
+He demonstrated that noise arises from three mechanisms: unsteady displacement, unsteady loading and turbulence.
+For the benefit of understanding, an intuitive explaination is given here.
+Consider a general flow field with a surface in unsteady motion.
+To enforce the 0 surface normal velocity boundary condition on the surrounding fluid, a mass flow source is required.
+This is a monopole source, which is a point source of sound that radiates equally in all directions.
+To balance the rate of momentum imparted to the surface, a momentum source is required in the direction of the force.
+This dipole source is equivilent to a pair of monopole mass flow sources, with opposing strengths, infitisesimally close together.
+A third type of source, called a quadrupole, can originate from turbulence within the flow field and interact with the surface.
+Calculation of the quadrupole source is more involved and outside the scope of this report.
+
+% can now see why a rotating propeller requires sources to be convected helicoidally
+% by neglecting turbulent noise, show harmonic noise is the only remaining source
+% in absence of BVI
+Hanson \cite{hanson_theory} considered the harmonic noise of helicoidally convected sources.
+
+
+%To enforce shear and normal stress originating from turbulence, a quadrupole source is required.
+%This forms a tensor with one dimension being direction of force and the other being the direction of fluctuation.
+
+% explain why the integral of many helically convected sources models the propeller
+% explain how changing location of sources can cause destructive interference for some wavenumbers
+
 
 % aero side
-\subsection{Actuator Disk Theory}
+\subsection{Aerodynamic definitions and relationships}
 
 % explain the origin of thrust and torque
 The thrust of a propeller is the axial force exerted by the air on the propeller due to imparted momentum and profile losses.
@@ -116,7 +178,7 @@ The propeller can be modelled is a thin disk with a uniform pressure distributio
 % torque, thrust coefficients and FoM definition
 
 \begin{equation}
-    FM = \frac{C_T^{2/3}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{2/3}}{Q} \frac{1}{R}
+    FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{3/2}}{Q} \frac{1}{R}
 \end{equation}
 
 
@@ -147,65 +209,6 @@ Tip losses were also neglected, where the blade element theory breaks down.
 
 % explain that this doesnt include swirl or tip losses where the blade element theory breaks down
 
-
-\subsection{Acoustics}
-
-% acoustic side
-Sound is a pressure fluctuation in a medium.
-The sound pressure level (SPL) is defined as the root mean square of the sound pressure, normalised to a reference pressure.
-Its often expressed logarithmically in decibels.
-
-\begin{equation}
-    OASPL = 20 \log_{10} \left( \frac{p'}{p_0} \right)
-\end{equation}
-
-% introduce intuitively how the sound pressure level would be expected to vary with speed, diameter, distance
-Intuitively the SPL of propeller noise would vary with the pressure difference accross the blade.
-It is then expected that the SPL would vary with tip speed squared, where the pressure differential is greatest.
-The pressure differential will also depend on local aerodynamic coefficients but this effect is secondary.
-From conservation of energy the sound intensity must be an inverse square law with distance.
-The sound energy can be shown to be proportional to the square of the sound pressure level...
-This means that the sound pressure level will vary with distance in an inverse law.
-Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
-
-\begin{equation}
-    p' = \frac{\rho (r \Omega)^2}{R/r} g(\theta, \text{geometry}) \label{eq:expected_plaw}
-\end{equation}
-
-Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
-The dependence on $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
-This means sound generated from different pressure differentials along the blade span, or chord, will interfere.
-To build a picture of the function $g()$ its required to model the sound generated over the entire surface of the propeller.
-
-% justify the focus on lift being the primary source of propeller noise
-% introduce concepts of interference with definition of wavenumber to explain directivity.
-% why do we model objects as surface integrals of point sources?
-\subsection{Rotating arbitrary surfaces}
-% how do we model our designs?
-% generalised function of fluid domain, define surface from source distribution
-% explain why these are modelled as monopole, dipole and quadrupole sources respectively
-Ffowcs Williams, following from the work of Lighthill \cite{lighthill_1952}, rearranged the Navier stokes equations to account for sound generation by surfaces in motion \cite{ffowcs_1969}.
-He demonstrated that noise arises from three mechanisms: unsteady displacement, unsteady loading and turbulence.
-For the benefit of understanding, an intuitive explaination is given here.
-Consider a general flow field with a surface in unsteady motion.
-To enforce the 0 surface normal velocity boundary condition on the surrounding fluid, a mass flow source is required.
-This is a monopole source, which is a point source of sound that radiates equally in all directions.
-To balance the rate of momentum imparted to the surface, a momentum source is required in the direction of the force.
-This dipole source is equivilent to a pair of monopole mass flow sources, with opposing strengths, infitisesimally close together.
-A third type of source, called a quadrupole, can originate from turbulence within the flow field and interact with the surface.
-Calculation of the quadrupole source is more involved and outside the scope of this report.
-
-% can now see why a rotating propeller requires sources to be convected helicoidally
-% by neglecting turbulent noise, show harmonic noise is the only remaining source
-% in absence of BVI
-Hanson \cite{hanson_theory} considered the harmonic noise of helicoidally convected sources.
-
-
-%To enforce shear and normal stress originating from turbulence, a quadrupole source is required.
-%This forms a tensor with one dimension being direction of force and the other being the direction of fluctuation.
-
-% explain why the integral of many helically convected sources models the propeller
-% explain how changing location of sources can cause destructive interference for some wavenumbers
 
 \begin{figure}[H]
     \centering 
@@ -394,6 +397,13 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 
 \subsection{Theoretical}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/design.pdf}
+    \caption{Screenshot of the propeller design software.}
+    \label{fig:design_software}
+\end{figure}
+
 % available propeller design tool input
 % python implementation of the nonlinear solver and acoustic model
 % airfoil coefficient interpolation and extrapolation
@@ -402,6 +412,27 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 % explain choice of simple linear swept blade designs
 
 \section{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/dalprop_series.pdf}
+    \caption{Commercial propeller designs used in the project.}
+    \label{fig:dalprop_series}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/sweep_series.pdf}
+    \caption{Swept propeller designs used in the project.}
+    \label{fig:sweep_series}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/loop_series.pdf}
+    \caption{Looped propeller designs used in the project.}
+    \label{fig:loop_series}
+\end{figure}
 
 % load cell calibration graphs
 

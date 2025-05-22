@@ -265,6 +265,12 @@ class DistributionPlotWidget(QWidget):
         self.scatter.setData(pos=self.scatter.control_points)
         self.dist_type.currentIndexChanged.connect(self.reset_distribution)
 
+        miny = np.min(self.scatter.control_points[:, 1])
+        maxy = np.max(self.scatter.control_points[:, 1])
+        padding = 0.1 * (maxy - miny) if maxy > miny else 0.1
+        self.plot_widget.setYRange(miny - padding, maxy + padding)
+        self.update_curve()
+
 
 class DistributionsWidget(QWidget):
     new_dist = pyqtSignal(bool)

@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 import numpy as np
 from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtWidgets import QApplication, QGridLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QGridLayout, QWidget, QVBoxLayout
 
 
 from app.dists import DistributionsWidget
@@ -44,21 +44,31 @@ class MainWindow(QWidget):
         self.aerodynamic_results_widget = AerodynamicResultsWidget(self)
         self.results_table = ResultsTable(self)
 
+        self.littlevbox = QVBoxLayout()
+
         self.dists_widget.setMaximumWidth(500)
         self.dists_widget.setMinimumWidth(400)
         self.input_widget.setMinimumWidth(400)
         self.input_widget.setMinimumHeight(700)
-        self.stl_viewer.setMinimumHeight(200)
         self.stl_viewer.setMinimumWidth(400)
+        self.stl_viewer.setMinimumHeight(400)
         self.noise_results_widget.setMinimumWidth(400)
-        self.aerodynamic_results_widget.setMinimumHeight(400)
+        #self.aerodynamic_results_widget.setMinimumHeight(400)
 
         layout.addWidget(self.input_widget, 0, 0, 2, 1)
         layout.addWidget(self.results_table, 2, 0, 1, 1)
         layout.addWidget(self.dists_widget, 0, 1, 3, 1)
-        layout.addWidget(self.stl_viewer, 0, 2, 2, 1)
         layout.addWidget(self.noise_results_widget, 0, 4, 3, 1)
-        layout.addWidget(self.aerodynamic_results_widget, 2, 2, 1, 1)
+
+        self.littlevbox.addWidget(self.stl_viewer)
+        self.littlevbox.addWidget(self.aerodynamic_results_widget)
+
+        vboxwidget = QWidget()
+        vboxwidget.setLayout(self.littlevbox)
+        
+        layout.addWidget(vboxwidget, 0, 2, 3, 2)
+
+
 
     def attach_signals(self):
 
