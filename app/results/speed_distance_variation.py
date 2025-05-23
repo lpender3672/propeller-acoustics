@@ -47,11 +47,6 @@ def plot_3d_regression_scatter(df, coeffs):
     plt.tight_layout()
 
 
-# TODO: filter data by ramp up. need to compare experimental results
-# where the ramp down was excluded because there was hysteresis in the data
-# the effect of this on the current results is unknown.
-
-
 def speed_distance_regression(hdf):
 
     # proof of concept for the speed-distance regression
@@ -263,7 +258,9 @@ if __name__ == "__main__":
 
     # closeness metric for beta1 and beta2
     coeff_df['dbeta1'] = np.exp(- np.abs(coeff_df['beta1'] - 2) / 2)
+    coeff_df['dbeta2'] = np.exp(- np.abs(coeff_df['beta2'] + 1) / 1)
 
+    """
     fig, ax = multi_function_plot(coeff_df,
                         x_var='angle_bin',
                         y_var='harmonic',
@@ -278,7 +275,6 @@ if __name__ == "__main__":
                         #marker = lambda df: ['o' if row['beta1'] > 2 else 'x' for _, row in df.iterrows()]
                         )
     
-    coeff_df['dbeta2'] = np.exp(- np.abs(coeff_df['beta2'] + 1) / 1)
     
     fig, ax = multi_function_plot(coeff_df,
                         x_var='angle_bin',
@@ -293,9 +289,41 @@ if __name__ == "__main__":
                         colourbar_label='Distance coefficient closeness metric',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
-
-    fig.savefig('deliverables/')
+    """
     
+    fig, ax = multi_function_plot(coeff_df,
+                        x_var='harmonic',
+                        y_var='beta1',
+                        filter_dict={
+                            'propeller': '5045_s15',
+                        },
+                        group_by='angle_bin',
+                        plot_type='scatter',
+                        #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
+                        )
+    ax.set_title('')
+    ax.legend().set_title('Angle [deg]')
+    ax.axhline(2, color='black', linestyle='--', label='Expected')
+    fig.savefig('deliverables/final_report/figures/speed_coefficient_for_angles_harmonics.png',
+                    dpi = 300)
+    
+    fig, ax = multi_function_plot(coeff_df,
+                        x_var='harmonic',
+                        y_var='beta2',
+                        filter_dict={
+                            'propeller': '5045_s15',
+                        },
+                        group_by='angle_bin',
+                        plot_type='scatter',
+                        #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
+                        )
+    
+    ax.set_title('')
+    ax.axhline(-1, color='black', linestyle='--', label='Expected')
+    ax.legend().set_title('Angle [deg]')
+    fig.savefig('deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.png',
+                    dpi = 300)
+
     plt.show()
     
     

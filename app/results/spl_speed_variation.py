@@ -46,6 +46,8 @@ def plot_rmsndp_speed(sdf):
     ax.set_xscale("log")
     ax.grid(True, which='both')
 
+    return fig, ax
+
 def plot_hrmsndp_speed(hdf):
 
     fig, ax = multi_function_plot(
@@ -70,6 +72,8 @@ def plot_hrmsndp_speed(hdf):
     ax.set_yscale("log")
     ax.grid(True, which='both')
 
+    return fig, ax
+
 
 if __name__ == "__main__":
 
@@ -83,8 +87,13 @@ if __name__ == "__main__":
     sdf = parse_spl_df(ldf, aero_coeffs)
     hdf = parse_harmonic_df(ldf, aero_coeffs)
 
-    plot_rmsndp_speed(sdf)
-    plot_hrmsndp_speed(hdf)
+    fig, ax = plot_rmsndp_speed(sdf)
+    ax.set_title("")
+    fig.savefig(
+        'deliverables/final_report/figures/spl_speed_variation.png',
+        dpi=300
+    )
 
+    plot_hrmsndp_speed(hdf)
     plt.show()
 

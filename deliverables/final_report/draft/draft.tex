@@ -154,7 +154,8 @@ Calculation of the quadrupole source is more involved and outside the scope of t
 % can now see why a rotating propeller requires sources to be convected helicoidally
 % by neglecting turbulent noise, show harmonic noise is the only remaining source
 % in absence of BVI
-Hanson \cite{hanson_theory} considered the harmonic noise of helicoidally convected sources.
+Hanson \cite{hanson_theory} considered the noise of helicoidally convected sources.
+
 
 
 %To enforce shear and normal stress originating from turbulence, a quadrupole source is required.
@@ -163,52 +164,11 @@ Hanson \cite{hanson_theory} considered the harmonic noise of helicoidally convec
 % explain why the integral of many helically convected sources models the propeller
 % explain how changing location of sources can cause destructive interference for some wavenumbers
 
-
-% aero side
-\subsection{Aerodynamic definitions and relationships}
-
-% explain the origin of thrust and torque
-The thrust of a propeller is the axial force exerted by the air on the propeller due to imparted momentum and profile losses.
-The torque is the rotational force exerted by the air on the propeller and is a result of imparted angular momentum to the air and profile losses.
-% actuator theory
-The propeller can be modelled is a thin disk with a uniform pressure distribution...
-% dependence of these aeroydynamic forces with speed, diameter, introduce invarient coefficients
-% thrust and torque coefficients
-
-% torque, thrust coefficients and FoM definition
-
+If the noise consists of only harmonics of the blade passage frequency for $B$ blades, then it can be written as an inverse fourier transform.
 \begin{equation}
-    FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{3/2}}{Q} \frac{1}{R}
+    p'(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t)
 \end{equation}
-
-
-\subsection{Blade Element Theory}
-% its more complicated than that, BET: nonlinear version of airfoil theory
-% justify why its more complicated than that. we dont want to overcomplicate things
-Blade element theory (BET) divides blades into annular airfoil elements.
-This allows for the design of twist and chord distributions.
-The lift and drag coefficients of the airfoil sections can be found from angle of attack and Reynolds number.
-Momentum theory applied to the stream annulus, similar to actuator disk theory, calculates the induced velocities from thrust and torque coefficients.
-From these induced velocities, a new angle of attack and Reynolds number can be calculated.
-This process is repeated until a convergence criteria is reached.
-However, a number of simplifications were made in the implementation.
-The airfoil coefficients were assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
-For now, exit swirl velocity is assumed negligible for simplicity. % TODO: include this later
-Tip losses were also neglected, where the blade element theory breaks down.
-
-% derivation of nonlinear solver used to predict aerodynamic performance of propellers
-% extension to swept blades
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../tikz/bem.pdf}
-    \caption{Blade element theory diagram TODO}
-    \label{fig:airfoil}
-\end{figure}
-
-
-% explain that this doesnt include swirl or tip losses where the blade element theory breaks down
-
+The noise can then expressed as the sum of thickness, drag and lift terms with the respective subscripts, $P_{mB} = P_{Vm} + P_{Dm} + P_{Lm}$.
 
 \begin{figure}[H]
     \centering 
@@ -248,6 +208,81 @@ Tip losses were also neglected, where the blade element theory breaks down.
     \end{aligned}
     \label{eq:hansons_result}
 \end{equation}
+
+% aero side
+\subsection{Aerodynamic definitions and relationships}
+
+% explain the origin of thrust and torque
+The thrust of a propeller is the axial force exerted by the air on the propeller due to imparted momentum and profile losses.
+The torque is the rotational force exerted by the air on the propeller and is a result of imparted angular momentum to the air and profile losses.
+% actuator theory
+% dependence of these aeroydynamic forces with speed, diameter, introduce invarient coefficients
+% thrust and torque coefficients
+
+% torque, thrust coefficients and FoM definition
+
+Torque and thrust coefficients are defined as
+\begin{equation}
+    C_T = \frac{T}{\frac{1}{2} \rho (r\omega)^2 A} \quad \quad \quad C_Q = \frac{Q}{\frac{1}{2} \rho (r\omega)^2 A r} \label{eq:CT_CQ}
+\end{equation}
+
+\begin{equation}
+    FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{3/2}}{Q} \frac{1}{R}
+\end{equation}
+
+
+\subsection{Blade Element Theory}
+% its more complicated than that, BET: nonlinear version of airfoil theory
+% justify why its more complicated than that. we dont want to overcomplicate things
+Blade element theory (BET) divides blades into annular airfoil elements.
+This allows for the design of twist and chord distributions.
+The lift and drag coefficients of the airfoil sections can be found from angle of attack and Reynolds number.
+Momentum theory applied to the stream annulus, similar to actuator disk theory, calculates the induced velocities from thrust and torque coefficients.
+From these induced velocities, a new angle of attack and Reynolds number can be calculated.
+This process is repeated until a convergence criteria is reached.
+However, a number of simplifications were made in the implementation.
+The airfoil coefficients were assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
+For now, exit swirl velocity is assumed negligible for simplicity. % TODO: include this later
+Tip losses were also neglected, where the blade element theory breaks down.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../tikz/bem.pdf}
+    \caption{Blade element theory diagram TODO}
+    \label{fig:airfoil}
+\end{figure}
+
+\subsection{Actuator Disk Theory}
+
+The propeller can be modelled is a thin disk with a uniform pressure distribution...
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[t]{0.4\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{../tikz/actuator_disk.pdf}
+        \caption{Actuator disk.}
+        \label{fig:actuator_disk}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.5\textwidth}
+        \centering
+        \includegraphics[width=0.8\textwidth]{../tikz/streamtube.pdf}
+        \caption{Actuator annulus.}
+        \label{fig:actuator_annulus}
+    \end{subfigure}
+    \caption{}
+\end{figure}
+
+% derivation of nonlinear solver used to predict aerodynamic performance of propellers
+% extension to swept blades
+
+
+
+
+% explain that this doesnt include swirl or tip losses where the blade element theory breaks down
+
+
+
 
 %% now ready to explain why a spectrum looks the way it does?
 
@@ -329,7 +364,7 @@ The final setup consisted of a moving platform with ceramic bearings to reduce f
         \caption{Iterations of the aerodynamic test rig}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.6\textwidth, angle=270]{../figures/aero_setup.pdf}
     \caption{Assembled aerodynamic test rig with moving platform and 200g load cell.}
@@ -348,6 +383,19 @@ The final setup consisted of a moving platform with ceramic bearings to reduce f
 % explain some of the choices made in the setup
 % control of variables
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{../figures/chamber.pdf}
+    \caption{Acoustic test rig in the anechoic chamber.}
+    \label{fig:anechoic_chamber}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth, angle=270]{../figures/concentric.pdf}
+    \caption{Acoustic test rig in the anechoic chamber.}
+    \label{fig:concentric}
+\end{figure}
 
 \subsubsection{Data Collection}
 % software used, majority python, C++
@@ -409,9 +457,10 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 % airfoil coefficient interpolation and extrapolation
 % explain the propeller mesh generation algorithm and minimum airfoil thickness
 
+
+\subsection{Propeller Designs}
 % explain choice of simple linear swept blade designs
 
-\section{Results}
 
 \begin{figure}[H]
     \centering
@@ -432,6 +481,43 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
     \includegraphics[width=0.8\textwidth]{../figures/loop_series.pdf}
     \caption{Looped propeller designs used in the project.}
     \label{fig:loop_series}
+\end{figure}
+
+\section{Results}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/controller_vs_loadcell_torque.pdf}
+    \caption{Torque measured by calibrated load cell compared to torque calculated from measured motor current for the dalprop 5045 propeller.}
+    \label{fig:looped}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/spl_speed_variation.pdf}
+    \caption{OASPL of the dalprop 5045 propeller }
+    \label{fig:spl_speed_variation}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/speed_coefficient_for_angles_harmonics.pdf}
+        \caption{}
+        \label{fig:speed_coefficient_for_angles_harmonics}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/distance_coefficient_for_angles_harmonics.pdf}
+        \caption{}
+        \label{fig:distance_coefficient_for_angles_harmonics}
+    \end{subfigure}
+    \caption{}
+\end{figure}
+
+\begin{figure}[H]
+    
 \end{figure}
 
 % load cell calibration graphs

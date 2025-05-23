@@ -146,7 +146,7 @@ def _format_group_name(name, modified_group_by, original_group_by, units):
 
 
 def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=None, plot_type='line', 
-                  title=None, fig_size=(10, 6), log_bin_factor=0.05,
+                  title=None, fig_size=(8, 6), log_bin_factor=0.05,
                   max_groups=10, colour_by=None, cmap='viridis', colourbar_label=None,
                   log_colourbar=False, units=None, **kwargs):
     """
@@ -250,6 +250,10 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
         
         # group by the correct grouping variables
         grouped = processed_df.groupby(modified_group_by)
+        # if single group, sort by the original group_by variable
+        if len(grouped) == 1:
+            grouped = processed_df.sort_values(by=group_by)
+
         
         if len(grouped) > max_groups:
             print(f"Warning: Too many groups ({len(grouped)}). Limiting to {max_groups} most interesting groups.")
@@ -349,6 +353,7 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
         ax.legend()
     
     ax.grid(True)
+    fig.tight_layout()
     
     return fig, ax
 

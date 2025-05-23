@@ -28,27 +28,30 @@
 \begin{document}
 \begin{tikzpicture}[scale=1.2]
 
-\def\length{3cm}
+\def\length{2cm}
 
 % outer tube
-\draw[thick] (0,1) to[out=0,in=180] (\length,0.6);
-\draw[thick] (\length,-0.6) to[out=180,in=0] (0,-1);
-\draw[thick] (0,0) ellipse [x radius=0.5cm, y radius=1cm];
-\styledEllipse{\length,0}{0.3cm}{0.6cm}{dashed}{thick};
+\draw[thick] (0,1) to[out=-10,in=180] (\length,0.6);
+\draw[thick] (0,-1)  to[out=10,in=180] (\length,-0.6) ;
+\draw[thick] (0, -1) -- (0, 1);
 
-% inner tube
-\draw[dashed] (0,0.8) to[out=0,in=180] (\length,0.4);
-\draw[dashed] (\length,-0.4) to[out=180,in=0] (0,-0.8);
-\draw[thick] (0,0) ellipse [x radius=0.3cm, y radius=0.8cm];
-\styledEllipse{\length,0}{0.15cm}{0.4cm}{dashed}{dashed};
 
-% velocity arrows
 \draw[thick,->] (0,0) -- (0.7,0) node[above] {$v$};
 \draw[thick,->] (\length,0) -- (\length + 0.7cm,0) node[above] {$w$};
 
-% radius arrows
-\draw[thick,->] (-0.6,0) -- (-0.6,0.7) node[midway, left] {$r$};
-\draw[thick,->] (-0.6,0.8) -- (-0.6,1) node[midway, left] {$\delta r$};
+\draw[thick,->] (-0.1,0.1) -- (-0.7,0.1) node[above] {$T$};
+
+\node at (-0.2, 1) {$A$};
+
+\foreach \label/\x in {0/-1,1/-0.15,2/0.15,3/\length} {
+    \node[
+      draw,
+      circle,
+      inner sep=0.3pt,      % smaller padding
+      font=\small,           % tiny font size
+      fill=white            % optional: cover the line underneath
+    ] at (\x,-0.2) {\label};
+  }
 
 
 \end{tikzpicture}

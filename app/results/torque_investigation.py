@@ -110,7 +110,7 @@ def compare_torque(prop_result_path):
     asp, atq = torque_from_aero_data(
         plot=False, prop_result_path=prop_result_path)
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    fig, ax = plt.subplots(1, 1, figsize=(7, 5))
 
     ax.plot(msp, mtq, "o", label="Current measurement")
     ax.plot(asp, atq, "o", label="Load cell measurement")
@@ -129,15 +129,18 @@ def compare_torque(prop_result_path):
     ax.set_xlabel("Speed [rad/s]")
     ax.set_ylabel("Torque [Nm]")
 
-    
+    return fig, ax
+
 
 if __name__ == "__main__":
 
-    compare_torque(
-        'app/results/dalprop5045bnr.prop'
+    fig, ax = compare_torque(
+        'app/results/dalprop5045.prop'
     )
-    compare_torque(
-        'app/results/dalprop6045.prop'
+
+    fig.savefig(
+        'deliverables/final_report/figures/controller_vs_loadcell_torque.png',
+        dpi=300
     )
 
     plt.show()
