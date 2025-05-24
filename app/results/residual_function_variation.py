@@ -77,6 +77,31 @@ def fixed_speed_distance_regression(hdf):
 
     return pd.DataFrame(results)
 
+def plot_sound_FOM(hdf, aero_data):
+
+    angle = 135 # degrees
+    harmonic = 4
+    
+    fm_dict = {
+        prop: Ct**(3/2) / (np.sqrt(2) * Cq)
+        for prop, (Ct, Cq) in aero_data.items()
+    }
+    
+    hdf['FM'] = hdf['propeller'].map(fm_dict)
+
+    print(hdf.head())
+
+    fig, ax = multi_function_plot(
+        hdf,
+        'FM',
+        'intercept',
+        filter_dict={
+            'harmonic': harmonic,
+            'angle_bin': angle,
+        },
+        group_by='propeller'
+    )
+
 
 
 if __name__ == "__main__":
@@ -137,5 +162,7 @@ if __name__ == "__main__":
         },
         group_by='angle_bin'
     )
+
+    plot_sound_FOM(results, aero_coeffs)
 
     plt.show()

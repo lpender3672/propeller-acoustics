@@ -230,31 +230,11 @@ Torque and thrust coefficients are defined as
     FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{3/2}}{Q} \frac{1}{R}
 \end{equation}
 
-
-\subsection{Blade Element Theory}
-% its more complicated than that, BET: nonlinear version of airfoil theory
-% justify why its more complicated than that. we dont want to overcomplicate things
-Blade element theory (BET) divides blades into annular airfoil elements.
-This allows for the design of twist and chord distributions.
-The lift and drag coefficients of the airfoil sections can be found from angle of attack and Reynolds number.
-Momentum theory applied to the stream annulus, similar to actuator disk theory, calculates the induced velocities from thrust and torque coefficients.
-From these induced velocities, a new angle of attack and Reynolds number can be calculated.
-This process is repeated until a convergence criteria is reached.
-However, a number of simplifications were made in the implementation.
-The airfoil coefficients were assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
-For now, exit swirl velocity is assumed negligible for simplicity. % TODO: include this later
-Tip losses were also neglected, where the blade element theory breaks down.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../tikz/bem.pdf}
-    \caption{Blade element theory diagram TODO}
-    \label{fig:airfoil}
-\end{figure}
-
 \subsection{Actuator Disk Theory}
 
-The propeller can be modelled is a thin disk with a uniform pressure distribution...
+The propeller can be modelled is a thin disk with a uniform pressure distribution.
+Incompressible, inviscid flow is assumed, with zero exit swirl velocity so $p_3 = p_0$.
+Conservation of momentum and energy lead to the following equations.
 
 \begin{figure}[H]
     \centering
@@ -267,19 +247,74 @@ The propeller can be modelled is a thin disk with a uniform pressure distributio
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=0.8\textwidth]{../tikz/streamtube.pdf}
-        \caption{Actuator annulus.}
+        \caption{Annular streamtube.}
         \label{fig:actuator_annulus}
     \end{subfigure}
     \caption{}
 \end{figure}
 
+\begin{align}
+    T &= \dot{m} w = \rho A v w \label{eq:actuator_disk_momentum} \\ 
+    Tv &= \frac{1}{2} \dot{m} w^2 \label{eq:actuator_disk_energy}
+\end{align}
+Equation \ref{eq:actuator_disk_energy} can also be obtained through Bernoulli's equation by setting $p_2 - p_1 = T/A$.
+Substituting the momentum equation into energy, the key result $w = 2v$ is obtained.
+This gives the thrust force as only a function of induced velocity.
+\begin{equation}
+    T = 2 \rho v^2 A \label{eq:actuator_disk_thrust}
+\end{equation}
+Remember for the acoustic model, aerodynamic forces are required to be known along the entire surface of the propeller.
+Luckily the above analysis is not limited to the entire disk, and can be applied to an annulus element.
+\begin{equation}
+    \delta T = 2 \rho v^2 \delta A
+\end{equation}
+
+However, the local induced velocity $v$ is not known and more information is required to solve for the local thrust.
+This comes from blade element theory discussed in the next section.  
+
 % derivation of nonlinear solver used to predict aerodynamic performance of propellers
 % extension to swept blades
 
+\subsection{Blade Element Theory}
+% its more complicated than that, BET: nonlinear version of airfoil theory
+% justify why its more complicated than that. we dont want to overcomplicate things
+Blade element theory (BET) divides a blade into annular airfoil elements.
+Each section is assumed to be a 2D airfoil with local lift and drag coefficients.
+These are dependent on the local angle of attack and Reynolds number which can be calculated from induced and operating velocities.
+The local aerodynamic forces are then calculated and then resolved in axial and tangential directions for thrust and torque respectively.
 
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../tikz/bem.pdf}
+    \caption{Aerodynamic forces on local blade element}
+    \label{fig:airfoil}
+\end{figure}
+\begin{equation}
+    \alpha = \beta - \phi = \beta - \tan^{-1} \left( \frac{v}{\Omega r} \right) \label{eq:angle_of_attack}
+\end{equation}
+Where the resolved aerodyanmic forces are
+\begin{align}
+    \delta T = \frac{1}{2} \rho W^2 ( c_l \cos(\phi) - c_d \sin(\phi) ) \label{eq:normal_force} \\
+    \delta Q = \frac{1}{2} \rho W^2 r ( c_l \sin(\phi) + c_d \cos(\phi) ) \label{eq:tangential_force}
+\end{align}
+With two equations for local thrust from the induced velocity, a solution must be found iteratively.
+This is due to the unavoidable nonlinearity of the problem that arises from the varying rotational speed along the radius.
+This is done numerically until the change in inducded velocity becomes sufficiently small.
 
 % explain that this doesnt include swirl or tip losses where the blade element theory breaks down
+Its important to note that a number of simplifications were made in this implementation of BET.
+Firstly, swirl in the wake is neglected, which typically increases induced velocity and induced power by 2\% \cite{?}.
+Conservation of angular momentum alongside discussed momentum theory can solve for an induced swirl velocity $u$ used to calculate BET variables.
+\begin{equation}
+    \phi = \tan \left( \frac{v}{\Omega r + u} \right)
+\end{equation}
+Tip losses were also neglected, where blade element theory assumptions break down.
+Prandtl derived a tip loss factor for the additional induced velocity near the tip, based on a simple horseshoe wake model \cite{prandtl_loss}. 
+% more advanced wake models exist.
+
+The airfoil coefficients were assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
+
+
 
 
 

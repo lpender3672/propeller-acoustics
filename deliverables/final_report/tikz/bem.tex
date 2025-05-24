@@ -16,18 +16,20 @@
     % hoirzontal line
     \draw[thick, dashed] (-4,0) -- (4, 0) node[below] {Rotation Plane};
     % velocity vector labelled at midline
-    \draw[->] (0,-1) -- (0,0) node[midway,right] {$V(1-a)$};
-    \draw[->] (-2,-1) -- (0,-1) node[midway,below] {$\Omega r(1+a')$};
+    \draw[->] (0,-1) -- (0,0) node[midway,right] {$v$};
+    \draw[->] (-2,-1) -- (0,-1) node[midway,below] {$\Omega r$};
     \draw[->] (-2,-1) -- (0,0) node[midway,below] {$W$};
     \draw[dashed] (-3,-1.5) -- (-2,-1) node[above] {};
     \draw[dashed] (-2.5,-0.67) -- (3,0.804) node[above] {};
     % curved arrows
-    \draw[->] (-2,0) arc (0:15:-2) node[midway, left] {$\theta$};
+    \draw[->] (-2,0) arc (0:15:-2) node[midway, left] {$\beta$};
     \draw[->] (-3,0) arc (0:26.565:-3) node[midway, left] {$\phi$};
     \draw[->] (-1.7888,-0.8944) arc (26.565:15:-2) node[midway, left] {$\alpha$};
     % force coefficients
-    \draw[->] (0.75, 0.194) -- (0.75,1.2) node[midway, left] {$c_n$};
-    \draw[->] (0.75, 0.194) -- (3, 0.194) node[above] {$c_t$};
+    %\draw[->] (0.75, 0.194) -- (0.75,1.2) node[midway, left] {$c_n$};
+    %\draw[->] (0.75, 0.194) -- (3, 0.194) node[above] {$c_t$};
+    \draw[->] (0 + 0.75,0 + 0.194) -- (2 + 0.75,1 + 0.194) node[right] {$c_d$};
+    \draw[->] (0 + 0.75,0 + 0.194) -- (-0.5 + 0.75,1 + 0.194) node[right] {$c_l$};
 \end{tikzpicture}
 
 \end{document}
