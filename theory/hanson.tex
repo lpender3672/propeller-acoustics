@@ -559,6 +559,48 @@ Then substituting this into equation \ref{eq:sifted_progress}
 This section forms a plan of the introduction of hansons helicoidal coordinates to the theory.
 A necessary complication is required to properly understand Hansons theory which involves the Introduction of helicoidal coordinates.
 
+It becomes necessary to explain the origin of harmonics in the pressure field.
+
+The sound waveform for $B$ propeller blades is the sum of the contributions from each blade.
+However, the signal from each blade experiences a phase-lag 
+\begin{equation}
+    p = \sum_{m=0}^{B-1} s \Bigl(
+      t
+      - \underbrace{\frac{m}{f_0}}_{\substack{\text{“time”}\\\text{phase-lag}}}
+      - \underbrace{\frac{r_m(t)}{c}}_{\substack{\text{“retarded-time”}\\\text{phase-lag}}}
+    \Bigr)
+\end{equation}
+
+Where $r_m$ is the distance from the observer to the mth blade.
+The position of blade tip and observer are defined as follows.
+\begin{align}
+    \mathbf x_m(t) &= r_t \left(\cos(\Omega t + 2\pi m/B),\;\sin(\Omega t + 2\pi m/B),\;0\right) \\
+    \mathbf r &= r\bigl(\sin\theta,\,0,\,\cos\theta\bigr)
+\end{align}
+Then, assuming the observer is in the far field $r >> r_t$
+\begin{align}
+    r_m(t) &= \bigl\lvert \mathbf r - \mathbf x_m \bigr\rvert
+    \approx r
+    -\hat{\mathbf r}\cdot\mathbf x \\
+    r_m(t) &\approx r - r_t \sin\theta\;\cos\!\bigl(\Omega t + 2\pi m/B\bigr)
+\end{align}
+
+\begin{equation}
+    P(\omega) \sum_{m=0}^{B-1} \exp\!\left[-j\omega \left( \frac{m}{f_0} + \frac{r - r_t \sin\theta\cos(\Omega t + 2\pi m/B)}{c_0} \right)\right]
+\end{equation}
+
+\begin{equation}
+    =P(\omega) \exp \left(-j\omega \frac{r}{c_0} \right)
+  \sum_{n=-\infty}^\infty(-j)^nJ_n(kR\sin\theta)\,e^{-jn\Omega t}
+  \sum_{m=0}^{B-1}e^{-j\frac{2\pi m}{B}\bigl(n+\omega/\Omega\bigr)}
+\end{equation}
+
+\begin{equation}
+    \propto\sum_{n}\!J_n(kR\sin\theta)e^{-jn\Omega t}\,
+    \bigl[\sum_{m=0}^{B-1}e^{-j2\pi m(n+\omega/\Omega)/B}\bigr]
+\end{equation}
+
+
 % insert figure of helicoidal coordinates
 
 \begin{thebibliography}{9}

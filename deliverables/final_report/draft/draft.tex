@@ -7,6 +7,7 @@
 \usepackage{lmodern}  
 \usepackage{titlesec}
 \usepackage{float}
+\usepackage{mathtools} % for \xmapsto
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 
 \usepackage{fancyhdr}
@@ -150,16 +151,26 @@ To balance the rate of momentum imparted to the surface, a momentum source is re
 This dipole source is equivilent to a pair of monopole mass flow sources, with opposing strengths, infitisesimally close together.
 A third type of source, called a quadrupole, can originate from turbulence within the flow field and interact with the surface.
 Calculation of the quadrupole source is more involved and outside the scope of this report.
+%To enforce shear and normal stress originating from turbulence, a quadrupole source is required.
+%This forms a tensor with one dimension being direction of force and the other being the direction of fluctuation.
+
 
 % can now see why a rotating propeller requires sources to be convected helicoidally
 % by neglecting turbulent noise, show harmonic noise is the only remaining source
 % in absence of BVI
-Hanson \cite{hanson_theory} considered the noise of helicoidally convected sources.
+Now consider a single blade in hover with sources distributed on its surface.
+As the blade rotates with angular speed $\Omega$, the sources are convected through a helical path.
+This is from the circular motion of the blade, and a small induced axial velocity (see section \ref{sec:actuator_disk}).
+From a stationary observer's perspective, the source strength, distance, and relative velocity all vary periodically.
+There is then also spatial periodicity from $B$ evenly spaced blades.
 
 
+Hanson \cite{hanson_theory} considered the distribution of sources convected along a helicoidal surface.
+His analysis in the frequency domain reduced the problem to frequencies at integers, or harmonics, of the blade passage frequency.
+This showed cancellation of noise at all other frequencies.
 
-%To enforce shear and normal stress originating from turbulence, a quadrupole source is required.
-%This forms a tensor with one dimension being direction of force and the other being the direction of fluctuation.
+% he distributed sources on the chord
+% 
 
 % explain why the integral of many helically convected sources models the propeller
 % explain how changing location of sources can cause destructive interference for some wavenumbers
@@ -199,8 +210,8 @@ The noise can then expressed as the sum of thickness, drag and lift terms with t
             P_{Vm} \\
             P_{Dm} \\
             P_{Lm}
-        \end{bmatrix} = - \frac{\rho_0 c_0^2 \sin(\theta )\exp\left(jmB \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right)}{4\pi r} \\
-        \times \int M_r^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB\Omega r_0}{c_0} \sin \theta \right) \begin{bmatrix}
+        \end{bmatrix} = - \frac{\rho_0 (r_t \Omega)^2}{4\pi (r / r_t)} \exp\left(jmB \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right) \\
+        \times \int_0^1 z^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right) \begin{bmatrix}
             k_x^2 t_b \Psi_V(k_x) \\
             jk_x (C_D / 2) \Psi_D(k_x) \\
             -jk_y (C_L / 2) \Psi_L(k_x)
@@ -230,7 +241,7 @@ Torque and thrust coefficients are defined as
     FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{3/2}}{Q} \frac{1}{R}
 \end{equation}
 
-\subsection{Actuator Disk Theory}
+\subsection{Actuator Disk Theory \label{sec:actuator_disk}}
 
 The propeller can be modelled is a thin disk with a uniform pressure distribution.
 Incompressible, inviscid flow is assumed, with zero exit swirl velocity so $p_3 = p_0$.
@@ -252,7 +263,6 @@ Conservation of momentum and energy lead to the following equations.
     \end{subfigure}
     \caption{}
 \end{figure}
-
 \begin{align}
     T &= \dot{m} w = \rho A v w \label{eq:actuator_disk_momentum} \\ 
     Tv &= \frac{1}{2} \dot{m} w^2 \label{eq:actuator_disk_energy}
@@ -264,7 +274,7 @@ This gives the thrust force as only a function of induced velocity.
     T = 2 \rho v^2 A \label{eq:actuator_disk_thrust}
 \end{equation}
 Remember for the acoustic model, aerodynamic forces are required to be known along the entire surface of the propeller.
-Luckily the above analysis is not limited to the entire disk, and can be applied to an annulus element.
+The above analysis is not limited to the entire disk, and can be applied to an annulus element.
 \begin{equation}
     \delta T = 2 \rho v^2 \delta A
 \end{equation}
@@ -335,8 +345,8 @@ This means that a clever way to normalise the SPL relative to the FOM is require
 % this effective radius non dimensionalises the sound pressure level
 % allowing us to compare the acoustic to efficiency of different propellers
 
-A definition of the effective radius
-% I have not been able to justify that FOM scales with 1/r
+A definition of the effective radius (wont work)
+A definition of performance metric 
 
 \section{Methodology}
 
