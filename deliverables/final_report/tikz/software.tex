@@ -21,13 +21,13 @@
 \node (in1) [io] {Input Propeller, OP};
 \node (start) [startstop, right of=in1, xshift=6cm] {Start};
 
-\node (pro1) [process, below of=in1] {Run XFoil \cite{xfoil}};
+\node (pro1) [process, below of=in1] {Run XFoil};
 \node (midin) [below of=pro1, yshift=1cm] {};
 \node (pro5) [process, right of=midin, xshift=2cm] {Calculate new $\phi$};
 \node (dec1) [decision, below of=pro1, yshift=-2cm] {$\delta \phi < \texttt{tol}$};
 \draw [arrow] (pro1) -- (dec1); 
 
-\node (pro2a) [process, below of=dec1, yshift=-0.5cm] {Calculate Noise};
+\node (pro2a) [process, below of=dec1, yshift=-0.5cm] {Calculate Harmonic Noise};
 
 \node (pro2b) [process, right of=dec1, xshift=2cm] {$\alpha = \beta - \phi$};
 \node (dec2) [decision, right of=pro2b, xshift=2cm] {$\alpha < \alpha_{stall}$};

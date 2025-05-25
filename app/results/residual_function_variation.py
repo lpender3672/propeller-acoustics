@@ -80,7 +80,7 @@ def fixed_speed_distance_regression(hdf):
 def plot_sound_FOM(hdf, aero_data):
 
     angle = 135 # degrees
-    harmonic = 4
+    harmonic = 1
     
     fm_dict = {
         prop: Ct**(3/2) / (np.sqrt(2) * Cq)
@@ -101,6 +101,20 @@ def plot_sound_FOM(hdf, aero_data):
         },
         group_by='propeller'
     )
+
+    # get xlim and ylim
+    xlo, xhi = ax.get_xlim()
+    ylo, yhi = ax.get_ylim()
+    xcont = np.linspace(xlo, xhi, 200)
+    ycont = np.linspace(ylo, yhi, 200)
+    xmesh, ymesh = np.meshgrid(xcont, ycont)
+
+    PM = xmesh / (10 ** ymesh)
+    # contour with labels
+    CS = ax.contour(xmesh, ymesh, PM, colors='gray', levels=np.logspace(1, np.log10(300), 10))
+    ax.clabel(CS, inline=True, fontsize=10, fmt='%.2f')
+
+    fig.savefig('deliverables/final_report/figures/prop_sound_FOM.png', dpi=300)
 
 
 

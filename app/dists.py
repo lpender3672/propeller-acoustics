@@ -294,13 +294,13 @@ class DistributionsWidget(QWidget):
         self.twist_plot = DistributionPlotWidget(
             self,
             title="Twist",
-            ylabel="Twist [rad]",
+            ylabel="Twist [deg]",
             default_ctrl_pts=np.array([[0, 20], [0.5, 15], [1, 15]]),
         )
         self.sweep_plot = DistributionPlotWidget(
             self,
             title="Sweep",
-            ylabel="Sweep [rad]",
+            ylabel="Sweep [deg]",
             default_ctrl_pts=np.array([[0, 0], [0.5, 5], [1, 20]]),
         )
 

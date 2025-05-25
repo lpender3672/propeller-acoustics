@@ -89,6 +89,7 @@ if __name__ == "__main__":
 
     fig, ax = plot_rmsndp_speed(sdf)
     ax.set_title("")
+    ax.legend().set_title("Distance (mm)")
     fig.savefig(
         'deliverables/final_report/figures/spl_speed_variation.png',
         dpi=300

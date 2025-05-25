@@ -135,7 +135,7 @@ def compare_torque(prop_result_path):
 if __name__ == "__main__":
 
     fig, ax = compare_torque(
-        'app/results/dalprop5045.prop'
+        'app/results/dalprop5045bnr.prop'
     )
 
     fig.savefig(

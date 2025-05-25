@@ -90,10 +90,11 @@ def foil_data(airfoil_data, alpha, Re, collect_cp=False):
     return cls, cds
 
 
-def load_foil(fpath):
+def load_foil(fpath, nxnodes=100):
     raw_coords = np.loadtxt(fpath)
-    nxnodes = raw_coords.shape[0] * 2 + 1
-    fx, fy = sample_airfoil(raw_coords, nxnodes)
+
+    #fx, fy = sample_airfoil(raw_coords, nxnodes)
+    fx, fy = sample_airfoil_spline(raw_coords, nxnodes)
 
     return np.column_stack([fx, fy])
 
@@ -373,6 +374,28 @@ def sample_airfoil(airfoil_data, nxnodes=None):
 
     xs_resampled = f_x(s_uniform)
     ys_resampled = f_y(s_uniform)
+
+    return xs_resampled, ys_resampled
+
+def sample_airfoil_spline(airfoil_data, nxnodes=None, bc_type='natural'):
+    xs = airfoil_data[:, 0]
+    ys = airfoil_data[:, 1]
+
+    dx = np.diff(xs)
+    dy = np.diff(ys)
+    ds = np.hypot(dx, dy)
+    sarr = np.concatenate(([0], np.cumsum(ds)))
+
+    cs_x = CubicSpline(sarr, xs, bc_type=bc_type)
+    cs_y = CubicSpline(sarr, ys, bc_type=bc_type)
+
+    if nxnodes is None:
+        nxnodes = xs.shape[0]
+
+    s_uniform = np.linspace(0, sarr[-1], nxnodes)
+
+    xs_resampled = cs_x(s_uniform)
+    ys_resampled = cs_y(s_uniform)
 
     return xs_resampled, ys_resampled
 

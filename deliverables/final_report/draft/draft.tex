@@ -8,6 +8,7 @@
 \usepackage{titlesec}
 \usepackage{float}
 \usepackage{mathtools} % for \xmapsto
+\usepackage{subcaption}
 \titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
 
 \usepackage{fancyhdr}
@@ -28,6 +29,8 @@
 \addbibresource{../../allrefs.bib}
 \graphicspath{{figures/}}
 
+\usepackage{xr}
+\externaldocument{../tikz/software.tex} % for tikz figures
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -185,19 +188,19 @@ The noise can then expressed as the sum of thickness, drag and lift terms with t
     \centering 
         \begin{subfigure}[t]{0.32\textwidth}
             \centering
-            \raisebox{1cm}{\includegraphics[height=4cm]{../tikz/topdownblade.pdf}}
+            \raisebox{0.5cm}{\includegraphics[height=4cm]{../tikz/topdownblade.pdf}}
             \caption{}
             \label{fig:topdownblade}    
         \end{subfigure}
         \begin{subfigure}[t]{0.32\textwidth}
             \centering
-            \includegraphics[height=6cm]{../tikz/single_blade_section.pdf}
+            \includegraphics[height=5cm]{../tikz/single_blade_section.pdf}
             \caption{}
             \label{fig:single_blade_section}    
         \end{subfigure}
         \begin{subfigure}[t]{0.32\textwidth}
             \centering
-            \includegraphics[height=6cm]{../tikz/superimposed_blade_sections.pdf}
+            \includegraphics[height=5cm]{../tikz/superimposed_blade_sections.pdf}
             \caption{}
             \label{fig:superimposed_blade_sections}    
         \end{subfigure}
@@ -370,7 +373,7 @@ The same 6 cell, 3300 mAh lithium polymer battery was also used to power the mot
 The safety of the experimental setup was a key consideration throughout the project.
 The testing required high speed rotating propellers which could cause serious injury.
 The custom 3D printed propellers were expected to be pushed to their material limits and so the risk of failure was high.
-For these reasons, all 3D printed propellers were tested soley in the foam anechoic chamber with the door closed and the operator outside.
+For these reasons, all 3D printed propellers were tested solely in the foam anechoic chamber with the door closed and the operator outside.
 TODO
 
 For this reason, the operater 
@@ -428,18 +431,24 @@ The final setup consisted of a moving platform with ceramic bearings to reduce f
 % explain some of the choices made in the setup
 % control of variables
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.6\textwidth]{../figures/chamber.pdf}
-    \caption{Acoustic test rig in the anechoic chamber.}
-    \label{fig:anechoic_chamber}
-\end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth, angle=270]{../figures/concentric.pdf}
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[height=8cm]{../figures/chamber.pdf}
+        \caption{Chamber view}
+        \label{fig:anechoic_chamber}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=8cm, angle=270]{../figures/concentric.pdf}
+        \caption{Concentric view}
+        \label{fig:concentric}
+    \end{subfigure}
     \caption{Acoustic test rig in the anechoic chamber.}
-    \label{fig:concentric}
+    \label{fig:test_rig}
 \end{figure}
 
 \subsubsection{Data Collection}
@@ -482,13 +491,36 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 
 \subsubsection{Data Processing}
 
+
 % rms normalised hanning window to prevent spectral leakage
 % frequency domain interpolation of microphone calibration data
 
 % method of integrating harmonics and definition pf HSPL
 % log regression of distance and speed
 
-\subsection{Theoretical}
+\subsection{Propeller Design Tool}
+
+A propeller design software tool was developed instead of using a standard parametric modelling software.
+This allowed for fast iterative design, with the ability to quickly change propeller geometry and see results in real time.
+A flowchart of the software is shown in figure \ref{fig:flowchart}.
+First, a propeller must be sufficiently defined by editing the input table, or a \texttt{*.prop} file is loaded.
+An airfoil profile is required which must be loaded from a \texttt{*.surf} file in the standard UIUC format \cite{uiuc_database}.
+Standard air and operating conditions have default values, but can also be edited.
+
+The software first runs a well known panel method solver, XFOIL, to compute the aerodynamic coefficients for the defined arbitrary airfoil.
+XFOIL uses a fully coupled viscous-inviscid interaction method to efficiently compute the coefficients for a range of angles of attack.
+
+% then what
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../tikz/software.pdf}
+    \caption{Flowchart of the propeller design software.}
+    \label{fig:flowchart}
+\end{figure}
+
+% tradeoff between high lift to drag ratios because of trig functions
 
 \begin{figure}[H]
     \centering
@@ -530,19 +562,25 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 
 \section{Results}
 
+\subsection{Calibration}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figures/controller_vs_loadcell_torque.pdf}
-    \caption{Torque measured by calibrated load cell compared to torque calculated from measured motor current for the dalprop 5045 propeller.}
-    \label{fig:looped}
+    \includegraphics[width=0.8\textwidth]{../tikz/loadcell_caltab.pdf}
+    \caption{Calibration graphs for the load cells used in the aerodynamic setup.}
+    \label{fig:loadcell_caltab}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figures/spl_speed_variation.pdf}
-    \caption{OASPL of the dalprop 5045 propeller }
-    \label{fig:spl_speed_variation}
+    \includegraphics[width=0.8\textwidth]{../figures/controller_vs_loadcell_torque.pdf}
+    \caption{Torque measured by calibrated load cell compared to torque calculated from measured motor current for the dalprop 5045bnr propeller.}
+    \label{fig:controller_vs_loadcell_torque}
 \end{figure}
+
+\subsection{Aerodynamic performance}
+
+\subsection{Acoustic performance}
 
 \begin{figure}[H]
     \centering
@@ -558,12 +596,24 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
         \caption{}
         \label{fig:distance_coefficient_for_angles_harmonics}
     \end{subfigure}
-    \caption{}
+    \caption{Power law coefficients for various observer angles and harmonics for the dalprop 5045 propeller.}
 \end{figure}
 
 \begin{figure}[H]
-    
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/spl_speed_variation.pdf}
+    \caption{OASPL of the dalprop 5045 propeller }
+    \label{fig:spl_speed_variation}
 \end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/prop_sound_FOM.pdf}
+    \caption{First harmonic sound at $\theta = 135^\circ$ against figure of merit for all propeller designs.}
+    \label{fig:prop_sound_FOM}
+\end{figure}
+
+
 
 % load cell calibration graphs
 
