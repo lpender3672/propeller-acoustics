@@ -65,11 +65,12 @@ def plot_hrmsndp_speed(hdf):
 
     xlo, xhi = ax.get_xlim()
     xcont = np.linspace(xlo, xhi, 1000)
-    ax.plot(xcont, 1e-2 * xcont**2, "k--", label="$x^2$")
+    ycont = 20 * np.log10(1e-2 * xcont**2)
+    ax.plot(xcont, ycont, "k--", label="$x^2$")
 
     ax.legend(loc="upper left")
     ax.set_xscale("log")
-    ax.set_yscale("log")
+    #ax.set_yscale("log")
     ax.grid(True, which='both')
 
     return fig, ax

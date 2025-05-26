@@ -15,45 +15,6 @@ from app.routines_aero import (
 )
 
 
-def plot_calibration(cal_data):
-
-    tcal_data, qcal_data = cal_data
-    
-    to_plot = [
-        ("Thrust",    tcal_data),
-        ("Torque",    qcal_data),
-    ]
-    output_dir = Path("deliverables/final_report/tikz")
-
-    sensor_names = ["Thrust", "Torque"]
-    units = {"Thrust": "N", "Torque": "Nm"}
-    for cal_label, data in to_plot:
-        for idx, sensor in enumerate(sensor_names):
-            fig, ax = plt.subplots(figsize=(5, 4))
-            ax.scatter(data[:, 0, idx], data[:, 1, idx])
-            #ax.set_title(f"{sensor} — {cal_label} Calibration")
-            ax.set_xlabel(f"Measured {sensor} (-)")
-            ax.set_ylabel(f"Applied {cal_label} ({units[cal_label]})")
-            ax.grid(True)
-
-            if cal_label == sensor:
-                # fit a line
-                pfit = np.polyfit(data[:, 0, idx], data[:, 1, idx], 1)
-                x_fit = np.linspace(np.min(data[:, 0, idx]), np.max(data[:, 0, idx]), 100)
-                y_fit = np.polyval(pfit, x_fit)
-                label_fit = f"y = {pfit[0]:.2e}x {pfit[1]:+.2e}".replace("+-", "- ")
-                ax.plot(x_fit, y_fit, "r--", label=label_fit)
-                ax.legend(loc="upper left")
-
-            # build a safe filename, e.g. Sensor_A_thrust.png
-            safe_name = sensor.replace(" ", "_")
-            filename = f"{safe_name}_{cal_label.lower()}.png"
-            path = output_dir / filename
-            fig.tight_layout()
-            fig.savefig(path, bbox_inches='tight', dpi=300)
-            plt.close(fig)
-
-
 def plot_prop(
     prop_result_path,
     ax1,
@@ -267,8 +228,6 @@ def FoM_comparison_plot(cal_data):
 if __name__ == "__main__":
 
     cal_data = load_cell_calibration()
-
-    plot_calibration(cal_data)
 
     sweep_comparison_plot(cal_data)
     printed_comparison_plot(cal_data)

@@ -203,7 +203,7 @@ def _generate_cache_key(lookup_df, aero_coefficients, reference_FOM, harmonics =
         aero_hash = hashlib.md5(pickle.dumps(aero_coefficients)).hexdigest()
         return f"{lookup_hash}_{aero_hash}_{reference_FOM + harmonics}"
 
-def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FOM = 0.5, use_cache=True):
+def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=True):
 
     MIN_SPEED_HZ = 10
     SAMPLE_FREQ_HZ = 51200 # Hz
@@ -213,6 +213,9 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
     rho = 1.225
 
     mic_calibration_data = load_microphone_calibration()
+
+    KT, KQ = np.mean(list(aero_coefficients.values()), axis=0)
+    reference_FOM = KT ** (3/2) / (2 ** (1/2) * KQ)
 
     # Generate a unique hash for the lookup_df and aero_coefficients
     cache_key = _generate_cache_key(lookup_df, aero_coefficients, reference_FOM, harmonics)
@@ -362,9 +365,13 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
         angles[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 2], harmonics)  # angle from mic state file
         distances[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 3], harmonics)  # distance from mic state file
 
-        fom = CT ** (3/2) / (2 ** (1/2) * CQ)
-        reff = prop["rt"] * (fom / reference_FOM)
-        nd_pressure = rho * (reff * speed_rad)**2
+        #fom = CT ** (3/2) / (2 ** (1/2) * CQ)
+        #reff = prop["rt"] * (fom / reference_FOM)
+        #nd_pressure = rho * (reff * speed_rad)**2
+
+        ref_offset = 20 * np.log10(
+            KQ / CQ * (CT / KT) ** 2
+        )
 
         for i in range(num_mics):
             for j in range(harmonics):
@@ -383,7 +390,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
                 harmonic_values[row_idx] = n
                 hrms_values[row_idx] = hspl
                 hspl_values[row_idx] = 20 * np.log10( hspl / REF_PRESSURE )
-                ndhspl_values[row_idx] = hspl / nd_pressure
+                ndhspl_values[row_idx] = hspl_values[row_idx] + ref_offset
 
                 row_idx += 1
 
@@ -403,7 +410,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
         'harmonic': harmonic_values,
         'RMS' : hrms_values,
         'SPL': hspl_values,
-        'ndSPL': ndhspl_values
+        'SPLref': ndhspl_values
     })
 
     # Save processed data to cache if caching is enabled
@@ -417,7 +424,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
 
     return processed_df
 
-def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=True):
+def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
 
     MIN_SPEED_HZ = 10
     SAMPLE_FREQ_HZ = 51200 # Hz
@@ -426,6 +433,9 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
     rho = 1.225
 
     mic_calibration_data = load_microphone_calibration()
+
+    KT, KQ = np.mean(list(aero_coefficients.values()), axis=0)
+    reference_FOM = KT ** (3/2) / (2 ** (1/2) * KQ)
 
     # Generate a unique hash for the lookup_df and aero_coefficients
     cache_key = _generate_cache_key(lookup_df, aero_coefficients, reference_FOM)
@@ -544,9 +554,13 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
 
         audio_data = apply_calib_time(audio_data, SAMPLE_FREQ_HZ, mic_calibration_data)
 
-        fom = CT ** (3/2) / (2 ** (1/2) * CQ)
-        reff = prop["rt"] * (fom / reference_FOM)
-        nd_pressure = rho * (reff * speed_rad)**2
+        #fom = CT ** (3/2) / (2 ** (1/2) * CQ)
+        #reff = prop["rt"] * (fom / reference_FOM)
+        #nd_pressure = rho * (reff * speed_rad)**2
+
+        ref_offset = 20 * np.log10(
+            KQ / CQ * (CT / KT) ** 2
+        )
         
         num_mics = len(mic_data)
         for i in range(num_mics):
@@ -562,7 +576,7 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
             
             # Calculate SPL and ndSPL
             spl_values[row_idx] = 20 * np.log10(rms / REF_PRESSURE)
-            ndspl_values[row_idx] = rms / nd_pressure
+            ndspl_values[row_idx] = spl_values[row_idx] + ref_offset
             
             # Increment row index
             row_idx += 1
@@ -582,7 +596,7 @@ def parse_spl_df(lookup_df, aero_coefficients, reference_FOM = 0.5, use_cache=Tr
         'distance': distances,
         'RMS': rms_values,
         'OASPL': spl_values,
-        'ndOASPL': ndspl_values
+        'OASPLref': ndspl_values
     })
 
     # Save processed data to cache if caching is enabled

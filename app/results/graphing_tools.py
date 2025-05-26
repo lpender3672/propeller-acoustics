@@ -385,7 +385,7 @@ if __name__ == "__main__":
 
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
-                            y_var='ndOASPL',
+                            y_var='OASPLref',
                             filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90},
                             #group_by=[],
                             plot_type='scatter',
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     
     fig, ax = multi_function_plot(pdf, 
                             x_var='distance', 
-                            y_var='ndOASPL',
+                            y_var='OASPLref',
                             filter_dict={ 'propeller' : 'dalprop5045', 'angle' : 90, 'speed' : (10000*pis, 13000*pis)},
                             group_by=['speed'],
                             plot_type='line',
