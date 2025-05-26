@@ -1,0 +1,3741 @@
+--COMMIT--
+2025-05-26 | lpender3672 | upload of work today feeling tired
+
+2	2	app/dists.py
+15	0	app/foils/0012search_m31.surf
+12	0	app/foils/0012search_v23.surf
+120	120	app/foils/clarkY.surf
+35	6	app/results/aero_graphs.py
+15	1	app/results/residual_function_variation.py
+1	0	app/results/spl_speed_variation.py
+1	1	app/results/torque_investigation.py
+26	3	app/routines.py
+71	21	deliverables/final_report/draft/draft.tex
+-	-	deliverables/final_report/figures/controller_vs_loadcell_torque.png
+-	-	deliverables/final_report/figures/prop_sound_FOM.png
+-	-	deliverables/final_report/figures/spl_speed_variation.png
+-	-	deliverables/final_report/tikz/Thrust_thrust.png
+-	-	deliverables/final_report/tikz/Thrust_torque.png
+-	-	deliverables/final_report/tikz/Torque_thrust.png
+-	-	deliverables/final_report/tikz/Torque_torque.png
+24	0	deliverables/final_report/tikz/loadcell_caltab.tex
+2	2	deliverables/final_report/tikz/software.tex
+
+--COMMIT--
+2025-05-25 | lpender3672 | slow day
+
+20	10	deliverables/final_report/draft/draft.tex
+42	0	theory/hanson.tex
+
+--COMMIT--
+2025-05-24 | lpender3672 | bem and bet theory done
+
+27	0	app/results/residual_function_variation.py
+60	25	deliverables/final_report/draft/draft.tex
+7	5	deliverables/final_report/tikz/bem.tex
+2	0	deliverables/final_report/tikz/streamtube.tex
+
+--COMMIT--
+2025-05-23 | lpender3672 | some graphs added. report written added custom task
+
+86	0	.vscode/tasks.json
+6	1	app/results/graphing_tools.py
+36	8	app/results/speed_distance_variation.py
+11	2	app/results/spl_speed_variation.py
+9	6	app/results/torque_investigation.py
+130	44	deliverables/final_report/draft/draft.tex
+-	-	deliverables/final_report/figures/controller_vs_loadcell_torque.png
+-	-	deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.png
+-	-	deliverables/final_report/figures/speed_coefficient_for_angles_harmonics.png
+-	-	deliverables/final_report/figures/spl_speed_variation.png
+58	0	deliverables/final_report/tikz/actuator_disk.tex
+40	16	deliverables/final_report/tikz/streamtube.tex
+
+--COMMIT--
+2025-05-23 | lpender3672 | slightly improved the old blade design software, probably the last little changes dont like working with it anymore because its rubbish and barely produced the propellers. rarranged theory
+
+6	0	app/dists.py
+15	5	app/main.py
+55	21	app/result_widgets.py
+89	58	deliverables/final_report/draft/draft.tex
+-	-	deliverables/final_report/figures/design.png
+
+--COMMIT--
+2025-05-22 | lpender3672 | more result analysis cleanup. started comparing residuals to theory. not great agreement, with the noise increasing with harmonics for a fixed speed
+
+71	3	app/hanson_comp.py
+13	12	app/results/graphing_tools.py
+0	0	app/results/harmonic_azimuthal_variation.py
+0	0	app/results/harmonic_radial_variation.py
+141	0	app/results/residual_function_variation.py
+4	4	app/results/{harmonic_speed_variation.py => speed_distance_variation.py}
+0	1	app/results/spl_azimuthal_variation.py
+0	0	app/results/spl_radial_variation.py
+8	12	app/results/spl_speed_variation.py
+7	2	app/results/torque_investigation.py
+6	0	app/routines_aero.py
+4	4	app/routines_audio.py
+0	2415	deliverables/final_report/draft/draft.bcf
+0	85	deliverables/final_report/draft/draft.run.xml
+2	0	deliverables/final_report/draft/draft.tex
+
+--COMMIT--
+2025-05-22 | lpender3672 | wow the torque from current agrees extremely well with calibrated. nevermind. this was the torque coefficient for 2300kV, with the actual one the data is worse. will look into torque coefficient. obviously still trusting load cell data above torque coefficient
+
+139	0	app/results/torque_investigation.py
+1	2	app/routines_aero.py
+
+--COMMIT--
+2025-05-21 | lpender3672 | Merge branch 'HEAD' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-21 | lpender3672 | image of aero setup. instead of SPL going to define OASPL to better match convention the harmonic dependent will remain SPL(n) for nth harmonic
+
+20	10	deliverables/final_report/draft/draft.tex
+-	-	deliverables/final_report/figures/aero_setup.jpg
+
+--COMMIT--
+2025-05-21 | lpender3672 | no load current data
+
+475	0	app/props/noprop.prop
+-	-	app/results/noprop.prop/aero_2025-05-21-22-57-36.npz
+
+--COMMIT--
+2025-05-21 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-21 | lpender3672 | wasnt sure if id need references for libraries. i dont. The hx711 should get recognition though
+
+3	2	app/results/harmonic_speed_variation.py
+66	0	deliverables/allrefs.bib
+7	0	deliverables/bib/hx711pico-c.bib
+14	0	deliverables/bib/matplotlib.bib
+22	0	deliverables/bib/numpy.bib
+23	0	deliverables/bib/scipy.bib
+1	0	deliverables/final_report/draft/draft.bcf
+39	6	deliverables/final_report/draft/draft.tex
+
+--COMMIT--
+2025-05-21 | lpender3672 | new collection tool ss
+
+-	-	app/collection.png
+-	-	deliverables/final_report/figures/collection.png
+
+--COMMIT--
+2025-05-21 | lpender3672 | fixed referneces
+
+52	0	deliverables/allrefs.bib
+25	0	deliverables/bib/rsj_rspa1938211_445.bib
+25	0	deliverables/bib/rsj_rsta1934264_321.bib
+11	1	deliverables/final_report/draft/draft.bcf
+1	1	deliverables/final_report/draft/draft.run.xml
+30	6	deliverables/final_report/draft/draft.tex
+1	1	deliverables/practical_summary/summary.tex
+
+--COMMIT--
+2025-05-21 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-21 | lpender3672 | big shift today lots of theory written
+
+46	5	app/results/cogging_investigation.py
+28	0	deliverables/convertpdf.py
+200	5	deliverables/final_report/draft/draft.tex
+-	-	deliverables/final_report/figures/dalprop_series.jpg
+-	-	deliverables/final_report/figures/loop_series.jpg
+-	-	deliverables/final_report/figures/sweep_series.jpg
+33	0	deliverables/final_report/tikz/bem.tex
+94	0	deliverables/final_report/tikz/hanson_foil.tex
+0	0	deliverables/final_report/tikz/helicoidal.tex
+32	0	deliverables/final_report/tikz/mic_layout1.tex
+42	0	deliverables/final_report/tikz/preamble.tex
+25	0	deliverables/final_report/tikz/single_blade_section.tex
+58	0	deliverables/final_report/tikz/software.tex
+31	0	deliverables/final_report/tikz/streamtube.tex
+29	0	deliverables/final_report/tikz/superimposed_blade_sections.tex
+16	0	deliverables/final_report/tikz/topdownblade.tex
+
+--COMMIT--
+2025-05-20 | lpender3672 | made an angle bin to group data together small sets of data were getting regressed which gave a lot of results without much significance
+
+43	10	app/results/graphing_tools.py
+23	10	app/results/harmonic_speed_variation.py
+
+--COMMIT--
+2025-05-18 | lpender3672 | some fast sampling of speed at different speeds to investigate cogging
+
+22	2	app/experiment.py
+-	-	app/results/cogging/0speed.npy
+-	-	app/results/cogging/12000speed.npy
+-	-	app/results/cogging/3000speed.npy
+-	-	app/results/cogging/6000speed.npy
+
+--COMMIT--
+2025-05-18 | lpender3672 | method started
+
+1	0	deliverables/final_presentation/presentation.tex
+33	3	deliverables/final_report/draft/draft.tex
+
+--COMMIT--
+2025-05-18 | lpender3672 | There is some kind of race condition in the data collection software where a signal triggered before being disconnected. Making an issue about it. Also copied over some aero data for the nonlinear so it works with FM normalisation Starting some cogging investigation too
+
+0	0	app/results/50loop_s50.prop/audio_2025-05-12-13-50-37.bin
+80	0	app/results/cogging_investigation.py
+-	-	app/results/dalprop5045_nonlinear_test.prop/aero_2025-04-11-15-34-31.npz
+-	-	app/results/dalprop5045_nonlinear_test2.prop/aero_2025-04-11-15-34-31.npz
+8	7	app/results/graphing_tools.py
+30	3	app/results/harmonic_speed_variation.py
+68	93	app/results/spl_speed_variation.py
+42	3	app/routines_audio.py
+
+--COMMIT--
+2025-05-18 | lpender3672 | movement of references to be in the general folder
+
+1	0	.gitignore
+0	0	deliverables/{tms => }/allrefs.bib
+0	0	deliverables/{tms => }/bib/S0003682X15003606.bib
+0	0	deliverables/{tms => }/bib/S0022460X83711521.bib
+0	0	deliverables/{tms => }/bib/S1876610217304356.bib
+0	0	deliverables/{tms => }/bib/UIUCdatabase.bib
+0	0	deliverables/{tms => }/bib/aiaa_6.2018-2953.bib
+0	0	deliverables/{tms => }/bib/aiaa_6.2021-1926.bib
+0	0	deliverables/{tms => }/bib/aiaa_aiaaj18_1213.bib
+0	0	deliverables/{tms => }/bib/aiaa_aiaaj18_1313.bib
+0	0	deliverables/{tms => }/bib/aiaa_jpp2_534.bib
+0	0	deliverables/{tms => }/bib/citation-315858872.bib
+0	0	deliverables/{tms => }/bib/citation-354282279.bib
+0	0	deliverables/{tms => }/bib/citation-368189976.bib
+0	0	deliverables/{tms => }/bib/ijerph-v20-i03_20250117.bib
+0	0	deliverables/{tms => }/bib/pericles_1099182417.bib
+3	0	deliverables/final_presentation/.gitignore
+86	0	deliverables/final_presentation/presentation.tex
+10	1	deliverables/final_report/draft/draft.bcf
+1	1	deliverables/final_report/draft/draft.run.xml
+35	14	deliverables/final_report/draft/draft.tex
+0	0	deliverables/{tms => }/mergebib.py
+4	3	deliverables/tms/tms.tex
+-	-	deliverables/tms/tms2.synctex(busy)
+4	2	deliverables/tms/tms2.tex
+
+--COMMIT--
+2025-05-17 | lpender3672 | more comments. removed some todos that were out of scope now
+
+3	1	app/bem.py
+0	1	app/results/aero_graphs.py
+1	1	app/results/spl_speed_variation.py
+3	1	cfd/betz.py
+42	25	deliverables/final_report/draft/draft.bcf
+48	5	deliverables/final_report/draft/draft.tex
+
+--COMMIT--
+2025-05-17 | lpender3672 | progress with plotting the important function need to get rid of all the ramp down data
+
+2	0	.gitignore
+29	19	app/results/graphing_tools.py
+259	0	app/results/harmonic_speed_variation.py
+59	0	deliverables/final_report/draft/draft.tex
+15	1	deliverables/practical_summary/summary.tex
+
+--COMMIT--
+2025-05-16 | lpender3672 | small changes and the renaming of files to be more intuitive
+
+1	0	app/results/{thrust_referenced_pressure.py => graphing_tools.py}
+4	1	app/results/listen.py
+3	2	app/results/spl_speed_variation.py
+1	1	deliverables/practical_summary/summary.tex
+
+--COMMIT--
+2025-05-16 | lpender3672 | calibration is now performed on spl and harmonic dfs I removed some redundant code that i spent ages writing which didnt show anything
+
+0	186	app/results/harmonic_speed_variation.py
+2	1	app/results/spl_speed_variation.py
+4	478	app/results/thrust_referenced_pressure.py
+533	51	app/routines_audio.py
+50	8	deliverables/practical_summary/summary.tex
+
+--COMMIT--
+2025-05-16 | lpender3672 | ok in the cad and images i forgot the nut that holds the propeller on
+
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup2.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-05-16 | lpender3672 | done the cad photos
+
+-	-	deliverables/practical_summary/figures/acoustic1.JPG
+-	-	deliverables/practical_summary/figures/acoustic2.JPG
+-	-	deliverables/practical_summary/figures/aero1.JPG
+-	-	deliverables/practical_summary/figures/aero2.JPG
+-	-	deliverables/practical_summary/figures/aero3.JPG
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup2.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-05-16 | lpender3672 | ok finished pdf and hdf (SPL and harmonic SPL dataframe entries for resutls) still need to apply the calibration which will require some thinking for the SPL case as im worried about just ffting calibrating, then iffting the calibration might incorrectly amplify spectral leakage
+
+247	26	app/results/thrust_referenced_pressure.py
+1	1	app/routines_audio.py
+8	0	theory/hanson.tex
+
+--COMMIT--
+2025-05-16 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-16 | lpender3672 | improvements before working on harmonics
+
+157	69	app/results/thrust_referenced_pressure.py
+0	3	app/routines_aero.py
+
+--COMMIT--
+2025-05-16 | lpender3672 | bit of cleanup fixed microphone angles
+
+2	0	.gitignore
+3	1	app/results/aero_graphs.py
+37	2	app/results/edit_metdata.py
+2	2	app/results/microphone_states/gantry22.5_6bd.csv
+2	2	app/results/microphone_states/gantry22.5_8bd.csv
+2	2	app/results/microphone_states/gantry45_6bd.csv
+2	2	app/results/microphone_states/gantry45_7bd.csv
+2	2	app/results/microphone_states/gantry45_8bd.csv
+2	2	app/results/microphone_states/gantry45_9bd.csv
+2	2	app/results/microphone_states/gantry45_r48.csv
+2	2	app/results/microphone_states/gantry67.5_6bd.csv
+2	2	app/results/microphone_states/gantry67.5_8bd.csv
+19	7	app/results/spl_speed_variation.py
+0	5	app/routines_aero.py
+
+--COMMIT--
+2025-05-16 | lpender3672 | bit of cleanup fixed microphone angles
+
+2	0	.gitignore
+3	1	app/results/aero_graphs.py
+36	2	app/results/edit_metdata.py
+2	3	app/results/microphone_states/gantry22.5_6bd.csv
+2	3	app/results/microphone_states/gantry22.5_8bd.csv
+2	3	app/results/microphone_states/gantry45_6bd.csv
+2	3	app/results/microphone_states/gantry45_7bd.csv
+2	3	app/results/microphone_states/gantry45_8bd.csv
+2	3	app/results/microphone_states/gantry45_9bd.csv
+2	3	app/results/microphone_states/gantry45_r48.csv
+2	3	app/results/microphone_states/gantry67.5_6bd.csv
+2	3	app/results/microphone_states/gantry67.5_8bd.csv
+19	7	app/results/spl_speed_variation.py
+0	5	app/routines_aero.py
+
+--COMMIT--
+2025-05-16 | lpender3672 | ndspl finally
+
+2	2	app/results/aero_graphs.py
+47	37	app/results/thrust_referenced_pressure.py
+
+--COMMIT--
+2025-05-16 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-16 | lpender3672 | cleaning up the aero graphs and improved fitting of coefficients
+
+73	119	app/results/{graph.py => aero_graphs.py}
+0	87	app/results/graph copy.py
+4	4	app/results/harmonic_speed_variation.py
+1	1	app/results/spl_speed_variation.py
+43	90	app/{ => results}/thrust_referenced_pressure.py
+185	0	app/routines_aero.py
+1	1	app/routines_audio.py
+
+--COMMIT--
+2025-05-16 | lpender3672 | cleaning up the aero graphs and improved fitting of coefficients
+
+73	119	app/results/{graph.py => aero_graphs.py}
+0	87	app/results/graph copy.py
+3	3	app/results/harmonic_speed_variation.py
+1	1	app/results/spl_speed_variation.py
+43	90	app/{ => results}/thrust_referenced_pressure.py
+185	0	app/routines_aero.py
+1	1	app/routines_audio.py
+
+--COMMIT--
+2025-05-16 | lpender3672 | cleaned up CAD ready for figures
+
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup2.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/base.SLDPRT
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-05-15 | lpender3672 | theres all the missing cad files... in gitignore
+
+-	-	loading/cad/metal_casing.SLDDRW
+-	-	loading/cad/metal_casing.SLDPRT
+-	-	loading/cad/motor mount.SLDPRT
+-	-	loading/cad/motor_magnet_mount.SLDPRT
+-	-	loading/cad/topclamp.SLDPRT
+
+--COMMIT--
+2025-05-15 | lpender3672 | fixed CAD reference by making virtual adn then resaving to external file
+
+-	-	loading/cad/Copy of topclamp.SLDPRT
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-05-15 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-15 | lpender3672 | figures and a summary of whats been done etc...
+
+-	-	deliverables/practical_summary/figures/chamber.jpg
+-	-	deliverables/practical_summary/figures/concentric.jpg
+-	-	deliverables/practical_summary/figures/cooling.jpg
+-	-	deliverables/practical_summary/figures/precision_fit.jpg
+367	0	deliverables/practical_summary/summary.tex
+
+--COMMIT--
+2025-05-15 | lpender3672 | after about 10 python enviroments rootkits cant be that much harder to remove than that broken venv
+
+2	3	README.md
+2	11	app/hanson.py
+8	1	app/routines.py
+1	1	xfoil-python
+
+--COMMIT--
+2025-05-15 | lpender3672 | do what i say not as i do
+
+34	0	README.md
+
+--COMMIT--
+2025-05-15 | lpender3672 | finally uploaded the build fix for pyxfoil
+
+1	1	.gitmodules
+1	1	xfoil-python
+
+--COMMIT--
+2025-05-15 | lpender3672 | fixed many issues with CAD and cleaned it up. now have every iteration as configurations in assembly. todo: toolboxing for nuts and bolts, renders also for report, the clean circuit and wiring schematics
+
+-	-	loading/cad/5045_s15.SLDPRT
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup2.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/base.SLDPRT
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/hallsensor.SLDPRT
+-	-	loading/cad/shaft_extender.SLDPRT
+
+--COMMIT--
+2025-05-15 | lpender3672 | the geometry code broke at some point leading to bad designs that were too time consuming to fix
+
+34	15	app/geometry.py
+1	1	app/results/listen.py
+
+--COMMIT--
+2025-05-14 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-05-14 | lpender3672 | tomorrow ill clean this up a bit more and move the functions to the right files has been some interesting graphs but ill spend all of tomorrow on it However the radial variation data seems concering The to do list is still to write up practical parts And some meshgrid plotting utilities Potentially the inclusion of integrated harmonics Also to speed the process up i need to save the processed data to a cache
+
+1	0	app/results/spl_azimuthal_variation.py
+413	50	app/thrust_referenced_pressure.py
+
+--COMMIT--
+2025-05-14 | lpender3672 | added a duration box to help tony record data for the other acoustic experiment tomorrow
+
+14	2	app/experiment.py
+
+--COMMIT--
+2025-05-13 | lpender3672 | issue from an autolint?
+
+2	2	app/collection_threads.py
+
+--COMMIT--
+2025-05-13 | lpender3672 | cleanup, turned app into a package which makes it easier to import throughout the codebase structure for graph plotting and audio routines separate from main routines
+
+0	0	app/__init__.py
+4	2	app/analysis.py
+4	3	app/bem.py
+0	4	app/chord.txt
+0	12	app/cl.txt
+12	3	app/experiment.py
+4	1	app/geometry.py
+5	1	app/hanson.py
+24	8	app/hanson_comp.py
+8	2	app/input.py
+8	7	app/main.py
+598	591	app/{results.py => result_widgets.py}
+0	0	app/results/__init__.py
+0	379	app/results/audio.py
+0	1	app/results/edit_metdata.py
+2	1	app/results/graph copy.py
+3	6	app/results/graph.py
+0	0	app/results/harmonic_azimuthal_variation.py
+0	0	app/results/harmonic_radial_variation.py
+187	0	app/results/harmonic_speed_variation.py
+1	1	app/results/listen.py
+0	0	app/results/spl_azimuthal_variation.py
+0	0	app/results/spl_radial_variation.py
+105	0	app/results/spl_speed_variation.py
+15	0	app/routines.py
+129	0	app/routines_audio.py
+0	1	app/table.py
+2	1	app/thrust_referenced_pressure.py
+0	4	app/twist.txt
+1	0	pyproject.toml
+
+--COMMIT--
+2025-05-13 | lpender3672 | final tests for 5045 s15 and s45. low speed testing of the 50loop_s50 which broke halfway through testing at 6bd 45 degrees rest of foxeer toroidal was done
+
+1	1	app/experiment.py
+-	-	app/results/5045_s15.prop/aero_2025-05-12-16-07-50.npz
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-08-56.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-08-58.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-00.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-02.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-05.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-07.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-10.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-12.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-15.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-17.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-19.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-21.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-24.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-09-27.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-12-50.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-12-52.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-12-54.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-12-56.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-12-58.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-00.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-03.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-05.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-08.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-10.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-12.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-15.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-17.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-13-19.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-19.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-21.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-23.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-25.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-28.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-30.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-32.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-35.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-37.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-40.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-42.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-44.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-46.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-15-49.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-41.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-43.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-45.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-47.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-49.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-51.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-54.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-56.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-57-58.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-58-01.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-58-03.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-58-05.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-58-08.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-58-10.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-37.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-39.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-41.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-43.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-45.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-48.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-50.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-53.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-55.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-14-59-57.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-00-00.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-00-02.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-00-04.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-00-06.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-29.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-31.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-33.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-35.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-38.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-40.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-42.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-45.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-47.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-49.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-52.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-54.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-56.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-12-15-03-59.bin
+-	-	app/results/5045_s15.prop/meta_data.npy
+-	-	app/results/5045_s45.prop/aero_2025-05-12-16-04-49.npz
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-39.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-41.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-43.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-46.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-48.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-50.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-53.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-55.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-18-58.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-19-00.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-19-02.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-19-05.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-19-07.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-19-09.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-27.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-29.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-31.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-33.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-36.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-38.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-40.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-43.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-45.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-47.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-50.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-52.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-54.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-21-56.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-13.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-15.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-18.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-20.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-22.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-24.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-26.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-29.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-31.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-34.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-36.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-38.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-41.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-25-43.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-48-49.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-48-51.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-48-53.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-48-55.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-48-58.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-00.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-02.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-04.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-07.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-09.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-12.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-14.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-16.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-49-18.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-45.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-47.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-50.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-52.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-54.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-56.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-51-58.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-01.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-04.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-06.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-08.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-11.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-13.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-52-15.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-54-50.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-54-52.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-54-54.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-54-57.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-54-59.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-01.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-03.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-06.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-08.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-11.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-13.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-15.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-18.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-12-14-55-20.bin
+-	-	app/results/5045_s45.prop/meta_data.npy
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-11.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-13.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-15.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-17.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-19.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-21.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-24.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-26.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-28.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-31.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-33.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-35.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-37.bin
+-	-	app/results/5045_s60.prop/audio_2025-05-12-10-54-40.bin
+-	-	app/results/5045_s60.prop/meta_data.npy
+-	-	app/results/50loop_s50.prop/aero_2025-05-12-16-12-52.npz
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-30.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-33.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-35.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-37.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-39.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-41.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-43.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-46.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-48.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-50.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-52.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-54.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-57.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-26-59.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-24.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-26.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-28.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-31.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-33.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-35.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-37.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-40.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-42.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-44.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-46.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-49.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-51.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-29-53.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-15.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-17.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-19.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-22.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-24.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-26.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-28.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-31.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-33.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-35.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-38.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-40.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-42.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-33-44.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-35.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-37.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-39.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-42.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-44.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-46.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-48.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-50.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-52.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-55.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-57.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-45-59.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-46-02.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-46-04.bin
+0	0	app/results/50loop_s50.prop/audio_2025-05-12-13-50-37.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-38.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-40.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-42.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-44.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-46.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-48.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-50.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-53.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-55.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-50-57.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-51-00.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-51-02.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-51-04.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-51-06.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-07.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-09.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-11.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-13.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-15.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-18.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-20.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-22.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-25.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-27.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-29.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-31.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-33.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-13-54-35.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-44.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-46.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-48.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-51.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-53.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-56.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-17-58.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-00.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-03.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-05.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-07.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-09.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-12.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-18-14.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-19-56.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-19-58.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-00.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-02.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-05.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-07.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-10.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-12.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-14.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-17.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-19.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-21.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-23.bin
+-	-	app/results/50loop_s50.prop/audio_2025-05-12-15-20-26.bin
+-	-	app/results/50loop_s50.prop/meta_data.npy
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-37.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-39.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-41.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-44.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-46.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-51.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-53.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-56.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-34-58.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-35-00.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-35-03.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-35-06.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-35-09.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-00.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-02.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-05.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-07.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-09.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-11.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-14.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-16.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-19.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-21.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-23.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-26.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-28.bin
+-	-	app/results/dalprop5045.prop/audio_2025-05-12-15-46-32.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/foxeer_toroidal.prop/aero_2025-05-12-16-10-17.npz
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-01.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-04.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-06.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-09.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-11.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-14.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-16.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-19.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-22.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-25.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-27.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-32.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-12-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-24.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-26.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-28.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-33.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-37.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-40.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-42.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-45.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-47.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-49.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-52.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-16-54.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-08.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-10.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-13.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-15.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-18.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-20.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-22.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-25.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-28.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-32.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-38.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-19-41.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-28.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-31.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-33.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-37.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-39.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-42.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-44.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-47.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-49.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-52.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-54.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-57-58.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-58-01.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-59-52.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-59-54.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-59-56.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-13-59-58.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-01.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-03.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-05.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-08.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-10.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-13.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-15.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-17.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-20.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-00-23.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-27.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-33.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-37.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-40.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-42.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-44.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-47.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-49.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-52.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-55.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-02-57.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-14-03-00.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-06-53.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-06-56.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-06-58.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-00.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-02.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-05.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-07.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-09.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-12.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-14.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-17.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-20.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-22.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-07-26.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-29.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-31.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-33.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-37.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-40.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-42.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-45.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-47.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-50.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-52.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-55.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-11-58.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-12-01.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-03.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-05.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-07.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-09.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-11.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-13.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-16.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-18.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-21.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-23.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-25.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-28.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-05-12-15-14-33.bin
+-	-	app/results/foxeer_toroidal.prop/meta_data.npy
+8	0	app/results/microphone_states/gantry45_7bd.csv
+8	0	app/results/microphone_states/gantry45_9bd.csv
+
+--COMMIT--
+2025-05-12 | lpender3672 | SPL hysterisis seems independent of settling time so transient effects can be ruled out.
+
+1	0	app/experiment.py
+475	0	app/props/dalprop5045_nonlinear_test.prop
+475	0	app/props/dalprop5045_nonlinear_test2.prop
+19	2	app/results/audio.py
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-09.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-11.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-14.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-17.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-19.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-22.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-25.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-28.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-31.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-34.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-37.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-40.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-43.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/audio_2025-05-12-10-38-46.bin
+-	-	app/results/dalprop5045_nonlinear_test.prop/meta_data.npy
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-08.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-11.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-15.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-18.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-22.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-25.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-29.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-32.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-36.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-39.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-43.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-46.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-50.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/audio_2025-05-12-10-47-54.bin
+-	-	app/results/dalprop5045_nonlinear_test2.prop/meta_data.npy
+
+--COMMIT--
+2025-05-11 | lpender3672 | so theres a lot nonlinearity in the SPL which needs to be thought about. This is worrying and points to bad data but there may be an explaination for it. Either way i had hoped for more coherent data
+
+86	5	app/results/audio.py
+75	11	app/results/graph.py
+
+--COMMIT--
+2025-05-11 | lpender3672 | lots more result files and draft report files
+
+1	1	app/experiment.py
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-33.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-35.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-37.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-39.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-42.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-44.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-47.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-49.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-52.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-55.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-26-57.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-27-00.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-27-03.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-27-05.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-29-59.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-02.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-04.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-06.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-08.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-11.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-13.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-16.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-18.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-21.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-23.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-26.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-28.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-30-30.bin
+0	0	app/results/5045_s15.prop/audio_2025-05-08-14-32-11.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-13.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-16.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-18.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-20.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-23.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-25.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-27.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-30.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-33.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-36.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-38.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-41.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-44.bin
+-	-	app/results/5045_s15.prop/audio_2025-05-08-14-36-46.bin
+-	-	app/results/5045_s15.prop/meta_data.npy
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-12.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-15.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-18.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-21.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-24.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-27.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-30.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-33.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-35.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-38.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-40.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-43.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-45.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-41-48.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-28.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-30.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-32.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-34.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-36.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-39.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-41.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-43.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-46.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-48.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-50.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-52.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-55.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-43-57.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-26.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-28.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-30.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-32.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-34.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-36.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-39.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-41.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-43.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-46.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-48.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-50.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-53.bin
+-	-	app/results/5045_s45.prop/audio_2025-05-08-14-46-55.bin
+-	-	app/results/5045_s45.prop/meta_data.npy
+0	0	deliverables/final_presentation/presentation.tex
+2378	0	deliverables/final_report/draft/draft.bcf
+85	0	deliverables/final_report/draft/draft.run.xml
+54	0	deliverables/final_report/draft/draft.tex
+0	0	deliverables/final_report/final/final.tex
+
+--COMMIT--
+2025-04-25 | lpender3672 | computer do what your programmed to do
+
+2	2	app/experiment.py
+204	0	app/props/foxeer_toroidal.prop
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-25.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-28.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-31.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-33.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-36.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-39.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-42.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-45.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-49.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-52.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-55.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-14-58.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-15-02.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-15-05.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-00.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-03.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-06.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-09.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-12.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-15.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-18.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-21.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-25.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-28.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-31.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-34.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-38.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-31-41.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-41-55.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-41-59.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-02.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-05.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-08.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-11.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-14.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-17.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-21.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-24.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-27.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-30.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-34.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-25-15-42-36.bin
+-	-	app/results/5045_s30.prop/meta_data.npy
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-06-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-06-52.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-06-54.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-06-57.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-00.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-02.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-05.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-08.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-11.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-14.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-17.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-21.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-24.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-25-15-07-27.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-16.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-19.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-22.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-25.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-28.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-31.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-35.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-39.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-42.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-46.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-50.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-53.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-56.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-19-59.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-27-58.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-01.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-04.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-07.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-10.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-14.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-17.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-20.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-23.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-27.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-34.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-37.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-28-41.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-24.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-26.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-30.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-32.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-36.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-39.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-42.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-45.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-49.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-52.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-55.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-45-58.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-46-01.bin
+-	-	app/results/foxeer_toroidal.prop/audio_2025-04-25-15-46-05.bin
+-	-	app/results/foxeer_toroidal.prop/meta_data.npy
+8	0	app/results/microphone_states/gantry45_r48.csv
+
+--COMMIT--
+2025-04-25 | lpender3672 | automatic linting my old code
+
+19	30	app/analysis.py
+241	192	app/bem.py
+91	79	app/collection_threads.py
+124	123	app/dists.py
+309	173	app/experiment.py
+349	276	app/geometry.py
+224	190	app/hanson.py
+447	273	app/hanson_comp.py
+144	105	app/input.py
+27	31	app/main.py
+175	144	app/results.py
+81	71	app/results/audio.py
+23	20	app/results/edit_metdata.py
+35	40	app/results/graph copy.py
+83	67	app/results/graph.py
+13	11	app/results/listen.py
+164	111	app/results/separate_calibration.py
+139	121	app/routines.py
+91	85	app/table.py
+50	50	app/thrust_referenced_pressure.py
+51	27	app/vis.py
+296	6	poetry.lock
+53	3	pyproject.toml
+
+--COMMIT--
+2025-04-25 | lpender3672 | cleaned up and using poetry now
+
+3	0	.gitmodules
+6	1	.vscode/settings.json
+22	0	README.md
+0	1	app/collection_threads.py
+2449	0	poetry.lock
+12	0	pyproject.toml
+0	12	requirements.txt
+1	0	xfoil-python
+
+--COMMIT--
+2025-04-23 | lpender3672 | final props and some code improvements
+
+7	1	app/geometry.py
+475	0	app/props/5045_s15.prop
+-	-	app/props/5045_s15.stl
+475	0	app/props/5045_s45.prop
+-	-	app/props/5045_s45.stl
+212	0	app/props/50loop_s40.prop
+-	-	app/props/50loop_s40.stl
+212	0	app/props/50loop_s50.prop
+-	-	app/props/50loop_s50.stl
+13	8	app/results/listen.py
+
+--COMMIT--
+2025-04-22 | lpender3672 | moved some files around and listened to playback of audio
+
+1	0	app/input.py
+66	5	app/results.py
+22	8	app/{ => results}/audio.py
+0	0	app/{ => results}/graph copy.py
+0	0	app/{ => results}/graph.py
+53	0	app/results/listen.py
+1	1	app/thrust_referenced_pressure.py
+
+--COMMIT--
+2025-04-21 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-04-21 | lpender3672 | visualised some error bars but it wasnt particularly useful. already knew uncertainty at small torque thrusts and speeds was more significant speed uncertainty is still more than expected though
+
+118	37	app/graph.py
+
+--COMMIT--
+2025-04-19 | lpender3672 | using lookup df to plot microphone radar graph
+
+50	12	app/thrust_referenced_pressure.py
+
+--COMMIT--
+2025-04-18 | lpender3672 | agile commit wrote a function to build a df from all result files
+
+56	1	app/thrust_referenced_pressure.py
+
+--COMMIT--
+2025-04-11 | lpender3672 | audio for different 2 more radaii at 6 and 8 blade diameters also lots more aero data up to 16000 and 17000 rpm
+
+1	1	app/experiment.py
+-	-	app/results/5045_s30.prop/aero_2025-04-11-15-28-49.npz
+-	-	app/results/dalprop4045.prop/aero_2025-04-11-15-34-31.npz
+-	-	app/results/dalprop5045.prop/aero_2025-04-11-15-18-43.npz
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-16.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-19.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-22.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-26.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-30.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-33.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-37.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-40.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-44.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-52.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-55.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-13-59.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-14-03.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-19.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-22.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-24.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-27.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-30.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-33.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-36.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-39.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-42.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-45.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-51.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-54.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-21-57.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-26-34.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-26-51.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-26-54.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-26-56.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-00.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-03.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-06.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-08.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-11.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-14.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-17.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-20.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-23.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-26.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-27-29.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-13.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-16.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-18.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-21.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-23.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-26.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-29.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-32.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-34.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-38.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-41.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-44.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-46.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-45-49.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-51-46.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-51-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-51-51.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-51-53.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-51-56.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-51-59.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-01.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-04.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-07.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-10.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-13.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-16.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-19.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-52-22.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-25.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-28.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-30.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-33.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-36.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-39.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-41.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-44.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-47.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-50.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-52.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-56.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-56-58.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-14-57-01.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/dalprop5045bnr.prop/aero_2025-04-11-15-39-11.npz
+-	-	app/results/dalprop6045.prop/aero_2025-04-11-15-44-44.npz
+8	0	app/results/microphone_states/gantry22.5_6bd.csv
+8	0	app/results/microphone_states/gantry22.5_8bd.csv
+8	0	app/results/microphone_states/gantry45_6bd.csv
+8	0	app/results/microphone_states/gantry45_8bd.csv
+8	0	app/results/microphone_states/gantry67.5_6bd.csv
+8	0	app/results/microphone_states/gantry67.5_8bd.csv
+-	-	app/results/printed5045.prop/aero_2025-04-11-15-21-35.npz
+-	-	app/results/printed5045bnr.prop/aero_2025-04-11-15-48-02.npz
+
+--COMMIT--
+2025-04-11 | lpender3672 | a lot of data fro different angles
+
+1	1	app/collection_threads.py
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-01.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-06.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-10.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-14.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-19.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-25.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-30.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-35.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-38.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-41.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-44.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-47.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-50.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-02-53.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-33.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-36.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-38.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-41.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-44.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-46.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-49.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-52.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-55.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-07-58.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-08-02.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-08-05.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-08-08.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-08-11.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-16.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-19.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-23.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-26.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-29.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-32.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-35.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-38.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-41.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-43.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-46.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-49.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-53.bin
+-	-	app/results/5045_s30.prop/audio_2025-04-10-14-12-57.bin
+-	-	app/results/5045_s30.prop/meta_data.npy
+-	-	app/results/5045_s60.prop/meta_data.npy
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-48-47.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-48-49.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-48-51.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-48-53.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-48-55.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-48-58.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-00.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-03.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-06.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-08.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-11.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-13.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-15.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-49-18.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-24.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-27.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-29.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-31.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-33.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-36.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-38.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-41.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-44.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-46.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-49.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-52.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-54.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-52-57.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-01.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-03.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-05.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-07.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-09.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-12.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-15.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-18.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-20.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-23.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-25.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-28.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-30.bin
+-	-	app/results/dalprop4045.prop/audio_2025-04-11-12-56-32.bin
+-	-	app/results/dalprop4045.prop/meta_data.npy
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-25.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-27.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-30.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-33.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-36.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-39.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-41.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-44.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-50.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-53.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-56.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-42-59.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-10-14-43-02.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-13.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-17.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-20.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-24.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-27.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-31.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-34.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-37.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-40.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-43.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-47.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-50.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-54.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-26-57.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-34-43.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-34-46.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-34-49.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-34-52.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-34-55.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-34-59.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-02.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-05.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-09.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-12.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-16.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-20.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-23.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-11-11-35-28.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-06.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-10.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-13.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-17.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-20.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-22.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-25.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-30.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-34.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-39.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-44.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-49.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-54.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-46-59.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-50-58.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-01.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-04.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-07.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-09.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-12.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-15.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-22.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-25.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-30.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-35.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-39.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-43.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-51-46.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-17.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-20.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-22.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-25.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-28.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-31.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-35.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-40.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-43.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-48.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-54.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-58-58.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-59-02.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-04-11-11-59-06.bin
+-	-	app/results/dalprop5045bnr.prop/meta_data.npy
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-21.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-25.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-28.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-32.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-35.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-39.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-45.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-50.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-52.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-23-56.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-24-00.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-24-05.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-24-08.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-24-15.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-37-49.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-37-51.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-37-54.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-37-56.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-37-58.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-01.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-03.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-07.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-10.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-13.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-18.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-21.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-25.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-38-27.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-26.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-29.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-31.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-33.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-36.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-38.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-41.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-45.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-47.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-50.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-54.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-41-58.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-42-01.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-11-12-42-04.bin
+-	-	app/results/dalprop6045.prop/meta_data.npy
+1	1	app/results/edit_metdata.py
+8	0	app/results/microphone_states/gantry22.5.csv
+8	0	app/results/microphone_states/gantry67.5.csv
+-	-	app/results/{ => old}/5045_s30.prop/aero_2025-03-24-15-15-01.npz
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-17.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-20.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-23.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-26.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-29.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-32.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-36.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-39.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-43.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-48.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-52.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-25-56.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-26-00.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-26-04.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-26-07.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-26-10.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-26-14.bin
+-	-	app/results/{ => old}/5045_s30.prop/audio_2025-03-25-13-26-17.bin
+-	-	app/results/old/5045_s30.prop/meta_data.npy
+-	-	app/results/{ => old}/5045_s60.prop/aero_2025-03-24-15-22-07.npz
+-	-	app/results/{ => old}/5045_s60.prop/aero_2025-03-25-09-28-57.npz
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-41.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-44.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-46.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-49.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-52.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-55.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-28-59.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-02.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-06.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-11.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-16.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-20.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-24.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-27.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-31.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-34.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-38.bin
+-	-	app/results/{ => old}/5045_s60.prop/audio_2025-03-25-13-29-41.bin
+-	-	app/results/old/5045_s60.prop/meta_data.npy
+-	-	app/results/{ => old}/constant_chord.prop/meta_data.npy
+-	-	app/results/{ => old}/d100clarkY.prop/aero_2025-03-18-11-29-01.npz
+-	-	app/results/{ => old}/d100naca0018.prop/aero_2025-03-18-11-28-09.npz
+-	-	app/results/{ => old}/dalprop5045.prop/aero_2025-03-18-11-28-01.npz
+-	-	app/results/{ => old}/dalprop5045.prop/aero_2025-03-24-15-07-39.npz
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-18-15-45-52.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-18-15-47-33.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-26.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-29.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-32.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-35.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-38.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-41.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-45.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-49.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-53.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-00-57.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-01-02.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-03-25-13-01-06.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-40.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-43.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-45.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-48.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-50.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-53.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-55.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-43-58.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-44-01.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-44-03.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-44-06.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-44-11.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-44-14.bin
+-	-	app/results/{ => old}/dalprop5045.prop/audio_2025-04-09-10-44-17.bin
+-	-	app/results/old/dalprop5045.prop/meta_data.npy
+-	-	app/results/{ => old}/dalprop5045bnr.prop/aero_2025-03-18-11-29-00.npz
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-40.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-42.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-45.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-48.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-51.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-54.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-14-57.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-01.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-05.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-10.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-14.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-18.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-22.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-26.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-29.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-33.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-36.bin
+-	-	app/results/{ => old}/dalprop5045bnr.prop/audio_2025-03-25-13-15-39.bin
+-	-	app/results/old/dalprop5045bnr.prop/meta_data.npy
+-	-	app/results/{ => old}/dalprop6045.prop/aero_2025-03-24-14-59-21.npz
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-16.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-18.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-22.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-26.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-28.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-32.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-35.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-39.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-43.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-47.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-52.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-07-56.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-08-00.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-08-04.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-08-07.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-08-11.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-08-14.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-03-25-13-08-17.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-08.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-12.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-15.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-18.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-24.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-29.bin
+-	-	app/results/{ => old}/dalprop6045.prop/audio_2025-04-09-11-36-35.bin
+-	-	app/results/old/dalprop6045.prop/meta_data.npy
+-	-	app/results/{ => old}/printed5045.prop/aero_2025-03-24-15-11-44.npz
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-22.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-25.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-28.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-31.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-34.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-37.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-40.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-44.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-48.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-52.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-21-57.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-01.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-05.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-09.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-12.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-15.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-18.bin
+-	-	app/results/{ => old}/printed5045.prop/audio_2025-03-25-13-22-21.bin
+-	-	app/results/old/printed5045.prop/meta_data.npy
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-17-56.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-00.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-03.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-05.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-09.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-12.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-15.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-19.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-23.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-28.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-32.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-36.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-40.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-44.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-47.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-50.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-54.bin
+-	-	app/results/{ => old}/printed5045bnr.prop/audio_2025-03-25-13-18-56.bin
+-	-	app/results/old/printed5045bnr.prop/meta_data.npy
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-14.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-16.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-18.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-21.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-23.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-26.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-29.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-32.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-35.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-37.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-40.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-43.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-45.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-12-45-48.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-19-56.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-19-59.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-01.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-04.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-06.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-09.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-12.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-15.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-18.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-21.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-24.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-26.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-29.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-20-32.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-23-45.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-23-48.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-23-50.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-23-53.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-23-55.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-23-58.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-01.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-04.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-06.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-09.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-12.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-15.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-17.bin
+-	-	app/results/printed5045.prop/audio_2025-04-10-13-24-20.bin
+-	-	app/results/printed5045.prop/meta_data.npy
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-04-45.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-04-48.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-04-51.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-04-54.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-04-57.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-00.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-03.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-07.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-10.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-13.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-16.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-19.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-23.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-05-25.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-02.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-06.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-09.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-11.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-14.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-18.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-21.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-24.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-28.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-31.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-35.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-39.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-41.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-08-44.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-26.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-32.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-38.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-43.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-46.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-51.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-54.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-17-58.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-18-03.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-18-08.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-18-12.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-18-17.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-18-21.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-04-11-12-18-25.bin
+-	-	app/results/printed5045bnr.prop/meta_data.npy
+
+--COMMIT--
+2025-04-09 | lpender3672 | higher speed data but probably too fast as motor getting really hot now and the off centered spin is getting worse magnet mount fell off actually Joe is remaking the shaft extender with a better connection May also balance the spin will talk to mechanics lab
+
+4	1	app/collection_threads.py
+33	12	app/experiment.py
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-40.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-43.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-45.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-48.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-50.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-53.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-55.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-43-58.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-44-01.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-44-03.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-44-06.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-44-11.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-44-14.bin
+-	-	app/results/dalprop5045.prop/audio_2025-04-09-10-44-17.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/dalprop5045bnr.prop/meta_data.npy
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-08.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-12.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-15.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-18.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-24.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-29.bin
+-	-	app/results/dalprop6045.prop/audio_2025-04-09-11-36-35.bin
+23	8	app/results/edit_metdata.py
+-	-	app/results/printed5045.prop/meta_data.npy
+-	-	loading/cad/shaft_extender.SLDDRW
+-	-	loading/cad/shaft_extender.SLDPRT
+
+--COMMIT--
+2025-04-09 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-04-09 | lpender3672 | finally fixed the microphones
+
+25	22	app/audio.py
+25	2	app/graph.py
+-	-	app/results/5045_s30.prop/meta_data.npy
+-	-	app/results/5045_s60.prop/meta_data.npy
+-	-	app/results/constant_chord.prop/meta_data.npy
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/dalprop5045bnr.prop/meta_data.npy
+-	-	app/results/dalprop6045.prop/meta_data.npy
+99	0	app/results/edit_metdata.py
+8	0	app/results/microphone_states/discrete_layout1.csv
+8	0	app/results/microphone_states/gantry45.csv
+-	-	app/results/printed5045.prop/meta_data.npy
+-	-	app/results/printed5045bnr.prop/meta_data.npy
+107	0	app/thrust_referenced_pressure.py
+-	-	practical/microphones.xlsx
+-	-	practical/~$microphones.xlsx
+
+--COMMIT--
+2025-03-31 | louis | so my laptop did break and this is me on lucy cavs laptop
+
+9	3	app/audio.py
+14	5	app/collection_threads.py
+
+--COMMIT--
+2025-03-25 | lpender3672 | ive been sleeping on vel ramp rate
+
+2	1	app/collection_threads.py
+1	1	app/graph.py
+-	-	app/results/d100naca0018.prop/meta_data.npz
+-	-	app/results/testloop.prop/aero_2025-03-25-09-41-28.npz
+
+--COMMIT--
+2025-03-25 | lpender3672 | speed varying audio data for all the props and all microphones in a fixed arrangement
+
+51	13	app/experiment.py
+475	0	app/props/printed5045.prop
+475	0	app/props/printed5045bnr.prop
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-17.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-20.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-23.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-26.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-29.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-32.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-36.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-39.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-43.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-48.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-52.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-25-56.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-26-00.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-26-04.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-26-07.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-26-10.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-26-14.bin
+-	-	app/results/5045_s30.prop/audio_2025-03-25-13-26-17.bin
+-	-	app/results/5045_s30.prop/meta_data.npy
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-41.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-44.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-46.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-49.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-52.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-55.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-28-59.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-02.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-06.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-11.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-16.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-20.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-24.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-27.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-31.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-34.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-38.bin
+-	-	app/results/5045_s60.prop/audio_2025-03-25-13-29-41.bin
+-	-	app/results/5045_s60.prop/meta_data.npy
+-	-	app/results/{dalprop5045ext => dalprop5045.prop}/aero_2025-03-18-11-28-01.npz
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-26.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-29.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-32.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-35.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-38.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-41.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-45.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-49.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-53.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-00-57.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-01-02.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-25-13-01-06.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/{dalprop5045bnrext => dalprop5045bnr.prop}/aero_2025-03-18-11-29-00.npz
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-40.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-42.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-45.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-48.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-51.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-54.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-14-57.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-01.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-05.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-10.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-14.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-18.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-22.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-26.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-29.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-33.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-36.bin
+-	-	app/results/dalprop5045bnr.prop/audio_2025-03-25-13-15-39.bin
+-	-	app/results/dalprop5045bnr.prop/meta_data.npy
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-16.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-18.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-22.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-26.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-28.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-32.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-35.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-39.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-43.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-47.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-52.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-07-56.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-08-00.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-08-04.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-08-07.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-08-11.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-08-14.bin
+-	-	app/results/dalprop6045.prop/audio_2025-03-25-13-08-17.bin
+-	-	app/results/dalprop6045.prop/meta_data.npy
+-	-	app/results/floor/F_5045_12.bin
+-	-	app/results/floor/F_5045_6.bin
+-	-	app/results/floor/F_ambient.bin
+-	-	app/results/floor/F_motor12.bin
+-	-	app/results/floor/F_motor6.bin
+-	-	app/results/{ => no_floor}/NF_0024.bin
+-	-	app/results/{ => no_floor}/NF_AV_tri12.bin
+-	-	app/results/{ => no_floor}/NF_V_tri12.bin
+-	-	app/results/{ => no_floor}/NF_ambient.bin
+-	-	app/results/{ => no_floor}/NF_loop.bin
+-	-	app/results/{ => no_floor}/NF_motor.bin
+-	-	app/results/{ => no_floor}/NF_motor12.bin
+-	-	app/results/{ => no_floor}/NF_motor12_shrouded.bin
+-	-	app/results/{ => no_floor}/NF_tri.bin
+-	-	app/results/{ => no_floor}/NF_tri12.bin
+-	-	app/results/{ => no_floor}/NF_tri12_shrouded.bin
+-	-	app/results/{ => no_floor}/NF_twin.bin
+-	-	app/results/{dalprop5045bnr.prop => printed5045.prop}/aero_2025-03-24-15-11-44.npz
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-22.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-25.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-28.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-31.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-34.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-37.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-40.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-44.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-48.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-52.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-21-57.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-01.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-05.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-09.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-12.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-15.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-18.bin
+-	-	app/results/printed5045.prop/audio_2025-03-25-13-22-21.bin
+-	-	app/results/printed5045.prop/meta_data.npy
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-17-56.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-00.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-03.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-05.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-09.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-12.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-15.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-19.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-23.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-28.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-32.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-36.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-40.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-44.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-47.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-50.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-54.bin
+-	-	app/results/printed5045bnr.prop/audio_2025-03-25-13-18-56.bin
+-	-	app/results/printed5045bnr.prop/meta_data.npy
+
+--COMMIT--
+2025-03-25 | lpender3672 | decent morning going to do some audio pyramids at specific locations
+
+6	1	app/collection_threads.py
+23	5	app/experiment.py
+13	10	app/graph.py
+-	-	app/results/5045_s60.prop/aero_2025-03-25-09-28-57.npz
+-	-	app/results/testloop.prop/aero_2025-03-25-09-41-28.npz
+
+--COMMIT--
+2025-03-24 | lpender3672 | more props and aero data!
+
+2	0	app/audio.py
+9	4	app/collection_threads.py
+24	18	app/experiment.py
+475	0	app/props/dalprop4045.prop
+475	0	app/props/dalprop6045.prop
+-	-	app/results/5045_s30.prop/aero_2025-03-24-15-15-01.npz
+-	-	app/results/5045_s60.prop/aero_2025-03-24-15-22-07.npz
+-	-	app/results/constant_chord.prop/meta_data.npy
+-	-	app/results/dalprop5045.prop/aero_2025-03-24-15-07-39.npz
+-	-	app/results/dalprop5045bnr.prop/aero_2025-03-24-15-11-44.npz
+-	-	app/results/{dalprop5045bnr.prop => dalprop5045bnrext}/aero_2025-03-18-11-29-00.npz
+-	-	app/results/{dalprop5045.prop => dalprop5045ext}/aero_2025-03-18-11-28-01.npz
+-	-	app/results/dalprop6045.prop/aero_2025-03-24-14-59-21.npz
+1	1	app/routines.py
+
+--COMMIT--
+2025-03-24 | lpender3672 | improved pyramid to include logarithmic values for improved logging of dimensionless groups
+
+19	6	app/experiment.py
+
+--COMMIT--
+2025-03-24 | lpender3672 | added an audio pyramid for investigating the variance of sound with speed its untested though as mark needed the odrive cable to charge his phone also made a quick microphone mount design
+
+145	38	app/experiment.py
+16	4	app/results.py
+5	1	app/routines.py
+-	-	loading/cad/micmount_base.3mf
+-	-	loading/cad/micmount_base.SLDPRT
+-	-	loading/cad/micmount_base.STL
+-	-	loading/cad/micmount_top.STL
+-	-	loading/cad/plum_line.SLDPRT
+-	-	loading/cad/plum_line.STL
+
+--COMMIT--
+2025-03-19 | lpender3672 | designs to be made improved tangents of tip geometry
+
+3	7	app/geometry.py
+475	0	app/props/5045_s30.prop
+-	-	app/props/5045_s30.stl
+475	0	app/props/5045_s60.prop
+-	-	app/props/5045_s60.stl
+-	-	app/props/dalprop5045.stl
+-	-	app/props/dalprop5045bnr.stl
+-	-	app/props/looptest.stl
+212	0	app/props/testloop.prop
+1	1	app/vis.py
+
+--COMMIT--
+2025-03-18 | lpender3672 | big shift today. a lot of audio processing done harmonic and radar sound graphs
+
+246	0	app/audio.py
+1	1	app/collection_threads.py
+3	4	app/experiment.py
+0	372	app/ft_input.dat
+52	59	app/graph.py
+0	19	app/input.txt
+475	0	app/props/dalprop5045.prop
+475	0	app/props/dalprop5045bnr.prop
+0	70	app/results/audio.py
+-	-	app/results/brng_torque/D100naca0018.npz
+-	-	app/results/constant_chord.prop/audio_2025-02-28-10-32-54.bin
+-	-	app/results/{brng_torque/D100clarkY.npz => d100clarkY.prop/aero_2025-03-18-11-29-01.npz}
+-	-	app/results/{brng_torque/dalprop5045.npz => dalprop5045.prop/aero_2025-03-18-11-28-01.npz}
+-	-	app/results/dalprop5045.prop/audio_2025-03-18-15-45-52.bin
+-	-	app/results/dalprop5045.prop/audio_2025-03-18-15-47-33.bin
+-	-	app/results/dalprop5045.prop/meta_data.npy
+-	-	app/results/{brng_torque/dalprop5045bnr.npz => dalprop5045bnr.prop/aero_2025-03-18-11-29-00.npz}
+2	2	app/routines.py
+-	-	practical/microphones.xlsx
+
+--COMMIT--
+2025-03-18 | lpender3672 | found that the antivibration foam actually makes it worse
+
+5	15	app/collection_threads.py
+1	0	app/experiment.py
+-	-	app/results/NF_AV_tri12.bin
+-	-	app/results/NF_V_tri12.bin
+7	3	app/results/audio.py
+
+--COMMIT--
+2025-03-18 | lpender3672 | lots of data and fixed a few bugs fixed cad of acoustic setup to work with new magnet motor mount
+
+-	-	app/bcal_thrust.npy
+-	-	app/bcal_torque.npy
+-	-	app/calibration.npy
+3	3	app/collection_threads.py
+15	14	app/experiment.py
+70	12	app/graph.py
+471	0	app/props/d100clarkY.prop
+471	0	app/props/d100naca0018.prop
+-	-	app/results/aero copy.npz
+-	-	app/results/aero_2025-03-04-09-38-39.npz.npy
+-	-	app/results/aero_2025-03-04-09-56-28.npz.npy
+-	-	app/results/brng_torque/D100clarkY.npz
+-	-	app/results/brng_torque/D100naca0018.npz
+-	-	app/results/brng_torque/dalprop5045.npz
+-	-	app/results/brng_torque/dalprop5045bnr.npz
+-	-	app/results/brng_torque/foxeer_toroidal.npz
+-	-	app/results/d100naca0018.prop/aero_2025-03-18-11-28-09.npz
+-	-	app/results/d100naca0018.prop/meta_data.npz
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/finalshroud.STL
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/uppydownybit_final.STL
+
+--COMMIT--
+2025-03-12 | lpender3672 | modifications to casing to pushfit encoder board and mount the load cell the right way round
+
+-	-	app/bearing_torque_cal.npy
+-	-	app/calibration.npy
+3	3	app/experiment.py
+372	0	app/ft_input.dat
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aero3_housing.STL
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/motortwistybit^aero3.3mf
+-	-	loading/cad/motortwistybit^aero3.SLDPRT
+-	-	loading/cad/motortwistybit^aero3.STL
+
+--COMMIT--
+2025-03-10 | lpender3672 | fixed issue in hanson that went under the radar. added harmonic plot removed saving to fortran
+
+0	3	app/ ft_output.dat
+1	1	app/app_vars.json
+11	2	app/experiment.py
+0	372	app/ft_input.dat
+0	3	app/ft_output.dat
+39	69	app/hanson.py
+0	39	app/input.py
+0	2	app/main.py
+58	13	app/results.py
+2	2	app/routines.py
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/aerodynamic_setup4.SLDASM
+-	-	loading/cad/basethatmovesonlyupanddown.STL
+-	-	loading/cad/motortwistybit.STL
+-	-	loading/cad/small_cell.SLDPRT
+
+--COMMIT--
+2025-03-05 | lpender3672 | some cad work but i didnt like it
+
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aero3.SLDASM
+-	-	loading/cad/aerodynamic_setup3.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/load cell.SLDPRT
+-	-	loading/cad/small_cell.SLDPRT
+
+--COMMIT--
+2025-03-04 | lpender3672 | corrected the scale for the stratasys objet30 software
+
+1	1	app/geometry.py
+3	1	app/vis.py
+
+--COMMIT--
+2025-03-04 | lpender3672 | changed graphs in supo data was being loaded incorrectly
+
+103	103	app/ft_input.dat
+1	1	app/hanson.py
+9	5	app/results/audio.py
+-	-	loading/cad/aerodynamic_setup.SLDASM
+
+--COMMIT--
+2025-03-04 | lpender3672 | added rotation direction to software something that probably should have been added sooner
+
+2	1	app/bem.py
+62	62	app/foils/clarkY.surf
+35	0	app/foils/naca0024.surf
+103	103	app/ft_input.dat
+9	0	app/geometry.py
+1	1	app/hanson_comp.py
+3	2	app/input.py
+2	1	app/props/c.prop
+-	-	app/props/clarkY.stl
+2	1	app/props/constant_chord.prop
+2	1	app/props/constant_chord_hires.prop
+2	1	app/props/constant_chord_swept.prop
+2	1	app/props/first_loop.prop
+-	-	app/props/naca0024.stl
+2	1	app/props/small_wide.prop
+2	1	app/props/swept_spline.prop
+-	-	app/props/twin_conopt.stl
+-	-	app/props/twin_opt.stl
+
+--COMMIT--
+2025-03-04 | lpender3672 | more audio and also tried doing two seperate calibration regressions which yield similar result need to troubleshoot the data
+
+40	1	app/bem.py
+2	1	app/experiment.py
+0	3	app/foils/clarkY.surf
+358	122	app/ft_input.dat
+1	1	app/input.py
+5	2	app/main.py
+9	4	app/results.py
+-	-	app/results/NF_motor12.bin
+-	-	app/results/NF_motor12_shrouded.bin
+-	-	app/results/NF_tri12.bin
+-	-	app/results/NF_tri12_shrouded.bin
+-	-	app/results/aero_2025-03-04-09-38-39.npz.npy
+-	-	app/results/aero_2025-03-04-09-56-28.npz.npy
+18	10	app/results/audio.py
+75	6	app/results/separate_calibration.py
+-	-	theory/bem.xlsx
+
+--COMMIT--
+2025-03-03 | lpender3672 | added overhead mic
+
+1	1	app/experiment.py
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/shroud.STL
+-	-	practical/microphones.xlsx
+
+--COMMIT--
+2025-03-03 | lpender3672 | FM plot but its orders of magnitude lower than expected
+
+-	-	app/calibration.npy
+2	2	app/experiment.py
+122	358	app/ft_input.dat
+-	-	app/results/mixed_cal.npy
+38	3	app/results/separate_calibration.py
+
+--COMMIT--
+2025-03-03 | lpender3672 | saving props in stl mm now fixed further xfoil_data problems
+
+4	4	app/bem.py
+18	13	app/geometry.py
+3	3	app/hanson.py
+20	14	app/hanson_comp.py
+-	-	app/props/twin_conopt.stl
+-	-	app/props/twin_opt.stl
+5	15	app/routines.py
+-	-	deliverables/tms/figures/chord_locus.png
+-	-	deliverables/tms/figures/chordwise_loading.png
+-	-	deliverables/tms/figures/optimised_ratio.png
+-	-	deliverables/tms/figures/radial_locus.png
+
+--COMMIT--
+2025-03-02 | lpender3672 | separated xfoil data and geometry data so they can be different lengths. The resolution of lift/drag data was coupled to the airfoil resolution making high resolution airfoils take forever on xfoil also made xfoil run on separate thread
+
+338	102	app/ft_input.dat
+36	33	app/geometry.py
+42	14	app/input.py
+34	23	app/routines.py
+
+--COMMIT--
+2025-03-02 | lpender3672 | shifting things around in geometry need to clean up a lot of stuff tomorrow morning then work on 4F2 then work on 4A4 then work on implementing the static BEM and reduced airfoil table
+
+20	22	app/geometry.py
+
+--COMMIT--
+2025-03-02 | lpender3672 | implemented the swept Hermite tip curve improvements to geometry
+
+102	47	app/geometry.py
+
+--COMMIT--
+2025-03-01 | lpender3672 | so the separate calibration gets merged and then a regression gets done. the influence of torque on the thrust load cell is neglible and so that coefficient is set to 0 to help the regession however the regession still struggles to get the , now 5 coefficients, especially for torque because theres only i think 5 datapoints more datapoints are required and will be obtained on monday the thrust coefficient curve is nice and flat up until the top speed. would like to get higher speed points to reach a limit of the motor
+
+166	12	app/results/separate_calibration.py
+
+--COMMIT--
+2025-02-28 | lpender3672 | fixed improvements
+
+20	2	app/bem.py
+7	4	app/experiment.py
+-	-	app/results/audio.bin
+-	-	app/results/constant_chord.prop/audio_2025-02-28-10-32-54.bin
+
+--COMMIT--
+2025-02-28 | lpender3672 | small improvements
+
+12	8	app/collection_threads.py
+32	15	app/experiment.py
+464	3	app/props/constant_chord.prop
+10	0	app/routines.py
+
+--COMMIT--
+2025-02-27 | lpender3672 | the first audio data
+
+0	48	app/CMakeLists.txt
+33	7	app/collection_threads.py
+54	12	app/experiment.py
+-	-	app/results/NF_0024.bin
+-	-	app/results/NF_ambient.bin
+-	-	app/results/NF_loop.bin
+-	-	app/results/NF_motor.bin
+-	-	app/results/NF_tri.bin
+-	-	app/results/NF_twin.bin
+-	-	app/results/audio.bin
+38	27	app/results/audio.py
+
+--COMMIT--
+2025-02-26 | lpender3672 | no longer using fortran
+
+0	3066	app/json-lib/json_file_module.F90
+0	32	app/json-lib/json_get_scalar_by_path.inc
+0	27	app/json-lib/json_get_vec_by_path.inc
+0	43	app/json-lib/json_get_vec_by_path_alloc.inc
+0	117	app/json-lib/json_initialize_arguments.inc
+0	26	app/json-lib/json_initialize_dummy_arguments.inc
+0	148	app/json-lib/json_kinds.F90
+0	58	app/json-lib/json_macros.inc
+0	104	app/json-lib/json_module.F90
+0	144	app/json-lib/json_parameters.F90
+0	932	app/json-lib/json_string_utilities.F90
+0	11600	app/json-lib/json_value_module.F90
+0	360	app/pll/helix_func.f90
+0	9	app/pll/operating.f90
+-	-	app/pll/operating_mod.mod
+0	62	app/pll/pll.f90
+0	145	app/pll/points_mod.f90
+0	914	app/pll/propeller.f90
+0	162	app/pll/propeller_lifting_line.f90
+
+--COMMIT--
+2025-02-26 | lpender3672 | insane in the membrane
+
+-	-	app/1kg_calibration.npy
+-	-	app/calibration.npy
+7	2	app/collection_threads.py
+34	8	app/experiment.py
+-	-	app/results/audio.bin
+43	0	app/results/audio.py
+34	0	app/results/separate_calibration.py
+-	-	app/results/thrust_cal.npy
+-	-	app/results/torque_cal.npy
+-	-	practical/microphones.xlsx
+-	-	theory/bem.xlsx
+
+--COMMIT--
+2025-02-24 | lpender3672 | progress with geometry
+
+20	20	app/ft_input.dat
+267	2	app/geometry.py
+-	-	app/props/{a.stl => triblade_naca0012.stl}
+-	-	app/props/{stiffer.stl => triblade_naca0024.stl}
+-	-	loading/cad/acoustic_base.STL
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/base.SLDPRT
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/shroud.STL
+
+--COMMIT--
+2025-02-22 | lpender3672 | new setup and associated data starting to implement prop file with saved file
+
+-	-	app/collection.png
+3	1	app/collection_threads.py
+31	3	app/experiment.py
+91	0	app/graph copy.py
+48	15	app/graph.py
+-	-	app/results/0.2kg_torque/dalprop5045.npz
+-	-	app/results/0.2kg_torque/dalprop5045bnr.npz
+-	-	app/results/0.2kg_torque/foxeer_toroidal.npz
+-	-	app/results/1kg_torque/dalprop5045.npz
+-	-	app/results/1kg_torque/dalprop5045bnr.npz
+-	-	app/results/{aero.npz => 1kg_torque/foxeer_toroidal.npz}
+-	-	loading/cad/Part3^aerodynamic_setup2.STL
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup2.SLDASM
+-	-	loading/cad/base.SLDPRT
+-	-	loading/cad/base.STL
+-	-	loading/cad/botclamp.SLDPRT
+-	-	loading/cad/botclamp_v2.STL
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/small_cell.SLDPRT
+
+--COMMIT--
+2025-02-17 | lpender3672 | wallah. calibration and pyramid data
+
+-	-	app/calibration.npy
+4	5	app/collection_threads.py
+16	6	app/experiment.py
+6	0	app/graph.py
+-	-	app/results/aero copy.npz
+-	-	app/results/aero.npz
+
+--COMMIT--
+2025-02-16 | lpender3672 | its messy but the crazy propeller pyramid is working
+
+-	-	app/calibration.npy
+77	14	app/collection_threads.py
+205	28	app/experiment.py
+21	0	app/graph.py
+-	-	app/results/aero.npz
+0	0	app/results/audio.bin
+
+--COMMIT--
+2025-02-16 | lpender3672 | saving cal data now
+
+16	8	app/experiment.py
+
+--COMMIT--
+2025-02-16 | lpender3672 | improvements to data collection and calibration
+
+52	35	app/collection_threads.py
+57	51	app/experiment.py
+
+--COMMIT--
+2025-02-15 | lpender3672 | motor controller moved to seperate thread and cad work
+
+66	46	app/collection_threads.py
+26	10	app/experiment.py
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/intermediate_bend.png
+-	-	loading/cad/~$acoustic_setup.SLDASM
+-	-	loading/cad/~$aerodynamic_setup.SLDASM
+-	-	loading/cad/~$base.SLDPRT
+-	-	loading/cad/~$botclamp.SLDPRT
+-	-	loading/cad/~$fullsetup.SLDASM
+-	-	loading/cad/~$load cell.SLDPRT
+-	-	loading/cad/~$motor.SLDPRT
+-	-	loading/cad/~$shaft_extender.SLDPRT
+-	-	practical/designs/clarkY/~$clarkY_prop.SLDPRT
+
+--COMMIT--
+2025-02-13 | lpender3672 | motor control from collection app is working CAD metal acoustic box
+
+56	35	app/collection_threads.py
+30	1	app/experiment.py
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/base.SLDPRT
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/~$acoustic_setup.SLDASM
+-	-	loading/cad/~$aerodynamic_setup.SLDASM
+-	-	loading/cad/~$base.SLDPRT
+-	-	loading/cad/~$botclamp.SLDPRT
+-	-	loading/cad/~$fullsetup.SLDASM
+-	-	loading/cad/~$load cell.SLDPRT
+-	-	loading/cad/~$motor.SLDPRT
+-	-	loading/cad/~$shaft_extender.SLDPRT
+-	-	practical/designs/clarkY/~$clarkY_prop.SLDPRT
+
+--COMMIT--
+2025-02-11 | lpender3672 | fixed issues with serial thread and calibration but is working now
+
+14	12	app/collection_threads.py
+71	8	app/experiment.py
+
+--COMMIT--
+2025-02-11 | lpender3672 | reading all the data now at the same time
+
+4	2	app/collection_threads.py
+65	10	app/experiment.py
+
+--COMMIT--
+2025-02-10 | lpender3672 | progress with audio collection
+
+99	13	app/collection_threads.py
+-	-	loading/cad/acoustic_setup.SLDASM
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/motor.SLDPRT
+-	-	loading/cad/shaft_extender.SLDDRW
+-	-	loading/cad/shaft_extender.SLDPRT
+
+--COMMIT--
+2025-02-07 | lpender3672 | agile i am
+
+11	0	app/experiment.py
+
+--COMMIT--
+2025-02-07 | lpender3672 | experiment ui
+
+315	0	app/collection_threads.py
+206	0	app/experiment.py
+0	0	practical/pico/DAQ_thread.py
+
+--COMMIT--
+2025-02-07 | lpender3672 | python reading data
+
+0	0	practical/pico/DAQ_thread.py
+29	0	practical/pico/audio-test.py
+
+--COMMIT--
+2025-02-07 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-02-07 | lpender3672 | attached setup to stand in cad
+
+89	89	app/ft_input.dat
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/fullsetup_recovery.SLDASM
+
+--COMMIT--
+2025-02-04 | lpender3672 | moved away from riscV because didnt think it was working with the library. never really found out though went through so many tests that ive lost the will to find out why all that matters is that it works now also comes with a fancy multithreaded serial plotter app that i wrote
+
+3	3	.gitmodules
+0	0	practical/{piconewton => pico}/.gitignore
+1	1	practical/{piconewton => pico}/.vscode/c_cpp_properties.json
+0	0	practical/{piconewton => pico}/.vscode/cmake-kits.json
+0	0	practical/{piconewton => pico}/.vscode/extensions.json
+0	0	practical/{piconewton => pico}/.vscode/launch.json
+8	7	practical/{piconewton => pico}/.vscode/settings.json
+0	0	practical/{piconewton => pico}/.vscode/tasks.json
+31	26	practical/{piconewton => pico}/CMakeLists.txt
+0	0	practical/{piconewton => pico}/hx711-pico-c
+98	0	practical/pico/liveplot.py
+56	0	practical/pico/pico.c
+0	0	practical/{piconewton => pico}/pico_sdk_import.cmake
+0	39	practical/piconewton/piconewton.c
+
+--COMMIT--
+2025-02-03 | lpender3672 | setup for load cell reading, allbeit with issues
+
+3	0	.gitmodules
+1	0	practical/piconewton/.gitignore
+22	0	practical/piconewton/.vscode/c_cpp_properties.json
+15	0	practical/piconewton/.vscode/cmake-kits.json
+9	0	practical/piconewton/.vscode/extensions.json
+70	0	practical/piconewton/.vscode/launch.json
+42	0	practical/piconewton/.vscode/settings.json
+58	0	practical/piconewton/.vscode/tasks.json
+72	0	practical/piconewton/CMakeLists.txt
+1	0	practical/piconewton/hx711-pico-c
+84	0	practical/piconewton/pico_sdk_import.cmake
+39	0	practical/piconewton/piconewton.c
+
+--COMMIT--
+2025-01-30 | lpender3672 | tms report is done
+
+1	1	app/geometry.py
+1	0	app/hanson.py
+82	14	app/hanson_comp.py
+-	-	deliverables/tms/figures/IMG_2245.jpg
+-	-	deliverables/tms/figures/chord_locus.png
+-	-	deliverables/tms/figures/conopt_swept.png
+-	-	deliverables/tms/figures/opt_swept.png
+-	-	deliverables/tms/figures/radial_locus.png
+12	1	deliverables/tms/tms.tex
+-	-	deliverables/tms/tms2.synctex(busy)
+171	112	deliverables/tms/tms2.tex
+
+--COMMIT--
+2025-01-29 | lpender3672 | tms2.1
+
+38	66	deliverables/tms/tms2.tex
+
+--COMMIT--
+2025-01-29 | lpender3672 | tms2
+
+89	89	app/ft_input.dat
+1	1	app/hanson.py
+33	3	app/hanson_comp.py
+1	195	app/props/constant_chord.prop
+29	25	app/props/first_loop.prop
+18	4	app/routines.py
+-	-	deliverables/tms/figures/unswept.png
+29	27	deliverables/tms/tms.tex
+470	0	deliverables/tms/tms2.tex
+
+--COMMIT--
+2025-01-28 | lpender3672 | can now do make symmetrical looped propellers
+
+20	20	app/ft_input.dat
+154	18	app/geometry.py
+203	0	app/props/first_loop.prop
+16	34	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-27 | lpender3672 | Xfoil nodes now set to twice the number of acoustic sources plus one as top and bottom panels collapse into the thin airfoil theory
+
+3	2	app/analysis.py
+2	1	app/bem.py
+1	1	app/hanson.py
+71	11	app/hanson_comp.py
+4	3	app/input.py
+71	29	app/routines.py
+
+--COMMIT--
+2025-01-27 | lpender3672 | gantt chart, reordered some things
+
+10	0	deliverables/tms/allrefs.bib
+10	0	deliverables/tms/bib/citation-315858872.bib
+-	-	deliverables/tms/figures/chord_locus.png
+-	-	deliverables/tms/figures/chordwise_loading.png
+-	-	deliverables/tms/figures/{setup.jpg => newsetup.jpg}
+-	-	deliverables/tms/figures/oldsetup.jpg
+-	-	deliverables/tms/figures/radial_locus.png
+214	107	deliverables/tms/tms.tex
+100	0	theory/hanson.tex
+
+--COMMIT--
+2025-01-25 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-01-25 | lpender3672 | gantt
+
+33	8	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-25 | lpender3672 | added a bit to tms and corrected some py
+
+11	11	app/hanson.py
+13	12	app/hanson_comp.py
+1	2	app/main.py
+27	20	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-25 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-01-25 | lpender3672 | small bits forgot to merge
+
+1	1	deliverables/tms/allrefs.bib
+1	1	deliverables/tms/bib/citation-354282279.bib
+16	10	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-23 | lpender3672 | fixed some inconsistencies with meshgrids that used xy indexing added gant and flow charts to tms
+
+1	1	app/app_vars.json
+1	1	app/ft_input.dat
+31	14	app/hanson.py
+49	21	app/hanson_comp.py
+1	0	app/main.py
+470	0	app/props/constant_chord_hires.prop
+18	1	app/routines.py
+-	-	deliverables/tms/figures/radial_locus.png
+103	17	deliverables/tms/tms.tex
+18	2	theory/hanson.tex
+
+--COMMIT--
+2025-01-21 | lpender3672 | chunks of work. Tomorrow will make cp plots for chordwise locus
+
+18	0	deliverables/tms/allrefs.bib
+17	0	deliverables/tms/bib/aiaa_6.2021-1926.bib
+19	5	deliverables/tms/tms.tex
+86	3	theory/hanson.tex
+-	-	theory/hansonfoil.png
+
+--COMMIT--
+2025-01-21 | lpender3672 | renamed betz to bem and fixed legend on directionality graph
+
+1	1	app/analysis.py
+2	2	app/app_vars.json
+597	599	app/{betz.py => bem.py}
+3	3	app/dists.py
+22	22	app/ft_input.dat
+1	1	app/hanson_comp.py
+14	4	app/results.py
+
+--COMMIT--
+2025-01-21 | lpender3672 | some nice chordwise locus
+
+42	42	app/ft_input.dat
+105	130	app/hanson_comp.py
+-	-	deliverables/tms/figures/optimised_directivity.png
+-	-	deliverables/tms/figures/optimised_harmonic_profiles.png
+-	-	deliverables/tms/figures/optimised_harmonics.png
+-	-	deliverables/tms/figures/optimised_ratio.png
+
+--COMMIT--
+2025-01-20 | lpender3672 | tomorrow will work on 4A4 and a tikz flowchart
+
+21	0	deliverables/tms/allrefs.bib
+7	0	deliverables/tms/bib/UIUCdatabase.bib
+-	-	deliverables/tms/figures/optimised_directivity.png
+-	-	deliverables/tms/figures/optimised_harmonic_profiles.png
+-	-	deliverables/tms/figures/optimised_harmonics.png
+-	-	deliverables/tms/figures/optimised_ratio.png
+46	16	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-20 | lpender3672 | accounted for chordwise noncompactness by computing chordwise loading from cp data obtained through xfoil cleaned up input, routines and hansons secondary variables
+
+43	43	app/ft_input.dat
+60	39	app/hanson.py
+66	50	app/hanson_comp.py
+3	38	app/input.py
+4	2	app/results.py
+119	8	app/routines.py
+
+--COMMIT--
+2025-01-20 | lpender3672 | added a minimum thickness to the 3d model for manufacturing
+
+2	2	app/ft_input.dat
+26	6	app/geometry.py
+-	-	app/props/a.stl
+-	-	app/props/stiffer.stl
+1	1	app/vis.py
+-	-	deliverables/tms/figures/CAD.JPG
+-	-	deliverables/tms/figures/viterna_extrapolation.png
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-01-19 | lpender3672 | better geometry including hub and full propeller stl output now
+
+1	1	app/betz.py
+20	20	app/ft_input.dat
+201	23	app/geometry.py
+5	3	app/input.py
+3	3	app/main.py
+-	-	app/props/a.stl
+4	24	app/props/betz.prop
+5	1	app/props/c.prop
+2	1	app/props/constant_chord.prop
+2	1	app/props/constant_chord_swept.prop
+5	1	app/props/small_wide.prop
+3	1	app/props/swept_spline.prop
+6	7	app/routines.py
+26	52	app/vis.py
+
+--COMMIT--
+2025-01-19 | lpender3672 | bit of progress on tms
+
+68	0	deliverables/tms/allrefs.bib
+14	0	deliverables/tms/bib/S1876610217304356.bib
+16	0	deliverables/tms/bib/aiaa_6.2018-2953.bib
+34	0	deliverables/tms/bib/aiaa_jpp2_534.bib
+15	0	deliverables/tms/bib/pericles_1099182417.bib
+-	-	deliverables/tms/figures/app.png
+-	-	deliverables/tms/figures/loop.jpg
+-	-	deliverables/tms/figures/optimised_harmonic_profiles.png
+-	-	deliverables/tms/figures/optimised_harmonics.png
+-	-	deliverables/tms/figures/optimised_ratio.png
+-	-	deliverables/tms/figures/setup.jpg
+2	1	deliverables/tms/mergebib.py
+117	20	deliverables/tms/tms.tex
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-01-19 | lpender3672 | added Viterna extrapolation of airfoil data added more graphs for tms report
+
+22	24	app/betz.py
+20	20	app/ft_input.dat
+2	0	app/hanson.py
+150	12	app/hanson_comp.py
+8	2	app/input.py
+19	8	app/results.py
+58	0	app/routines.py
+
+--COMMIT--
+2025-01-17 | lpender3672 | Merge branch 'temp'
+
+--COMMIT--
+2025-01-17 | lpender3672 | bit of writing today still stuck on BEM
+
+40	1	deliverables/tms/allrefs.bib
+13	0	deliverables/tms/bib/S0022460X83711521.bib
+1	1	deliverables/tms/bib/citation-354282279.bib
+7	0	deliverables/tms/bib/citation-368189976.bib
+18	0	deliverables/tms/bib/ijerph-v20-i03_20250117.bib
+7	2	deliverables/tms/mergebib.py
+66	2	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-17 | lpender3672 | changed bem because of disagreement which it still disagrees so i dont know anymore
+
+1	1	app/app_vars.json
+244	103	app/betz.py
+1	1	app/ft_input.dat
+29	28	app/results.py
+
+--COMMIT--
+2025-01-16 | lpender3672 | started TMS report
+
+90	0	deliverables/tms/allrefs.bib
+13	0	deliverables/tms/bib/S0003682X15003606.bib
+34	0	deliverables/tms/bib/aiaa_aiaaj18_1213.bib
+34	0	deliverables/tms/bib/aiaa_aiaaj18_1313.bib
+7	0	deliverables/tms/bib/citation-354282279.bib
+15	0	deliverables/tms/mergebib.py
+111	0	deliverables/tms/tms.tex
+
+--COMMIT--
+2025-01-16 | lpender3672 | added a BEM with guaranteed convergence
+
+1	1	app/app_vars.json
+169	12	app/betz.py
+85	101	app/ft_input.dat
+9	6	app/results.py
+2	0	theory/hanson.tex
+
+--COMMIT--
+2025-01-16 | lpender3672 | added repeated code to seperate routine some aerodynamic analysis and arctan(1/r) distribution
+
+80	0	app/analysis.py
+33	95	app/betz.py
+26	74	app/dists.py
+120	104	app/ft_input.dat
+1	1	app/hanson.py
+10	56	app/hanson_comp.py
+5	5	app/input.py
+1	27	app/main.py
+45	17	app/results.py
+172	0	app/routines.py
+13	9	app/table.py
+
+--COMMIT--
+2025-01-15 | lpender3672 | sweep optimiser is very promising
+
+2	2	app/betz.py
+20	20	app/ft_input.dat
+64	39	app/hanson_comp.py
+9	4	app/results.py
+22	1	theory/hanson.tex
+-	-	theory/hasonsweep.png
+
+--COMMIT--
+2025-01-15 | lpender3672 | nice sweep graph still have an incorrect order of magnitude will plot FM against solidity
+
+3	3	app/ ft_output.dat
+1	1	app/CMakeLists.txt
+10	11	app/betz.py
+20	20	app/ft_input.dat
+14	14	app/geometry.py
+162	31	app/hanson_comp.py
+1	1	app/input.py
+3	1	app/pll/propeller_lifting_line.f90
+23	23	app/props/constant_chord.prop
+3	1	app/results.py
+58	12	app/vis.py
+
+--COMMIT--
+2025-01-15 | lpender3672 | small issue with table will work on report graphs today
+
+1	1	app/input.py
+1	1	app/main.py
+7	8	app/table.py
+
+--COMMIT--
+2025-01-14 | lpender3672 | added observer location to input oper table
+
+3	1	app/app_vars.json
+3	10	app/hanson.py
+6	2	app/input.py
+
+--COMMIT--
+2025-01-14 | lpender3672 | added results table marked where BEM uses invalid airfoil data improvements to dists including splines and snap to grid vis widget small so now pops out on double click added twinB to input to start thinking about loops
+
+1	1	app/app_vars.json
+3	0	app/betz.py
+127	91	app/dists.py
+21	21	app/ft_input.dat
+17	116	app/input.py
+14	3	app/main.py
+2	1	app/props/constant_chord.prop
+89	88	app/props/constant_chord_swept.prop
+59	3	app/results.py
+140	17	app/table.py
+55	5	app/vis.py
+
+--COMMIT--
+2025-01-14 | lpender3672 | designed base for odrive and load cell to attach to
+
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/botclamp.SLDPRT
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2025-01-13 | lpender3672 | back to BET implemented extension for sweep and fixed some problems with it fixed twist in 3d visualiser and stl
+
+2	2	app/app_vars.json
+27	14	app/betz.py
+18	13	app/dists.py
+95	95	app/ft_input.dat
+3	3	app/geometry.py
+76	13	app/hanson.py
+4	5	app/hanson_comp.py
+60	24	app/input.py
+11	9	app/main.py
+-	-	app/pll/operating_mod.mod
+218	0	app/props/a.prop
+123	123	app/props/constant_chord.prop
+205	0	app/props/constant_chord_swept.prop
+64	14	app/results.py
+1	1	app/vis.py
+
+--COMMIT--
+2025-01-12 | lpender3672 | progress after today need to fix definition of sweep and define lift coefficient better, implementing impacts of sweep
+
+18	10	app/betz.py
+20	3	app/dists.py
+60	60	app/ft_input.dat
+48	17	app/hanson.py
+313	0	app/hanson_comp.py
+10	14	app/input.py
+2	2	app/main.py
+201	0	app/props/constant_chord.prop
+-	-	loading/cad/aerodynamic_setup.SLDASM
+
+--COMMIT--
+2025-01-11 | lpender3672 | added inverse dist
+
+55	4	app/betz.py
+17	1	app/dists.py
+40	40	app/ft_input.dat
+4	4	app/hanson.py
+2	2	app/main.py
+95	30	app/results.py
+
+--COMMIT--
+2025-01-10 | lpender3672 | fixed bug with pll and added it to the app
+
+8	2	app/main.py
+3	3	app/pll/propeller.f90
+
+--COMMIT--
+2025-01-10 | lpender3672 | removed C interoperability and changed build to msys added fortran in and out files added 75% chord, needs to be checked sligtly changed how thickess is done airfoil curves are calculated and stored with airfoil data only upon loading improvements to graphs
+
+3	0	app/ ft_output.dat
+2	2	app/.vscode/launch.json
+3	3	app/CMakeLists.txt
+2	2	app/app_vars.json
+28	8	app/betz.py
+1	1	app/dists.py
+136	0	app/ft_input.dat
+3	0	app/ft_output.dat
+12	6	app/hanson.py
+94	5	app/input.py
+15	8	app/main.py
+1	1	app/pll/pll.f90
+239	95	app/pll/propeller.f90
+17	6	app/pll/propeller_lifting_line.f90
+137	132	app/props/swept_spline.prop
+42	7	app/results.py
+
+--COMMIT--
+2025-01-08 | lpender3672 | todays progress. added linear/cosine variation in radial positions changed sweep back to absolute relaxed pip requirements to install correctly in venv
+
+3	0	.gitignore
+2	1	app/.vscode/launch.json
+1	1	app/app_vars.json
+22	13	app/betz.py
+1	1	app/geometry.py
+2	2	app/hanson.py
+85	29	app/input.py
+1	0	app/main.py
+50	7	app/pll/propeller.f90
+2	2	app/pll/propeller_lifting_line.f90
+2	1	app/props/swept_spline.prop
+10	5	app/table.py
+11	11	requirements.txt
+
+--COMMIT--
+2025-01-07 | lpender3672 | json loading from file in fortran starting to work
+
+2	1	app/.vscode/launch.json
+1	0	app/CMakeLists.txt
+3066	0	app/json-lib/json_file_module.F90
+32	0	app/json-lib/json_get_scalar_by_path.inc
+27	0	app/json-lib/json_get_vec_by_path.inc
+43	0	app/json-lib/json_get_vec_by_path_alloc.inc
+117	0	app/json-lib/json_initialize_arguments.inc
+26	0	app/json-lib/json_initialize_dummy_arguments.inc
+148	0	app/json-lib/json_kinds.F90
+58	0	app/json-lib/json_macros.inc
+104	0	app/json-lib/json_module.F90
+144	0	app/json-lib/json_parameters.F90
+932	0	app/json-lib/json_string_utilities.F90
+11600	0	app/json-lib/json_value_module.F90
+62	0	app/pll/propeller.f90
+5	3	app/pll/propeller_lifting_line.f90
+
+--COMMIT--
+2025-01-07 | lpender3672 | setup and marginally improved runtime of code using intel mkl library instead of matrix module
+
+25	0	app/.vscode/launch.json
+47	0	app/CMakeLists.txt
+4	0	app/chord.txt
+12	0	app/cl.txt
+19	0	app/input.txt
+0	112	app/pll/matrix_mod.f90
+9	0	app/pll/operating.f90
+16	9	app/pll/pll.f90
+2	2	app/pll/points_mod.f90
+85	7	app/pll/propeller.f90
+4	0	app/twist.txt
+
+--COMMIT--
+2025-01-06 | lpender3672 | forgot to credit Zach Montgomery's code
+
+4	0	app/pll/helix_func.f90
+4	0	app/pll/matrix_mod.f90
+4	0	app/pll/pll.f90
+4	0	app/pll/points_mod.f90
+4	0	app/pll/propeller.f90
+4	0	app/pll/propeller_lifting_line.f90
+
+--COMMIT--
+2025-01-06 | lpender3672 | a lot of source files but cannot for the life of me get cmake to have different compilers and generators for the different subfolders
+
+4	0	.gitignore
+3	0	.gitmodules
+3	0	.vscode/settings.json
+356	0	app/pll/helix_func.f90
+108	0	app/pll/matrix_mod.f90
+51	0	app/pll/pll.f90
+141	0	app/pll/points_mod.f90
+583	0	app/pll/propeller.f90
+143	0	app/pll/propeller_lifting_line.f90
+319	0	loading/CrsfSerial.cpp
+73	0	loading/CrsfSerial.h
+1	0	loading/hx711-pico-c
+45	0	loading/motor.cpp
+32	0	loading/motor.h
+
+--COMMIT--
+2025-01-05 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2025-01-05 | lpender3672 | update to CAD
+
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/botclamp.SLDPRT
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/motor.SLDPRT
+
+--COMMIT--
+2025-01-05 | lpender3672 | fixed some issues and clarified
+
+-	-	app/app.png
+2	2	app/app_vars.json
+17	5	app/betz.py
+1	0	app/dists.py
+3	3	app/hanson.py
+207	0	app/props/swept_spline.prop
+26	12	app/results.py
+3	3	theory/hanson.tex
+
+--COMMIT--
+2025-01-02 | lpender3672 | added to hanson proof fixed issue with hansons function
+
+1	1	app/hanson.py
+65	13	theory/hanson.tex
+
+--COMMIT--
+2025-01-01 | lpender3672 | added an empirical clip for axial and rotary interference factors a, aprime at 0.7 made the polar plot inherit from a base plot class with the same functionality added saving to stl clipped geometry to be less messy for high chord to hub radius which also limits final sweep
+
+2	2	app/app_vars.json
+64	11	app/betz.py
+3	0	app/geometry.py
+6	7	app/hanson.py
+5	1	app/input.py
+9	5	app/main.py
+76	76	app/props/betz.prop
+38	5	app/results.py
+18	2	app/vis.py
+
+--COMMIT--
+2025-01-01 | lpender3672 | hansons method validated for lift and drag problem with thickness improved 3d window and added hansons update
+
+3	2	app/app_vars.json
+2	2	app/betz.py
+17	13	app/dists.py
+21	12	app/geometry.py
+124	120	app/hanson.py
+6	12	app/input.py
+23	3	app/main.py
+40	40	app/props/betz.prop
+129	172	app/props/c.prop
+199	0	app/props/small_wide.prop
+32	3	app/results.py
+-	-	app/validation/exact.mat
+32	7	app/vis.py
+
+--COMMIT--
+2024-12-31 | lpender3672 | noise results started in an agile commit
+
+1	0	app/betz.py
+35	1	app/hanson.py
+5	1	app/main.py
+93	0	app/results.py
+
+--COMMIT--
+2024-12-31 | lpender3672 | progress implementing hansons
+
+1	1	app/app_vars.json
+5	4	app/dists.py
+1	1	app/geometry.py
+233	0	app/hanson.py
+1	1	app/main.py
+25	12	app/vis.py
+0	114	cfd/hanson.py
+
+--COMMIT--
+2024-12-30 | lpender3672 | some problems to iron out, iike chord is bigger than radius etc removed spanwise variation in thickness because its overcomplicated for sections
+
+80	18	app/betz.py
+80	33	app/dists.py
+9	3	app/geometry.py
+3	0	app/input.py
+0	106	app/props/b.prop
+2	20	app/props/betz.prop
+
+--COMMIT--
+2024-12-29 | lpender3672 | custom blade profiles and betz will work on sweep now
+
+2	1	app/app_vars.json
+135	0	app/betz.py
+209	12	app/dists.py
+6	1	app/geometry.py
+56	28	app/input.py
+28	28	app/main.py
+57	31	app/props/b.prop
+234	0	app/props/betz.prop
+242	0	app/props/c.prop
+1	1	app/vis.py
+0	1	cfd/betz.py
+
+--COMMIT--
+2024-12-29 | lpender3672 | saving propeller files
+
+8	1	app/app_vars.json
+125	0	app/foils/clarkY.surf
+44	2	app/input.py
+4	1	app/main.py
+80	0	app/props/b.prop
+
+--COMMIT--
+2024-12-29 | lpender3672 | added airfoils to software
+
+45	0	app/foils/6412lowsw.surf
+97	0	app/foils/ah79-100c.surf
+41	0	app/foils/naca0006.surf
+41	0	app/foils/naca0012.surf
+41	0	app/foils/naca0016.surf
+41	0	app/foils/naca0018.surf
+41	0	app/foils/naca1408.surf
+41	0	app/foils/naca1412.surf
+41	0	app/foils/naca2212.surf
+41	0	app/foils/naca2412.surf
+41	0	app/foils/naca2612.surf
+41	0	app/foils/naca4412.surf
+41	0	app/foils/naca5208.surf
+41	0	app/foils/naca6305.surf
+41	0	app/foils/naca6404.surf
+41	0	app/foils/naca6405.surf
+41	0	app/foils/naca6407.surf
+41	0	app/foils/naca6409.surf
+41	0	app/foils/naca6412.surf
+42	0	app/foils/naca6412te.surf
+41	0	app/foils/naca7412.surf
+41	0	app/foils/naca8412.surf
+41	0	app/foils/naca9205.surf
+41	0	app/foils/naca9212.surf
+41	0	app/foils/naca9304.surf
+41	0	app/foils/naca9305.surf
+41	0	app/foils/naca9307.surf
+41	0	app/foils/naca9309.surf
+41	0	app/foils/naca9312.surf
+41	0	app/foils/naca9405.surf
+41	0	app/foils/naca9412.surf
+96	0	app/geometry.py
+118	12	app/input.py
+14	25	app/main.py
+5	0	app/vis.py
+
+--COMMIT--
+2024-12-28 | lpender3672 | improvements and saving of operating point data
+
+1	0	app/app_vars.json
+47	1	app/input.py
+33	7	app/main.py
+2	2	cfd/betz.py
+4	4	cfd/hanson.py
+-	-	practical/designs/clarkY.stl
+
+--COMMIT--
+2024-12-28 | lpender3672 | some more app settings
+
+21	10	app/dists.py
+75	8	app/input.py
+67	10	app/main.py
+0	59	app/table.py
+6	6	app/vis.py
+
+--COMMIT--
+2024-12-28 | lpender3672 | nice interactive plot with distributions
+
+119	0	app/dists.py
+7	1	app/main.py
+
+--COMMIT--
+2024-12-28 | lpender3672 | started making an app to visualise changes in geometry
+
+81	0	app/input.py
+33	0	app/main.py
+279	0	app/table.py
+76	0	app/vis.py
+12	0	requirements.txt
+
+--COMMIT--
+2024-12-28 | lpender3672 | progress with hansons theory
+
+0	1	cfd/betz.py
+114	0	cfd/hanson.py
+-	-	deliverables/michaelmas_presentation.pptx
+-	-	practical/designs/clarkY.stl
+297	0	theory/hanson.tex
+
+--COMMIT--
+2024-12-03 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-12-03 | lpender3672 | fixed m4 to m5
+
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+
+--COMMIT--
+2024-12-02 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-12-02 | lpender3672 | improvements to betz
+
+36	15	cfd/betz.py
+
+--COMMIT--
+2024-12-02 | lpender3672 | reordered the code a bit
+
+7	29	cfd/betz.py
+31	0	cfd/geometry.py
+-	-	practical/designs/clarkY.stl
+
+--COMMIT--
+2024-12-02 | lpender3672 | stl file generation adapted from code by Lily board
+
+7	7	cfd/betz.py
+95	0	cfd/geometry.py
+-	-	practical/designs/clarkY.stl
+
+--COMMIT--
+2024-12-02 | lpender3672 | 3d graph
+
+40	11	cfd/betz.py
+122	122	practical/designs/clarkY/section_0.sldcrv
+122	122	practical/designs/clarkY/section_10.sldcrv
+122	122	practical/designs/clarkY/section_15.sldcrv
+122	122	practical/designs/clarkY/section_20.sldcrv
+122	122	practical/designs/clarkY/section_25.sldcrv
+122	122	practical/designs/clarkY/section_30.sldcrv
+122	122	practical/designs/clarkY/section_35.sldcrv
+122	122	practical/designs/clarkY/section_40.sldcrv
+122	122	practical/designs/clarkY/section_45.sldcrv
+122	122	practical/designs/clarkY/section_5.sldcrv
+
+--COMMIT--
+2024-11-29 | lpender3672 | presentation came and went lessons learned a better consideration of theory required theory and rsearch must narrow down variables must narrow down the variables for systematic change systematic change will lead to more meaningful results
+
+-	-	deliverables/michaelmas_presentation.pptx
+
+--COMMIT--
+2024-11-27 | lpender3672 | finished ppt content
+
+-	-	deliverables/michaelmas_presentation.pptx
+-	-	practical/designs/clarkY/clarkY_prop.SLDPRT
+-	-	practical/designs/clarkY/toroid.SLDPRT
+
+--COMMIT--
+2024-11-26 | lpender3672 | powerpoint edits
+
+-	-	deliverables/michaelmas_presentation.pptx
+
+--COMMIT--
+2024-11-26 | lpender3672 | improved image for ppt
+
+-	-	deliverables/michaelmas_presentation.pptx
+-	-	loading/cad/fullsetup.PNG
+
+--COMMIT--
+2024-11-26 | lpender3672 | ppt
+
+-	-	deliverables/michaelmas_presentation.pptx
+
+--COMMIT--
+2024-11-26 | lpender3672 | ppt and cad
+
+-	-	deliverables/michaelmas_presentation.pptx
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/fullsetup.SLDASM
+-	-	loading/cad/load cell.SLDPRT
+-	-	loading/cad/motor.SLDPRT
+-	-	loading/cad/toroidal.SLDPRT
+-	-	practical/designs/clarkY/clarkY_prop.SLDPRT
+
+--COMMIT--
+2024-11-25 | lpender3672 | new and improved CAD using smaller sensors
+
+-	-	deliverables/michaelmas_presentation.pptx
+-	-	loading/cad/aerodynamic_setup.SLDASM
+-	-	loading/cad/cantilever_series.SLDASM
+-	-	loading/cad/load cell.SLDPRT
+-	-	loading/cad/motor.SLDPRT
+
+--COMMIT--
+2024-11-25 | lpender3672 | progress on thursdays presentation
+
+-	-	deliverables/michaelmas_presentation.pptx
+
+--COMMIT--
+2024-11-24 | lpender3672 | fixed issue with angle in degrees
+
+25	24	cfd/betz.py
+122	122	practical/designs/clarkY/section_0.sldcrv
+122	122	practical/designs/clarkY/section_10.sldcrv
+122	122	practical/designs/clarkY/section_15.sldcrv
+122	122	practical/designs/clarkY/section_20.sldcrv
+122	122	practical/designs/clarkY/section_25.sldcrv
+122	122	practical/designs/clarkY/section_30.sldcrv
+122	122	practical/designs/clarkY/section_35.sldcrv
+122	122	practical/designs/clarkY/section_40.sldcrv
+122	122	practical/designs/clarkY/section_45.sldcrv
+122	122	practical/designs/clarkY/section_5.sldcrv
+
+--COMMIT--
+2024-11-24 | lpender3672 | CAD file from betz code
+
+10	4	{practical/pre-theory => cfd}/betz.py
+0	0	{practical/pre-theory => cfd}/clarkY.dat
+0	0	{practical/pre-theory => cfd}/clarkY.surf
+-	-	practical/designs/clarkY/clarkY_prop.SLDPRT
+122	0	practical/designs/clarkY/section_0.sldcrv
+122	0	practical/designs/clarkY/section_10.sldcrv
+122	0	practical/designs/clarkY/section_15.sldcrv
+122	0	practical/designs/clarkY/section_20.sldcrv
+122	0	practical/designs/clarkY/section_25.sldcrv
+122	0	practical/designs/clarkY/section_30.sldcrv
+122	0	practical/designs/clarkY/section_35.sldcrv
+122	0	practical/designs/clarkY/section_40.sldcrv
+122	0	practical/designs/clarkY/section_45.sldcrv
+122	0	practical/designs/clarkY/section_5.sldcrv
+
+--COMMIT--
+2024-11-23 | lpender3672 | python code for betz method of propeller design fixed monte carlo sim and it says that theta = 0 is best.
+
+-	-	deliverables/michaelmas_presentation.pptx
+-	-	loading/cad/cantilever_series.SLDASM
+50	49	practical/pre-theory/arrangement_monte_carlo.py
+124	0	practical/pre-theory/betz.py
+124	0	practical/pre-theory/clarkY.dat
+125	0	practical/pre-theory/clarkY.surf
+
+--COMMIT--
+2024-11-21 | lpender3672 | cad work today
+
+-	-	loading/cad/cantilever_series.SLDASM
+
+--COMMIT--
+2024-11-19 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-19 | lpender3672 | cad gitignore
+
+1	0	loading/cad/.gitignore
+
+--COMMIT--
+2024-11-18 | lpender3672 | monte carlo sim but it doesnt work
+
+88	9	practical/pre-theory/arrangement_monte_carlo.py
+
+--COMMIT--
+2024-11-18 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-18 | lpender3672 | added bridge to cad
+
+-	-	loading/cad/cantilever_series.SLDASM
+
+--COMMIT--
+2024-11-15 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-15 | lpender3672 | start of a monte carlo uncertainty analysis in load cell orientation
+
+24	0	practical/pre-theory/arrangement_monte_carlo.py
+1	1	practical/pre-theory/arrangement_uncertainty.py
+
+--COMMIT--
+2024-11-12 | lpender3672 | a few considerations such as emf and flow interference on load and sound measurements
+
+-	-	loading/cad/cantilever_series.SLDASM
+19	2	practical/docs/spec.tex
+
+--COMMIT--
+2024-11-09 | lpender3672 | parallel and series cantilever work starting to consider methods of rapid prototyping
+
+-	-	loading/cad/cantilever_parallel.SLDASM
+-	-	loading/cad/cantilever_series.SLDASM
+-	-	loading/cad/load cell.SLDPRT
+-	-	loading/cad/load_profile.zip
+-	-	practical/docs/{ => figures}/wheatstone.png
+18	7	practical/docs/spec.tex
+3	0	practical/pre-theory/arrangement_uncertainty.py
+
+--COMMIT--
+2024-11-08 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-08 | lpender3672 | comparison of measured acoustics to measured angular speed
+
+27	35	loading/report.tex
+
+--COMMIT--
+2024-11-08 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-08 | lpender3672 | CAD figure in loading report
+
+-	-	loading/figures/CAD.jpg
+8	1	loading/report.tex
+1	1	practical/pre-theory/arrangement_uncertainty.py
+
+--COMMIT--
+2024-11-08 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-08 | lpender3672 | a bit of a conclusion
+
+9	2	loading/report.tex
+
+--COMMIT--
+2024-11-08 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-08 | lpender3672 | acoustic frequency testing to accurately measured rpm
+
+-	-	loading/figures/11126rpm_triblade.png
+-	-	loading/figures/12854rpm_toroid.png
+-	-	loading/figures/13183rpm_twinblade.png
+6	4	practical/docs/spec.tex
+
+--COMMIT--
+2024-11-07 | lpender3672 | some theory work finding an optimum angle for the load cells
+
+1	1	loading/loading_cmd.cpp
+27	6	practical/docs/spec.tex
+100	0	practical/pre-theory/arrangement_uncertainty.py
+88	0	practical/pre-theory/farfield_pressure.py
+1	1	practical/pre-theory/load_cell_positioning.py
+
+--COMMIT--
+2024-11-06 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-06 | lpender3672 | progress with practical aspect
+
+30	25	practical/docs/spec.tex
+-	-	practical/docs/wheatstone.png
+
+--COMMIT--
+2024-11-05 | lpender3672 | full wheatstone bridge cantilever load cell sizing based on force and moment requirements.
+
+108	0	practical/pre-theory/load_cell_positioning.py
+
+--COMMIT--
+2024-11-04 | lpender3672 | practical thoughts on load cells
+
+20	1	loading/blade_comparison.py
+1	1	loading/figures/power_vs_thrust.eps
+1	1	loading/figures/speed_vs_thrust.eps
+1385	0	loading/figures/torque_vs_speed.eps
+34	2	practical/docs/spec.tex
+
+--COMMIT--
+2024-11-04 | lpender3672 | Merge branch 'master' of https://github.com/lpender3672/propeller-acoustics.git
+
+--COMMIT--
+2024-11-04 | lpender3672 | written more of the spec about decided method of measuring force
+
+110	0	loading/graphs.ipynb
+35	0	practical/docs/spec.tex
+
+--COMMIT--
+2024-11-02 | lpender3672 | added application to jd bursary
+
+2	0	.gitignore
+
+--COMMIT--
+2024-10-31 | lpender3672 | loading writeup
+
+-	-	loading/figures/hispeed_biprop.png
+-	-	loading/figures/hispeed_toroid.png
+-	-	loading/figures/lospeed_biprop.png
+-	-	loading/figures/lospeed_toroid.png
+-	-	loading/figures/setup.jpg
+140	0	loading/report.tex
+3	3	practical/docs/spec.tex
+41	0	practical/pre-theory/farfield_intensity_model.py
+0	0	theory/theory.tex
+
+--COMMIT--
+2024-10-29 | lpender3672 | small changes will work on in free period tomorrow
+
+6	6	practical/docs/spec.tex
+
+--COMMIT--
+2024-10-28 | lpender3672 | work from propeller testing carried across
+
+38	1	loading/CMakeLists.txt
+0	11	loading/bi-blade.csv
+58	23	loading/blade_comparison.py
+0	0	loading/{ => data}/A.txt
+0	0	loading/{ => data}/B.txt
+0	0	loading/{ => data}/C.txt
+0	0	loading/{ => data}/D.txt
+17	0	loading/data/bi-blade.csv
+17	0	loading/data/bi-blade_esc.csv
+0	0	loading/{ => data}/no-blade.csv
+17	0	loading/data/toroidal.csv
+17	0	loading/data/toroidal_esc.csv
+17	0	loading/data/tri-blade.csv
+17	0	loading/data/tri-blade_esc.csv
+108	0	loading/esc_record.py
+173	137	loading/{ => figures}/power_vs_thrust.eps
+3091	0	loading/figures/speed_vs_thrust.eps
+957	543	loading/{speed_vs_thrust.eps => figures/speed_vs_thrust_hysteresis.eps}
+3222	0	loading/figures/throttle_vs_thrust.eps
+-	-	loading/{ => figures}/thrust_profile_plot.png
+0	108	loading/graphs.ipynb
+18	4	loading/loading_cmd.cpp
+9	4	loading/odrive_record.py
+2	2	loading/plotter.py
+-	-	loading/power_law.png
+0	11	loading/toroidal.csv
+0	11	loading/tri-blade.csv
+
+--COMMIT--
+2024-10-27 | lpender3672 | first commit of some report files
+
+135	0	.gitignore
+129	0	practical/docs/spec.tex
+0	0	theory/theory.tex
+
+--COMMIT--
+2024-10-22 | lpender3672 | removed submodule that wasnt meant to be copied over
+
+0	2	loading/hx711-pico-c/.gitattributes
+0	17	loading/hx711-pico-c/.github/workflows/build_doxy.yml
+0	27	loading/hx711-pico-c/.github/workflows/cppcheck.yml
+0	29	loading/hx711-pico-c/.github/workflows/generate_pio.yml
+0	530	loading/hx711-pico-c/.gitignore
+0	24	loading/hx711-pico-c/.vscode/c_cpp_properties.json
+0	25	loading/hx711-pico-c/.vscode/launch.json
+0	47	loading/hx711-pico-c/.vscode/settings.json
+0	12	loading/hx711-pico-c/.vscode/tasks.json
+0	94	loading/hx711-pico-c/CMakeLists.txt
+0	2406	loading/hx711-pico-c/Doxyfile
+0	21	loading/hx711-pico-c/LICENSE
+0	281	loading/hx711-pico-c/README.md
+0	9	loading/hx711-pico-c/cppcheck_report.txt
+0	43	loading/hx711-pico-c/include/common.h
+0	341	loading/hx711-pico-c/include/hx711.h
+0	489	loading/hx711-pico-c/include/hx711_multi.h
+0	110	loading/hx711-pico-c/include/hx711_multi_awaiter.pio.h
+0	181	loading/hx711-pico-c/include/hx711_multi_reader.pio.h
+0	173	loading/hx711-pico-c/include/hx711_reader.pio.h
+0	464	loading/hx711-pico-c/include/util.h
+0	73	loading/hx711-pico-c/pico_sdk_import.cmake
+-	-	loading/hx711-pico-c/resources/hx711F_EN.pdf
+-	-	loading/hx711-pico-c/resources/hx711_80sps_nogainchange.sr
+-	-	loading/hx711-pico-c/resources/hx711_80sps_serialout.gif
+0	64	loading/hx711-pico-c/src/common.c
+0	534	loading/hx711-pico-c/src/hx711.c
+0	880	loading/hx711-pico-c/src/hx711_multi.c
+0	161	loading/hx711-pico-c/src/hx711_multi_awaiter.pio
+0	280	loading/hx711-pico-c/src/hx711_multi_reader.pio
+0	312	loading/hx711-pico-c/src/hx711_reader.pio
+0	503	loading/hx711-pico-c/src/util.c
+0	51	loading/hx711-pico-c/tests/CMakeLists.txt
+0	168	loading/hx711-pico-c/tests/main.c
+
+--COMMIT--
+2024-10-22 | lpender3672 | plot was too cluttered
+
+4	4	loading/graphs.ipynb
+-	-	loading/power_law.png
+
+--COMMIT--
+2024-10-22 | lpender3672 | power law graph
+
+12	38	loading/graphs.ipynb
+-	-	loading/power_law.png
+
+--COMMIT--
+2024-10-22 | lpender3672 | upload some of previous work
+
+22	0	loading/A.txt
+24	0	loading/B.txt
+22	0	loading/C.txt
+61	0	loading/CMakeLists.txt
+24	0	loading/D.txt
+11	0	loading/bi-blade.csv
+49	0	loading/blade_comparison.py
+134	0	loading/graphs.ipynb
+2	0	loading/hx711-pico-c/.gitattributes
+17	0	loading/hx711-pico-c/.github/workflows/build_doxy.yml
+27	0	loading/hx711-pico-c/.github/workflows/cppcheck.yml
+29	0	loading/hx711-pico-c/.github/workflows/generate_pio.yml
+530	0	loading/hx711-pico-c/.gitignore
+24	0	loading/hx711-pico-c/.vscode/c_cpp_properties.json
+25	0	loading/hx711-pico-c/.vscode/launch.json
+47	0	loading/hx711-pico-c/.vscode/settings.json
+12	0	loading/hx711-pico-c/.vscode/tasks.json
+94	0	loading/hx711-pico-c/CMakeLists.txt
+2406	0	loading/hx711-pico-c/Doxyfile
+21	0	loading/hx711-pico-c/LICENSE
+281	0	loading/hx711-pico-c/README.md
+9	0	loading/hx711-pico-c/cppcheck_report.txt
+43	0	loading/hx711-pico-c/include/common.h
+341	0	loading/hx711-pico-c/include/hx711.h
+489	0	loading/hx711-pico-c/include/hx711_multi.h
+110	0	loading/hx711-pico-c/include/hx711_multi_awaiter.pio.h
+181	0	loading/hx711-pico-c/include/hx711_multi_reader.pio.h
+173	0	loading/hx711-pico-c/include/hx711_reader.pio.h
+464	0	loading/hx711-pico-c/include/util.h
+73	0	loading/hx711-pico-c/pico_sdk_import.cmake
+-	-	loading/hx711-pico-c/resources/hx711F_EN.pdf
+-	-	loading/hx711-pico-c/resources/hx711_80sps_nogainchange.sr
+-	-	loading/hx711-pico-c/resources/hx711_80sps_serialout.gif
+64	0	loading/hx711-pico-c/src/common.c
+534	0	loading/hx711-pico-c/src/hx711.c
+880	0	loading/hx711-pico-c/src/hx711_multi.c
+161	0	loading/hx711-pico-c/src/hx711_multi_awaiter.pio
+280	0	loading/hx711-pico-c/src/hx711_multi_reader.pio
+312	0	loading/hx711-pico-c/src/hx711_reader.pio
+503	0	loading/hx711-pico-c/src/util.c
+51	0	loading/hx711-pico-c/tests/CMakeLists.txt
+168	0	loading/hx711-pico-c/tests/main.c
+161	0	loading/loading.cpp
+190	0	loading/loading_cmd.cpp
+11	0	loading/no-blade.csv
+180	0	loading/odrive_record.py
+40	0	loading/plotter.py
+1795	0	loading/power_vs_thrust.eps
+1900	0	loading/speed_vs_thrust.eps
+-	-	loading/thrust_profile_plot.png
+11	0	loading/toroidal.csv
+11	0	loading/tri-blade.csv
+
+--COMMIT--
+2024-10-22 | lpender3672 | add readme
+
+1	0	README.md

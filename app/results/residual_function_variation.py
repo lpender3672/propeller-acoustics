@@ -39,7 +39,7 @@ def fixed_speed_distance_regression(hdf):
         # Convert to SI
         omega = group['speed'].values * 2 * np.pi / 60   # rad/s
         r     = group['distance'].values * 1e-3          # m
-        spl   = group['SPL'].values
+        spl   = group['SPL'].values / 20
 
         # Log10 values
         log_speed    = np.log10(omega)
@@ -109,12 +109,12 @@ def plot_sound_FOM(hdf, aero_data):
     ycont = np.linspace(ylo, yhi, 200)
     xmesh, ymesh = np.meshgrid(xcont, ycont)
 
-    PM = xmesh / (10 ** ymesh)
+    PM = xmesh / (10 ** (ymesh / 20))
     # contour with labels
     CS = ax.contour(xmesh, ymesh, PM, colors='gray', levels=np.logspace(1, np.log10(300), 10))
     ax.clabel(CS, inline=True, fontsize=10, fmt='%.2f')
 
-    fig.savefig('deliverables/final_report/figures/prop_sound_FOM.png', dpi=300)
+    return fig, ax
 
 
 
@@ -166,6 +166,9 @@ if __name__ == "__main__":
         },
         group_by='propeller'
     )
+    ax.set_title('')
+    fig.savefig('deliverables/final_report/figures/harmonic_sound_sweep_for_135deg.png', dpi=300)
+
     # harmonic variation for different angles
     fig, ax = multi_function_plot(
         results,
@@ -176,7 +179,11 @@ if __name__ == "__main__":
         },
         group_by='angle_bin'
     )
+    ax.set_title('')
+    fig.savefig('deliverables/final_report/figures/harmonic_sound_angle_for_dalprop5045.png', dpi=300)
 
-    plot_sound_FOM(results, aero_coeffs)
+
+    fig, ax = plot_sound_FOM(results, aero_coeffs)
+    fig.savefig('deliverables/final_report/figures/prop_sound_FOM.png', dpi=300)
 
     plt.show()

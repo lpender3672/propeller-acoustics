@@ -108,7 +108,7 @@ The theory will show how noise and efficiency are inherently coupled, providing 
 % acoustic side
 Sound is a pressure fluctuation in a medium.
 The overall sound pressure level (OASPL) is defined as the root mean square of the sound pressure, normalised to a reference pressure.
-Its expressed logarithmically, as shown in equation \ref{eq:OASPL}.
+It's expressed logarithmically, as shown in equation \ref{eq:OASPL}.
 Noise at discrete frequency intervals will later be shown to be of importance and so a definition of this frequency dependent sound pressure level (SPL) is provided in equation \ref{eq:SPL}.
 
 \begin{equation}
@@ -121,10 +121,10 @@ Noise at discrete frequency intervals will later be shown to be of importance an
 
 % introduce intuitively how the sound pressure level would be expected to vary with speed, diameter, distance
 Intuitively the SPL of propeller noise would vary with the pressure difference accross the blade.
-It is then expected that the SPL would vary with tip speed squared, where the pressure differential is greatest.
-The pressure differential will also depend on local aerodynamic coefficients but this effect is secondary.
+From Bernoulli's dynamic pressure its then expected that the SPL would vary with tip speed squared, where the pressure differential is greatest.
+The pressure differential will also depend on local aerodynamic coefficients but this effect is small.
 From conservation of energy the sound intensity must be an inverse square law with distance.
-The sound energy can be shown to be proportional to the square of the sound pressure level...
+The sound energy can be shown to be proportional to the square of the sound pressure.
 This means that the sound pressure level will vary with distance in an inverse law.
 Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
 
@@ -183,6 +183,10 @@ If the noise consists of only harmonics of the blade passage frequency for $B$ b
     p'(t) = \sum_{m=-\infty}^\infty P_{mB} \exp(-jmB\Omega t)
 \end{equation}
 The noise can then expressed as the sum of thickness, drag and lift terms with the respective subscripts, $P_{mB} = P_{Vm} + P_{Dm} + P_{Lm}$.
+Hanson considered an airfoil with mid chord alignment (MCA), and face alignment (FA) offsets which vary along the span.
+This allows for a distribution of sweep, as well as the standard twist and chord distributions.
+
+How and where do I intuitively explain the destructive interference from chordwise and spanwise cancellation?
 
 \begin{figure}[H]
     \centering 
@@ -207,6 +211,10 @@ The noise can then expressed as the sum of thickness, drag and lift terms with t
         \caption{}
 \end{figure}
 
+The result of Hanson's work is a general expression for the harmonic noise coefficients.
+A simplified version of this for a subsonic propeller in hover, with quadrupole sources neglected is
+shown below in equation \ref{eq:hansons_result}.
+
 \begin{equation}
     \begin{aligned}
         \begin{bmatrix}
@@ -222,6 +230,18 @@ The noise can then expressed as the sum of thickness, drag and lift terms with t
     \end{aligned}
     \label{eq:hansons_result}
 \end{equation}
+
+TODO Define all the variables and justify simplifications.
+
+It can be seen that the intuitive expectation of the sound pressure in equation \ref{eq:expected_plaw} agrees with Hanson's result.
+The $\phi_s$ term represents a phase shift of the component of sound emitted from a point along the blade span.
+This is shown to be due to sweep, and careful choice of sweep can lead to destructive interference of the sound pressure at certain observer angles.
+
+% figure?
+
+A key mechanism for noise reduction has been identified, however the above analysis requires knowledge of lift and drag coefficients for the entire surface of the propeller.
+Hanson also showed that modelling the chordwise distribution as quadratic showed good agreement with experimental results \cite{hanson_influence}.
+A method to solve for the aerodynamic coefficients is presented later in section \ref{sec:actuator_disk}.
 
 % aero side
 \subsection{Aerodynamic definitions and relationships}
@@ -325,10 +345,7 @@ Tip losses were also neglected, where blade element theory assumptions break dow
 Prandtl derived a tip loss factor for the additional induced velocity near the tip, based on a simple horseshoe wake model \cite{prandtl_loss}. 
 % more advanced wake models exist.
 
-The airfoil coefficients were assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
-
-
-
+The airfoil coefficients were also assumed to be constant over the range of Reynolds numbers considered, only varying with angle of attack.
 
 
 
@@ -366,7 +383,7 @@ The setups were designed to have near identical propeller and motor conditions, 
 The drone motor, Emax ECO II Series 2207 1700KV, was used to drive the propellers with an Odrive S1 motor controller.
 This controller allowed for precise measurement and control of both motor speed and torque.
 A high speed AS5047P encoder was used to measure the angular speed of the motor.
-The same 6 cell, 3300 mAh lithium polymer battery was also used to power the motor for both setups.
+The same 6 cell, 3300 mAh lithium polymer battery were also used to power the motor for both setups.
 
 
 \subsection{Saftey}
@@ -374,10 +391,7 @@ The safety of the experimental setup was a key consideration throughout the proj
 The testing required high speed rotating propellers which could cause serious injury.
 The custom 3D printed propellers were expected to be pushed to their material limits and so the risk of failure was high.
 For these reasons, all 3D printed propellers were tested solely in the foam anechoic chamber with the door closed and the operator outside.
-TODO
-
-For this reason, the operater 
-A watchdog timer was enabled with the controller to ensure safe shutdown if communication was lost.
+A watchdog timer was enabled with the controller to ensure safe shutdown if any communication from outside the chamber was lost.
 
 
 \subsubsection{Aerodynamic setup}
@@ -491,6 +505,9 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 
 \subsubsection{Data Processing}
 
+% handling of audio data
+
+% log normalisation 
 
 % rms normalised hanning window to prevent spectral leakage
 % frequency domain interpolation of microphone calibration data
@@ -605,6 +622,28 @@ XFOIL uses a fully coupled viscous-inviscid interaction method to efficiently co
     \caption{OASPL of the dalprop 5045 propeller }
     \label{fig:spl_speed_variation}
 \end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/harmonic_sound_angle_for_dalprop5045.pdf}
+    \caption{Variation of sound with harmonic for various observer angles for the dalprop 5045 propeller.}
+    \label{fig:harmonic_sound_angle_for_dalprop5045}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/harmonic_sound_sweep_for_135deg.pdf}
+    \caption{Variation of sound with harmonic for differently swept propellers at $\theta = 135^\circ$.}
+    \label{fig:harmonic_sound_sweep_for_135deg}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/prop_sound_FOM.pdf}
+    \caption{First harmonic sound at $\theta = 135^\circ$ against figure of merit for all propeller designs.}
+    \label{fig:prop_sound_FOM}
+\end{figure}
+
 
 \begin{figure}[H]
     \centering

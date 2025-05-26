@@ -382,7 +382,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, reference_FO
 
                 harmonic_values[row_idx] = n
                 hrms_values[row_idx] = hspl
-                hspl_values[row_idx] = hspl / REF_PRESSURE
+                hspl_values[row_idx] = 20 * np.log10( hspl / REF_PRESSURE )
                 ndhspl_values[row_idx] = hspl / nd_pressure
 
                 row_idx += 1

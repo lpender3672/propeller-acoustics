@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,7 +10,8 @@ from app.results.graphing_tools import (
 
 from app.routines_audio import (
     parse_lookup_df,
-    parse_harmonic_df
+    parse_harmonic_df,
+    parse_spl_df
 )
 
 from app.routines_aero import (
@@ -47,11 +47,13 @@ def plot_3d_regression_scatter(df, coeffs):
     plt.tight_layout()
 
 
-def speed_distance_regression(hdf):
+def speed_distance_SPL_regression(hdf):
 
     # proof of concept for the speed-distance regression
     # group by propeller, angle, harmonic
     # run 2D regression on log 
+    # update had to normalize the data to avoid
+    # better fit to the higher magnitude values
 
     data_rows = []
 
@@ -68,23 +70,42 @@ def speed_distance_regression(hdf):
 
         speed = group_df['speed'].values * 2 * np.pi / 60  # to rad/s
         distance = group_df['distance'].values * 1e-3 # to m
-        SPL = group_df['SPL'].values
 
         logSpeed = np.log10(speed)
         logDistance = np.log10(distance)
-        logSPL = np.log10(SPL)
+        logSPL = group_df['SPL'].values / 20
 
+        # normalization
+        logSpeed_norm = (logSpeed - np.mean(logSpeed)) / np.std(logSpeed)
+        logDistance_norm = (logDistance - np.mean(logDistance)) / np.std(logDistance)
+        logSPL_norm = (logSPL - np.mean(logSPL)) / np.std(logSPL)
+
+        # normalization factors
+        speed_mean, speed_std = np.mean(logSpeed), np.std(logSpeed)
+        distance_mean, distance_std = np.mean(logDistance), np.std(logDistance)
+        spl_mean, spl_std = np.mean(logSPL), np.std(logSPL)
+
+        X_norm = np.column_stack((np.ones_like(logSpeed_norm), logSpeed_norm, logDistance_norm))
+        y_norm = logSPL_norm
+
+        # least squares regression on normalized data
+        normalized_coeffs, _, _, _ = np.linalg.lstsq(X_norm, y_norm, rcond=None)
+        beta0_norm, beta1_norm, beta2_norm = normalized_coeffs
+
+        # back to original scale coefficients for interpretability
+        # logSPL = beta0 + beta1*logSpeed + beta2*logDistance
+        beta1 = beta1_norm * (spl_std / speed_std)
+        beta2 = beta2_norm * (spl_std / distance_std)
+        beta0 = spl_mean - beta1 * speed_mean - beta2 * distance_mean
+
+        # For validation, compute predictions and residuals on original scale
         X = np.column_stack((np.ones_like(logSpeed), logSpeed, logDistance))
-        y = logSPL
-
-        # Least squares regression
-        coeffs, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
-        beta0, beta1, beta2 = coeffs
-
+        coeffs = np.array([beta0, beta1, beta2])
+        
         y_pred = X @ coeffs
-        residual = y - y_pred
+        residual = logSPL - y_pred
         residual_std = np.std(residual)
-        data_std = np.std(y)
+        data_std = np.std(logSPL)
         residual_std_norm = residual_std / data_std if data_std != 0 else np.inf
 
         data_rows.append({
@@ -94,7 +115,90 @@ def speed_distance_regression(hdf):
             'beta0': beta0,
             'beta1': beta1,
             'beta2': beta2,
-            'r_squared': 1 - np.var(y - X @ coeffs) / np.var(y),
+            'beta0_norm': beta0_norm,
+            'beta1_norm': beta1_norm, 
+            'beta2_norm': beta2_norm,
+            'r_squared': 1 - np.var(residual) / np.var(logSPL),
+            'residual_std': residual_std,
+            'residual_std_norm': residual_std_norm,
+        })
+
+ 
+    # make a dataframe from the data rows
+    coeffs_df = pd.DataFrame(data_rows)
+    
+    return coeffs_df
+
+def speed_distance_OASPL_regression(sdf):
+
+    data_rows = []
+
+    angle_tolerance = 22.5  # degrees
+    half_width = angle_tolerance / 2
+    angle_centers = np.arange(0, 181, angle_tolerance)
+    angle_bin_edges = np.arange(-half_width, 181 + half_width + 1e-6, angle_tolerance)
+
+    sdf['angle_bin'] = pd.cut(sdf['angle'], bins=angle_bin_edges, labels=False) * angle_tolerance
+
+    for (propeller, angle), group_df in sdf.groupby(['propeller', 'angle_bin']):
+        if len(group_df) < 3:
+            continue  # not enough points
+
+        speed = group_df['speed'].values * 2 * np.pi / 60  # to rad/s
+        distance = group_df['distance'].values * 1e-3 # to m
+
+        logSpeed = np.log10(speed)
+        logDistance = np.log10(distance)
+        logSPL = group_df['OASPL'].values / 20
+
+        # normalization
+        logSpeed_norm = (logSpeed - np.mean(logSpeed)) / np.std(logSpeed)
+        logDistance_norm = (logDistance - np.mean(logDistance)) / np.std(logDistance)
+        logSPL_norm = (logSPL - np.mean(logSPL)) / np.std(logSPL)
+
+        # normalization factors
+        speed_mean, speed_std = np.mean(logSpeed), np.std(logSpeed)
+        distance_mean, distance_std = np.mean(logDistance), np.std(logDistance)
+        spl_mean, spl_std = np.mean(logSPL), np.std(logSPL)
+
+        X_norm = np.column_stack((np.ones_like(logSpeed_norm), logSpeed_norm, logDistance_norm))
+        y_norm = logSPL_norm
+
+        # least squares regression on normalized data
+        try:
+            normalized_coeffs, _, _, _ = np.linalg.lstsq(X_norm, y_norm, rcond=None)
+        except np.linalg.LinAlgError:
+            print(f"LinAlgError for propeller {propeller}, angle {angle}. Skipping this group.")
+            continue
+
+        beta0_norm, beta1_norm, beta2_norm = normalized_coeffs
+
+        # back to original scale coefficients for interpretability
+        # logSPL = beta0 + beta1*logSpeed + beta2*logDistance
+        beta1 = beta1_norm * (spl_std / speed_std)
+        beta2 = beta2_norm * (spl_std / distance_std)
+        beta0 = spl_mean - beta1 * speed_mean - beta2 * distance_mean
+
+        # For validation, compute predictions and residuals on original scale
+        X = np.column_stack((np.ones_like(logSpeed), logSpeed, logDistance))
+        coeffs = np.array([beta0, beta1, beta2])
+        
+        y_pred = X @ coeffs
+        residual = logSPL - y_pred
+        residual_std = np.std(residual)
+        data_std = np.std(logSPL)
+        residual_std_norm = residual_std / data_std if data_std != 0 else np.inf
+
+        data_rows.append({
+            'propeller': propeller,
+            'angle_bin': angle,
+            'beta0': beta0,
+            'beta1': beta1,
+            'beta2': beta2,
+            'beta0_norm': beta0_norm,
+            'beta1_norm': beta1_norm, 
+            'beta2_norm': beta2_norm,
+            'r_squared': 1 - np.var(residual) / np.var(logSPL),
             'residual_std': residual_std,
             'residual_std_norm': residual_std_norm,
         })
@@ -144,11 +248,11 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
     
     xlo,xhi = ax.get_xlim()
     x_speed = np.linspace(xlo, xhi, 1000)
-    y_speed = 5e-5 * x_speed ** 2
+    y_speed = 20 * np.log10(5e-5 * x_speed ** 2)
     ax.plot(x_speed, y_speed, 'r--', label='Speed Fit', linewidth=1)
     
     ax.set_xscale('log')
-    ax.set_yscale('log')
+    #ax.set_yscale('log')
     ax.grid(True, which='both')
 
     distance_harmonic = best_distance_rows.iloc[0]['harmonic']
@@ -177,11 +281,11 @@ def plot_best_coeffs_2D(hdf, coeffs_df):
     
     xlo,xhi = ax.get_xlim()
     x_distance = np.linspace(xlo, xhi, 1000)
-    y_distance = 5e6 * x_distance ** -1
+    y_distance = 20 * np.log10(5e6 * x_distance ** -1)
     ax.plot(x_distance, y_distance, 'r--', label='Speed Fit', linewidth=1)
     
     ax.set_xscale('log')
-    ax.set_yscale('log')
+    #ax.set_yscale('log')
     ax.grid(True, which='both')
     
 
@@ -250,10 +354,12 @@ if __name__ == "__main__":
 
     hdf = parse_harmonic_df(lookup_df, aero_coeffs)
 
+    sdf = parse_spl_df(lookup_df, aero_coeffs)
+
     hdf_filtered = filter_df(hdf,
                     { 'propeller' : '5045_s15'})
     
-    coeff_df = speed_distance_regression(hdf_filtered)
+    coeff_df = speed_distance_SPL_regression(hdf_filtered)
     plot_best_coeffs_2D(hdf_filtered, coeff_df)
 
     # closeness metric for beta1 and beta2
@@ -323,7 +429,31 @@ if __name__ == "__main__":
     ax.legend().set_title('Angle [deg]')
     fig.savefig('deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.png',
                     dpi = 300)
+    
+
+    coeff_df2 = speed_distance_OASPL_regression(sdf)
+
+    fig, ax = multi_function_plot(coeff_df2,
+                        x_var='angle_bin',
+                        y_var='beta1',
+                        filter_dict={
+                            'propeller': 'dalprop5045',
+                        },
+                        plot_type='scatter',
+                        #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
+                        )
+
+    fig, ax = multi_function_plot(coeff_df2,
+                        x_var='angle_bin',
+                        y_var='beta2',
+                        filter_dict={
+                            'propeller': 'dalprop5045',
+                        },
+                        plot_type='scatter',
+                        #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
+                        )
+
 
     plt.show()
-    
-    
+
+

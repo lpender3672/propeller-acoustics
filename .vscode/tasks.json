@@ -58,9 +58,12 @@
                 "reveal": "always",
                 "panel": "shared"
             },
+            "options": {
+                "cwd": "${fileDirname}"
+            },
             "problemMatcher": {
                 "owner": "latex",
-                "fileLocation": ["relative", "${workspaceFolder}"],
+                "fileLocation": ["relative", "${fileDirname}"],
                 "pattern": {
                     "regexp": "^(.*):(\\d+):\\s+(.*)$",
                     "file": 1,
