@@ -403,6 +403,7 @@ if __name__ == "__main__":
                         filter_dict={
                             'propeller': '5045_s15',
                         },
+                        fig_size=(5,4),
                         group_by='angle_bin',
                         plot_type='scatter',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
@@ -421,6 +422,7 @@ if __name__ == "__main__":
                         },
                         group_by='angle_bin',
                         plot_type='scatter',
+                        fig_size=(5,4),
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
     

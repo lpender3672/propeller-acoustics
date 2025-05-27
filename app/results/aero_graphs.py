@@ -177,6 +177,34 @@ def plot_FM(prop_result_path, ax, cal_data, label=None):
     return ax
 
 
+def noload_torque(cal_data):
+
+    prop_result_path = 'app/results/noprop.prop'
+
+    full_path = Path(prop_result_path).resolve()
+    fprop = full_path.parent.parent / "props" / full_path.name
+    prop = load_prop_from_file(fprop)
+
+    candidates = list(full_path.glob("aero_*"))
+    if not candidates:
+        print("Warning: No aero data found for", prop_result_path)
+        return None
+    faero = max(candidates, key=lambda f: f.stat().st_mtime)
+    aero_data = np.load(faero)
+
+    force_data = aero_data['force_data']
+    motor_data = aero_data['motor_data']
+
+    speed = np.mean(motor_data[:, :, 1], axis=1) * -2 * np.pi / 60
+    raw_data = np.mean(force_data[:, :, 1:], axis=1)
+
+    fig, ax = plt.subplots(1, 1)
+
+    ax.plot(speed, raw_data[:, 0], "o", label="Thrust")
+    ax.plot(speed, raw_data[:, 1], "o", label="Torque")
+
+
+
 def sweep_comparison_plot(cal_data):
 
     fig, ax = plt.subplots(2, 1)
@@ -228,6 +256,8 @@ def FoM_comparison_plot(cal_data):
 if __name__ == "__main__":
 
     cal_data = load_cell_calibration()
+
+    noload_torque(cal_data)
 
     sweep_comparison_plot(cal_data)
     printed_comparison_plot(cal_data)

@@ -98,7 +98,9 @@ Looped propellers structure also allows for larger sweep than standard propeller
 % hover conditions used throughout. justify this
 
 \begin{itemize}
-    \item 
+    \item To experimentally compare far field noise emitted by various propeller designs at reference aerodynamic performance values.
+    \item To investigate the influence of blade sweep on the far field noise of propellers.
+    \item To provide design methods and recommendations for reducing the noise without compromising aerodynamic performance.
 \end{itemize}
 
 \section{Theory}
@@ -427,8 +429,7 @@ A watchdog timer was enabled with the controller to ensure safe shutdown if any 
 % software used, majority python, C++
 % key libraries used numpy, scipy, matplotlib
 
-For saftey reasons discussed, the data collection had to be done remotely from outside the chamber.
-This required responsive control and monitoring of the setup.
+The remote data collection, outside the chamber, required responsive control and monitoring of the setup.
 A sophisticated data collection tool was therefore developed to meet these requirements.
 This also allowed for automation of variable speed measurements, improving repeatability and the amount of data collected in the limited time available.
 
@@ -657,12 +658,36 @@ This causes the triangle generation to be more complicated at the tip to avoid b
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{../tikz/loadcell_caltab.pdf}
+    \includegraphics[width=0.9\textwidth]{../tikz/loadcell_caltab.pdf}
     \caption{Calibration graphs for the load cells used in the aerodynamic setup.}
     \label{fig:loadcell_caltab}
 \end{figure}
 
-Figure \ref{fig:loadcell_caltab} shows the calibration graphs for the 
+Figure \ref{fig:loadcell_caltab} shows the applied forces and measured signals during separate calibration tests.
+As expected, the thrust load cell has a strong linear relationship between the applied force and the measured signal.
+Similarly, the applied torque is strongly linear with the measured signal in the range of calibration.
+The applied torque influences the reading on the thrust sensor, which shows a weakly linear relationship.
+This is likely due to not applying the torque in the plane load cell, due to tolerances and table flatness.
+The key result is that the variation in thrust signal is 2 orders of magnitude smaller than the applied thrust signal.
+%The variation of the torque signal due to applied thrust is shown to lie entirely within the error bars and is attributed to noise.
+The variation of the torque signal due to applied thrust is shown to be small, such that the sensor noise error bars are visible.
+However, there is still variation outside of these error bars, indicating out of plane forces and nonlinearities.
+% This must be due to part of the thrust force being carried through the torque load cell rather than the ceramic bearing.
+% This is friction and bearing tolerances, but this was not observed.
+
+The torque due to the propeller is calculated from subtracting the no load torque from the measured propeller.
+However, the no load torque at all speeds were measured to be negligible on the calibration curves.
+This is likely due to smaller forces required to overcome friction of motor bearings compared to ceramic platform bearings.
+
+The motors phase currents are measured by the controller and are used to calculate a torque producing current, $I$.
+A torque constant $k_Q$, covered in more detail in the appendix \ref{sec:appendix_motor_calibration}, can then be used to calculate torque.
+
+\begin{equation}
+    Q = k_Q (I_\text{load}  - I_\text{noload}) \label{eq:torque_from_current}
+\end{equation}
+
+The equation is expected to be accurate for small motor currents and temperatures where load and noload losses are similar.
+The presence of a control system, increasing the current to maintain speed when there are increased losses, further complicates the relationship.
 
 \begin{figure}[H]
     \centering
@@ -670,6 +695,14 @@ Figure \ref{fig:loadcell_caltab} shows the calibration graphs for the
     \caption{Torque measured by calibrated load cell compared to torque calculated from measured motor current for the dalprop 5045bnr propeller.}
     \label{fig:controller_vs_loadcell_torque}
 \end{figure}
+
+Figure \ref{fig:controller_vs_loadcell_torque} shows the torque power law with speed.
+The load cell measurements are below the expected square power law for small values, likely due to similar friction in the bearings.
+For high values of torque, the measurements agree with the power law.
+The current calculated torque shows a strong agreement with the power law over the full range of speeds.
+These values also agree within 7\% of the calibrated load cell values
+This could be used at low torque values which were unable to be read by 
+
 
 \begin{figure}[H]
     \centering
@@ -793,6 +826,17 @@ For a function $f(\mathbf{x}, t)$ that defines a surface $ S(t) = \{\mathbf{x} \
 \end{equation}
 This result is a direct re-arrangement of the Navier-Stokes equations, where $T_{ij}$ is the stress tensor, $p_{ij}$ is the pressure tensor, and $n_j$ is the normal vector to the surface.
 
+\subsection{Calculation of motor torque constant \label{sec:appendix_motor_calibration}}
+
+The motor voltage constant, $k_V$, is provided by the manufacturer as 1700 KV, or 1700 revolutions per minute per unit line voltage.
+The torque constant, $k_Q$, can be calculated from this using the following relationship.
+
+\begin{equation}
+    k_Q = \frac{3}{2} \frac{1}{\sqrt{3}} \frac{60}{2\pi} \frac{1}{k_V}
+\end{equation}
+
+The factors $2\pi/60$ and $1/\sqrt{3}$ simply converts this constant to radians per second per unit phase voltage.
+The final $3/2$ factor arises from the conversion of 3 phase power to mechanical torque of per phase quantities \cite{?}.
 
 \printbibliography
 

@@ -14,7 +14,10 @@ from app.routines_audio import (
 def plot_loadcell_calibration(cal_data):
 
     tcal_data, qcal_data = cal_data
-    
+
+    tcal_data[:, 1, 1] = tcal_data[:, 1, 0]
+    qcal_data[:, 1, 0] = qcal_data[:, 1, 1]
+
     to_plot = [
         ("Thrust",    tcal_data),
         ("Torque",    qcal_data),
@@ -38,8 +41,15 @@ def plot_loadcell_calibration(cal_data):
                 x_fit = np.linspace(np.min(data[:, 0, idx]), np.max(data[:, 0, idx]), 100)
                 y_fit = np.polyval(pfit, x_fit)
                 label_fit = f"y = {pfit[0]:.2e}x {pfit[1]:+.2e}".replace("+-", "- ")
-                ax.plot(x_fit, y_fit, "r--", label=label_fit)
+                ax.plot(x_fit, y_fit, "r--", label=label_fit, linewidth=1)
                 ax.legend(loc="upper left")
+
+            else:
+
+                ax.errorbar(
+                    data[:, 0, idx], data[:, 1, idx],
+                    xerr = 200,
+                    fmt='o', markersize=4)
 
             # build a safe filename, e.g. Sensor_A_thrust.png
             safe_name = sensor.replace(" ", "_")

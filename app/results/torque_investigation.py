@@ -109,6 +109,8 @@ def compare_torque(prop_result_path):
         plot=False, prop_result_path=prop_result_path)
     asp, atq = torque_from_aero_data(
         plot=False, prop_result_path=prop_result_path)
+    
+    print(mtq, atq)
 
     fig, ax = plt.subplots(1, 1, figsize=(7, 5))
 
