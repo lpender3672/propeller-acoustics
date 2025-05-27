@@ -97,13 +97,22 @@ def plot_prop(
         xmax_q = np.max(speed_q + err_speed_q) * 1.1
         ax2.set_xlim(min(curr_min_q, xmin_q), max(curr_max_q, xmax_q))
 
+    ax2.grid(True, which="both")
+    ax2.set_xlabel("Speed [rad/s]")
+    ax2.set_ylabel("Torque Coefficient $C_Q$")
+
     # ok now fit curves to estimate the constant coefficients
     # thrust curve is constant enough to be averaged
 
     converged_thrust_coefficient = np.mean(CT)
     
     # fit torque curve
-    params_q = fit_cexp(np.log10(speed_q), CQ)
+    params_q = fit_cexp(np.log10(speed_q), CQ, [1000, 4, -1000])
+
+    if params_q is None:
+        print(f"Warning: Could not fit torque curve for prop {label}")
+        return ax1, ax2
+
     speed_cont_q = np.logspace(
         np.log10(np.min(speed_q)), np.log10(np.max(speed_q)), 1000
     )

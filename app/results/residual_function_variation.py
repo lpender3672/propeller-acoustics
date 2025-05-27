@@ -39,12 +39,11 @@ def fixed_speed_distance_regression(hdf):
         # Convert to SI
         omega = group['speed'].values * 2 * np.pi / 60   # rad/s
         r     = group['distance'].values * 1e-3          # m
-        spl   = group['SPL'].values / 20
 
         # Log10 values
         log_speed    = np.log10(omega)
         log_distance = np.log10(r)
-        log_spl      = np.log10(spl)
+        log_spl      = group['SPLref'].values / 20
 
         # Remove known physics trends:
         #   adjusted = log_spl − 2·log_speed + log_distance

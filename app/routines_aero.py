@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, OptimizeWarning
 
 from app.routines import (
     load_prop_from_file,
@@ -24,10 +24,8 @@ def cexp(x, a, b, c):
     """Converging exponential function."""
     return a * (1 - np.exp(-b * x)) + c
 
-def fit_cexp(x, y):
+def fit_cexp(x, y, initial_guess = [1000, 5, -1000]):
     """Fits a converging exponential to the data."""
-
-    initial_guess = [1000, 5, -1000]
 
     # sort x and y to ensure they are in the same order
     sorted_indices = np.argsort(x)
