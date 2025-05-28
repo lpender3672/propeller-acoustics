@@ -68,7 +68,7 @@ def plot_hrmsndp_speed(hdf):
     ycont = 20 * np.log10(1e-2 * xcont**2)
     ax.plot(xcont, ycont, "k--", label="$x^2$")
 
-    ax.legend(loc="upper left")
+    ax.legend(loc="upper left").set_title("Distance [-]")
     ax.set_xscale("log")
     #ax.set_yscale("log")
     ax.grid(True, which='both')
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     fig, ax = plot_rmsndp_speed(sdf)
     ax.set_title("")
-    ax.legend().set_title("Distance (mm)")
+    ax.legend().set_title("Distance [-]")
     fig.savefig(
         'deliverables/final_report/figures/spl_speed_variation.png',
         dpi=300

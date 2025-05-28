@@ -62,19 +62,22 @@ def fixed_speed_distance_regression(hdf):
         std_adj   = np.std(adjusted, ddof=0)
         std_norm  = std_res/std_adj if std_adj != 0 else np.inf
 
+        intercept_db = 20 * (intercept - np.log10( 20e-6))
+
         results.append({
             'propeller':          propeller,
             'angle_bin':          angle_bin,
             'harmonic':           harmonic,
-            'intercept':          intercept,
-            'speed_exponent':     2.0,
-            'distance_exponent': -1.0,
+            'intercept':          intercept_db,
             'r_squared':          r_squared,
             'residual_std':       std_res,
-            'residual_std_norm':  std_norm
+            #'residual_std_norm':  std_norm
         })
 
-    return pd.DataFrame(results)
+    # merge back on to df
+    results = pd.DataFrame(results)
+
+    return results
 
 def plot_sound_FOM(hdf, aero_data):
 

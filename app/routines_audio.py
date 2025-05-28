@@ -289,6 +289,9 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
     hrms_values = np.empty(total_rows)
     hspl_values = np.empty(total_rows)
     ndhspl_values = np.empty(total_rows)
+    CTs = np.empty(total_rows)
+    CQs = np.empty(total_rows)
+    FMs = np.empty(total_rows)
     
     # Process data and fill arrays
     row_idx = 0
@@ -364,6 +367,11 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         speeds[row_idx:row_idx + nnext] = speed
         angles[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 2], harmonics)  # angle from mic state file
         distances[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 3], harmonics)  # distance from mic state file
+        distances[row_idx:row_idx + nnext] /= 1e3 * prop["rt"]  # normalize distance by propeller radius
+
+        CTs[row_idx:row_idx + nnext] = CT
+        CQs[row_idx:row_idx + nnext] = CQ
+        FMs[row_idx:row_idx + nnext] = CT ** (3/2) / (np.sqrt(2) * CQ)
 
         #fom = CT ** (3/2) / (2 ** (1/2) * CQ)
         #reff = prop["rt"] * (fom / reference_FOM)
@@ -410,7 +418,10 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         'harmonic': harmonic_values,
         'RMS' : hrms_values,
         'SPL': hspl_values,
-        'SPLref': ndhspl_values
+        'SPLref': ndhspl_values,
+        'CT': CTs,
+        'CQ': CQs,
+        'FM': FMs
     })
 
     # Save processed data to cache if caching is enabled
@@ -569,6 +580,7 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
             speeds[row_idx] = speed_rad
             angles[row_idx] = float(mic_data[i][2])  # angle from mic state file
             distances[row_idx] = float(mic_data[i][3])  # distance from mic state file
+            distances[row_idx] /= 1e3 * prop["rt"]  # normalize distance by propeller radius
             
             # Calculate RMS
             rms = rms_butter(audio_data[:, i], speed_hz, SAMPLE_FREQ_HZ)
