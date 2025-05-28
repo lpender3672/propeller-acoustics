@@ -343,17 +343,6 @@ def _separate_panels(arr):
     return up_var, low_var
 
 
-def upscale_airfoil_geometry(airfoil_data, n_panels):
-
-    newidx = np.linspace(0, 1, n_panels + 1)
-    oldidx = np.linspace(0, 1, airfoil_data.shape[0])
-
-    newx = np.interp(newidx, oldidx, airfoil_data[:, 0])
-    newz = np.interp(newidx, oldidx, airfoil_data[:, 1])
-
-    return np.column_stack((newx, newz))
-
-
 def sample_airfoil(airfoil_data, nxnodes=None):
 
     xs = airfoil_data[:, 0]
@@ -475,7 +464,7 @@ def load_meta_data(prop_result_path):
 
 if __name__ == "__main__":
     raw = load_foil("app/foils/naca0012.surf")
-    airfoil_data = upscale_airfoil_geometry(raw, 100)
+    airfoil_data = sample_airfoil(raw, 100)
     airfoil_data = run_xfoil(airfoil_data, collect_cp=True)
 
     import matplotlib.pyplot as plt

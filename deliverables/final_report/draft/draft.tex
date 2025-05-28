@@ -230,13 +230,18 @@ shown below in equation \ref{eq:hansons_result}.
             P_{Dm} \\
             P_{Lm}
         \end{bmatrix} = - \frac{\rho_0 (r_t \Omega)^2}{4\pi (r / r_t)} \exp\left(jmB \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right) \\
-        \times \int_0^1 z^2 \exp(j(\phi_0 + \phi_s)) J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right) \begin{bmatrix}
+        \times \int_0^1 z^2 \exp \left(j \left(k_y \frac{FA}{b} + k_x \frac{MCA}{b}\right) \right) J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right) \begin{bmatrix}
             k_x^2 t_b \Psi_V(k_x) \\
             jk_x (C_D / 2) \Psi_D(k_x) \\
             -jk_y (C_L / 2) \Psi_L(k_x)
         \end{bmatrix}dz
     \end{aligned}
     \label{eq:hansons_result}
+\end{equation}
+
+\begin{equation}
+    k_x = \frac{mB b}{r_0}, \quad
+    k_y = \frac{mB\Omega b}{z c_0} \cos \theta, \quad
 \end{equation}
 
 TODO Define all the variables and justify simplifications.
