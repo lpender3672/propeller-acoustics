@@ -144,8 +144,8 @@ def parse_tdf(hdf):
             'CT': av.res['CT'],
             'CQ': av.res['CQ'], 
             'FM': av.res['FM'],
-            'prop': av.prop,
-            'res': av.res
+            'prop': av.prop.copy(),
+            'res': av.res.copy()
         }
 
     for (propeller, angle_bin, distance), group in df.groupby(['propeller', 'angle_bin', 'distance']):
