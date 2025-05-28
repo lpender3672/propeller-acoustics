@@ -51,6 +51,7 @@ def static_bem_basic(av):
             alpha = twist - phi
             
             Cl, Cd = interpolate_clcd(av.xfoil_data, alpha, 5e5)
+            Cl, Cd = correct_clcd_sweep(Cl, Cd, av.prop["sweep"][i])
             c_n = Cl * np.cos(phi) + Cd * np.sin(phi)
             
 
@@ -122,6 +123,7 @@ def static_bem_tiploss(av):
             alpha = twist - phi
             
             Cl, Cd = interpolate_clcd(av.xfoil_data, alpha, 5e5)
+            Cl, Cd = correct_clcd_sweep(Cl, Cd, av.prop["sweep"][i])
             c_n = Cl * np.cos(phi) + Cd * np.sin(phi)
             
             # Prandtl correction
@@ -211,6 +213,7 @@ def static_bem_swirl(av):
             alpha = twist - phi
             
             Cl, Cd = interpolate_clcd(av.xfoil_data, alpha, 5e5)
+            Cl, Cd = correct_clcd_sweep(Cl, Cd, av.prop["sweep"][i])
             c_n = Cl * np.cos(phi) + Cd * np.sin(phi)
             c_t = Cl * np.sin(phi) - Cd * np.cos(phi)
             
