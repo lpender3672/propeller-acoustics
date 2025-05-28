@@ -18,7 +18,7 @@ from app.bem import (
     betz_off_design,
     guaranteed_convergence_BEM,
     operating_range,
-    static_bem
+    static_bem_basic
 )
 from app.hanson import (
     calc_harmonics,
@@ -538,7 +538,7 @@ class AerodynamicResultsWidget(QWidget):
 
         self.tabWidget.addTab(self.CTprofile, "Loading")
         self.tabWidget.addTab(self.CPprofile, "Power")
-        self.tabWidget.addTab(self.performance, "Performance")
+        #self.tabWidget.addTab(self.performance, "Performance")
         self.tabWidget.addTab(self.AoA, "Angle of Attack")
 
         # self.layout.addWidget(self.profile, 0, 0, 2, 1)
@@ -552,7 +552,7 @@ class AerodynamicResultsWidget(QWidget):
 
         # avs = betz_off_design(avs)
         # avs = bem(avs)
-        avs = static_bem(avs)
+        avs = static_bem_basic(avs)
         # plot Cx and Cz against r0_rt
 
         if avs.res["converged"]:
@@ -561,29 +561,7 @@ class AerodynamicResultsWidget(QWidget):
             self.performance.clear_plot()
             self.AoA.clear_plot()
 
-            idxs = avs.res["invalids"]
-
-            # fill between xs
-            if len(idxs) > 0:
-                try:
-                    self.CTprofile.ax.fill_betweenx(
-                        [-1e3, 1e3],
-                        avs.prop["r0_rt"][idxs[0]],
-                        avs.prop["r0_rt"][idxs[-1]],
-                        color="pink",
-                        alpha=0.8,
-                        label="Invalid",
-                    )
-                    self.CPprofile.ax.fill_betweenx(
-                        [-1e3, 1e3],
-                        avs.prop["r0_rt"][idxs[0]],
-                        avs.prop["r0_rt"][idxs[-1]],
-                        color="pink",
-                        alpha=0.8,
-                        label="Invalid",
-                    )
-                except BaseException:
-                    pass
+            #idxs = avs.res["invalids"]
 
             sigma = (
                 avs.prop["B"]

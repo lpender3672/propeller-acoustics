@@ -27,9 +27,9 @@ from app.routines import (
 )
 
 from app.bem import (
-    betz_off_design, 
-    guaranteed_convergence_BEM,
-    static_bem
+    static_bem_basic,
+    static_bem_swirl,
+    static_bem_tiploss
 )
 from app.geometry import (
     generate_and_save_propeller_mesh, 
@@ -969,7 +969,7 @@ def main2():
         # airfoil_data = load_foil(prop['foil_path'])
         # takes forever running xfoil in the loop
         
-        av = static_bem(av)
+        av = static_bem_basic(av)
 
         av.res["alpha"] = 5 * np.ones(av.prop["nr"])
 

@@ -12,6 +12,7 @@ from app.routines_aero import (
     fit_cexp,
     cexp,
     load_cell_calibration,
+    calc_aero_coefficients
 )
 
 
@@ -216,39 +217,68 @@ def noload_torque(cal_data):
 
 def sweep_comparison_plot(cal_data):
 
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(2, 1, sharex=True)
 
     plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="0 deg sweep")
     plot_prop("app/results/5045_s15.prop", ax[0], ax[1], cal_data, label="15 deg sweep")
     plot_prop("app/results/5045_s30.prop", ax[0], ax[1], cal_data, label="30 deg sweep")
     plot_prop("app/results/5045_s45.prop", ax[0], ax[1], cal_data, label="45 deg sweep")
 
+    ax[0].set_xlabel('')
     ax[1].legend(loc="upper left")
+
+    fig.savefig(
+        "deliverables/final_report/figures/sweep_aero_coeffs.png", dpi=300
+    )
 
 
 def printed_comparison_plot(cal_data):
 
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(2, 1, sharex=True)
 
-    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 2 blade")
-    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 2 blade")
-    plot_prop("app/results/dalprop5045bnr.prop", ax[0], ax[1], cal_data, label="dalprop 3 blade")
+    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 5045")
+    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 5045")
+    plot_prop("app/results/dalprop5045bnr.prop", ax[0], ax[1], cal_data, label="dalprop 5045 3 blade")
     plot_prop("app/results/printed5045bnr.prop", ax[0], ax[1], cal_data, label="printed 3 blade")
 
+    ax[0].set_xlabel('')
     ax[1].legend(loc="upper left")
+
+    fig.savefig(
+        "deliverables/final_report/figures/printed_aero_coeffs.png", dpi=300
+    )
 
 
 def diameter_comparison_plot(cal_data):
 
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(2, 1, sharex=True)
 
     plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 5045")
     plot_prop("app/results/dalprop6045.prop", ax[0], ax[1], cal_data, label="dalprop 6045")
     plot_prop("app/results/dalprop4045.prop", ax[0], ax[1], cal_data, label="dalprop 4045")
     plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 5045")
 
+    ax[0].set_xlabel('')
     ax[1].legend(loc="upper left")
 
+    fig.savefig(
+        "deliverables/final_report/figures/diameter_aero_coeffs.png", dpi=300
+    )
+
+def looped_comparison_plot(cal_data):
+    
+    fig, ax = plt.subplots(2, 1, sharex=True)
+
+    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 5045")
+    plot_prop("app/results/50loop_s50.prop", ax[0], ax[1], cal_data, label="printed loop s40")
+    plot_prop("app/results/foxeer_toroidal.prop", ax[0], ax[1], cal_data, label="foxeer toroidal")
+
+    ax[0].set_xlabel('')
+    ax[1].legend(loc="upper left")
+
+    fig.savefig(
+        "deliverables/final_report/figures/looped_aero_coeffs.png", dpi=300
+    )
 
 def FoM_comparison_plot(cal_data):
     
@@ -262,6 +292,13 @@ def FoM_comparison_plot(cal_data):
     ax.legend(loc="upper left")
 
 
+def all_propeller_barchart(cal_data):
+
+    aero_coeffs = calc_aero_coefficients(
+        'app/results',
+        cal_data
+    )
+
 if __name__ == "__main__":
 
     cal_data = load_cell_calibration()
@@ -272,6 +309,7 @@ if __name__ == "__main__":
     printed_comparison_plot(cal_data)
     diameter_comparison_plot(cal_data)
     FoM_comparison_plot(cal_data)
+    looped_comparison_plot(cal_data)
     plt.tight_layout()
     plt.show()
 
