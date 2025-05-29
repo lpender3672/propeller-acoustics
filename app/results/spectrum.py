@@ -13,9 +13,8 @@ from app.routines_audio import (
     apply_calib_freq
 )
 
-def plot_audio_psd(audio_path, speed, ax, **kwargs):
+def plot_audio_psd(audio_path, speed, ax, channel = 3, **kwargs):
     calib_data = load_microphone_calibration()
-    channel = 0  # Assuming we want to plot the first channel
 
     audio_data = np.fromfile(audio_path, dtype=np.float64).reshape(-1, 7)
 
@@ -38,7 +37,7 @@ def plot_audio_psd(audio_path, speed, ax, **kwargs):
 
     return ax
 
-def plot_spectrums():
+def plot_motor_comparison_spectrums():
 
     fig, axes = plt.subplots(2, 1, figsize=(10, 8))
 
@@ -71,11 +70,32 @@ def plot_spectrums():
         "deliverables/final_report/figures/spectrum_plot.png", dpi=300
     )
 
-    
+
+def plot_stream_comparison_spectrums():
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+
+    plot_audio_psd('app/results/floor/F_motor12.bin', 
+                   200, ax, color='C1', alpha = 0.8, label=r'$\theta=135^\circ$')
+    plot_audio_psd('app/results/floor/F_motor12.bin',
+                   200, ax, channel=5, color='C2', alpha = 0.5, label=r'$\theta=180^\circ$')
+
+    ax.set_xlim(0, 10)
+    ax.set_ylabel('$SPL [dB]$')
+    ax.set_xlabel('$\omega / \Omega$ [-]')
+    ax.grid(True, which='both')
+
+    ax.legend()
+
+    fig.savefig(
+        "deliverables/final_report/figures/stream_spectrum_plot.png", dpi=300
+    )
+
 
 if __name__ == "__main__":
 
-    plot_spectrums()
+    plot_motor_comparison_spectrums()
+    plot_stream_comparison_spectrums()
 
     plt.show()
 

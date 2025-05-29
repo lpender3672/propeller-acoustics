@@ -109,7 +109,14 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
     y_data = group_df[y_var]
     
     scatter = None
-    
+
+    if label:
+        try: float(label)
+        except ValueError:
+            pass
+        else:
+            label = str(np.round(float(label), 2))  # Round numeric labels for better readability
+
     if is_polar:
         # Convert angles to radians for polar plot
         x_radians = np.deg2rad(x_data) if x_var == 'angle' else np.deg2rad(group_df['angle'])

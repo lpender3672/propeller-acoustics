@@ -301,6 +301,8 @@ def compare_tilloss_and_swirl(av):
 
     axes[1].set_xlabel("Normalized radius $r/r_t$ [-]")
 
+    return fig, axes
+
 
 def main():
 
@@ -315,7 +317,8 @@ def main():
 
     #av = static_bem(av)
 
-    compare_tilloss_and_swirl(av)
+    fig, axes = compare_tilloss_and_swirl(av)
+    fig.savefig('deliverables/final_report/figures/bem_comparison.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 

@@ -99,7 +99,7 @@ Looped propellers structure also allows for larger sweep than standard propeller
 
 \begin{itemize}
     \item To experimentally compare far field noise emitted by various propeller designs at reference aerodynamic performance values.
-    \item To investigate the influence of blade sweep on the far field noise of propellers.
+    \item To investigate the influence of blade sweep on the harmonic noise of propellers.
     \item To provide design methods and recommendations for reducing the noise without compromising aerodynamic performance.
 \end{itemize}
 
@@ -141,7 +141,7 @@ This means that the sound pressure level will vary with distance in an inverse l
 Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
 
 \begin{equation}
-    p' = \frac{\rho (r \Omega)^2}{R/r} g(\theta, \text{geometry}) \label{eq:expected_plaw}
+    p_\text{rms} = \frac{\rho (r \Omega)^2}{R/r} g(\theta, \text{geometry}) \label{eq:expected_plaw}
 \end{equation}
 
 Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
@@ -458,6 +458,8 @@ There was an issue in the audio data collection discovered in later analysis.
 A small portion of the audio pyramid tests had their motor data an index behind the audio data.
 This is thought to be due to a race condition between the threads, but was simply corrected in the post processing,
 removing the final audio sample from the audio pyramid.
+The respective pyramid tests ramps the motor speed up and down a logarithmic scale.
+This was to ensure a wide range of data was collected and any nonlinearities in the setup can be identified.
 
 \subsubsection{Aerodynamic setup}
 The aerodynamic setup is required to measure angular speed, thrust and torque for a range of angular speeds.
@@ -519,8 +521,9 @@ This was done in an anechoic chamber to prevent reflections from the walls.
 An acoustic foam box was designed around the motor to isolate the motor noise from the propeller noise.
 Structural vibrations from the motor on the rigid frame were damped by rubber feet.
 
-From rubber feet geometry, typical material properties and the mass of the stand, the natural frequency of the system was estimated to be 70.9 Hz.
-This corresponds to a speed of 4250 RPM
+From rubber feet geometry, typical material properties and the mass of the stand, the natural frequency of a second order system model was estimated to be 70.9 Hz \ref{sec:appendix_stand_frequency}.
+This means that frequencies above this are attenuated by the stand and should not be present in the acoustic data.
+Smaller speeds tested \~4000 RPM could excite this mode and produce noise in the acoustic data, however this was not observed in the sound spectrum.
 % vibration
 % motor pole count and frequencies
 % acousic isolation inside the foam box
@@ -777,6 +780,27 @@ This demonstrates destructive interference between the motor noise and the prope
 
 \begin{figure}[H]
     \centering
+    \includegraphics[width=0.8\textwidth]{../figures/stream_spectrum_plot.pdf}
+    \caption{Spectrum of the dalprop 5045 propeller at 12000 RPM.}
+    \label{fig:stream_spectrum}
+\end{figure}
+
+Figure \ref{fig:stream_spectrum} shows audio spectrums for the same distance of 10 blade diameters, but at different observer angles.
+At $180^\circ$, the microphone lies in the propeller wake and so there is a higher steady state pressure level from the stagnation of flow on the microphone.
+It was expected for the broadband noise to be higher due to turbulence far downstream of the propeller,
+but this was not observed.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/spl_speed_variation.pdf}
+    \caption{OASPL of the dalprop 5045 propeller }
+    \label{fig:spl_speed_variation}
+\end{figure}
+
+Figure \ref{fig:spl_speed_variation} shows OASPL against 
+
+\begin{figure}[H]
+    \centering
     \begin{subfigure}[t]{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/speed_coefficient_for_angles_harmonics.pdf}
@@ -792,12 +816,11 @@ This demonstrates destructive interference between the motor noise and the prope
     \caption{Power law coefficients for various observer angles and harmonics for the dalprop 5045 propeller.}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../figures/spl_speed_variation.pdf}
-    \caption{OASPL of the dalprop 5045 propeller }
-    \label{fig:spl_speed_variation}
-\end{figure}
+Figures \ref{fig:speed_coefficient_for_angles_harmonics} and \ref{fig:distance_coefficient_for_angles_harmonics} show the respective fitted power law coefficients for speed and distance for the dalprop 5045 propeller.
+The speed coefficients are significantly lower than the expected value of 2.0 over all the harmonics and angles.
+This must be due to some form of speed dependent interference.
+Interestingly, the angle of $180^\circ$ which is on the axis of the propeller, shows the closest agreement with the expected value of 2.0.
+
 
 \begin{figure}[H]
     \centering
@@ -889,6 +912,15 @@ For a function $f(\mathbf{x}, t)$ that defines a surface $ S(t) = \{\mathbf{x} \
     c_0^2 \square \rho = \frac{\partial^2}{\partial x_i \partial x_j} T_{ij} + \frac{\partial}{\partial t} \left( \rho_0 v_n |\nabla f| \delta(f) \right) - \frac{\partial}{\partial x_i} \left( p_{ij} n_j |\nabla f| \delta(f) \right)
 \end{equation}
 This result is a direct re-arrangement of the Navier-Stokes equations, where $T_{ij}$ is the stress tensor, $p_{ij}$ is the pressure tensor, and $n_j$ is the normal vector to the surface.
+
+\subsection{Comparison of swirl and tiploss for BEM}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/bem_comparison.pdf}
+    \caption{Comparison of the BEM solver with and without swirl and tip losses.}
+    \label{fig:bem_comparison}
+\end{figure}
 
 \subsection{Calculation of stand resonant frequency \label{sec:appendix_stand_frequency}}
 

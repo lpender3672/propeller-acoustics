@@ -31,7 +31,7 @@ def plot_rmsndp_speed(sdf):
         x_var="speed",
         y_var="OASPL",
         filter_dict={
-            "propeller": ["dalprop5045", "dalprop5045_nonlinear_test", "dalprop5045_nonlinear_test2"],
+            "propeller": "dalprop5045",
             "angle": 180,
         },
         group_by='distance',

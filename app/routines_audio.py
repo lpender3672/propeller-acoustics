@@ -209,7 +209,8 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
     SAMPLE_FREQ_HZ = 51200 # Hz
     REF_PRESSURE = 20e-6  # Pa
     EXPECTED_CHANNELS = 7 # recorded 7 channels for nearly everything
-    EPSILON = 5e-2 # BPF bound for integration
+    EPSILON_HZ = 2 # BPF bound for integration
+    # the bins are 1 Hz so pm 2 Hz is a good bound
     rho = 1.225
 
     mic_calibration_data = load_microphone_calibration()
@@ -355,7 +356,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         )
         
         # bpf format
-        freq_data = np.fft.rfftfreq(zero_padding, d=1 / SAMPLE_FREQ_HZ) / bpf_hz
+        freq_data = np.fft.rfftfreq(zero_padding, d=1 / SAMPLE_FREQ_HZ) # Hz
 
         ft_data = apply_calib_freq(ft_data, freq_data, mic_calibration_data)
 
@@ -386,13 +387,15 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
                 # i is mic number, n is harmonic number
                 n = j + 1
 
-                mask = (freq_data > (n - EPSILON)) & (freq_data < (n + EPSILON))
+                center_freq = n * bpf_hz
+                mask = (freq_data >= center_freq - EPSILON_HZ) & (freq_data <= center_freq + EPSILON_HZ)
                 # integrate mask with np.trap
-                fqharm = freq_data[mask]
+                fqharm = freq_data[mask] / bpf_hz
                 ftharm = ft_data[mask, i]
 
                 # seems to be working
-                integrated_value = np.trapezoid(ftharm**2, fqharm)
+                integrated_value = np.trapezoid(
+                    np.abs(ftharm)**2, fqharm)
                 hspl = np.sqrt(integrated_value)
 
                 harmonic_values[row_idx] = n
