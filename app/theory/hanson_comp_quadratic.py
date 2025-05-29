@@ -3,15 +3,14 @@
 # this file will assume quadratic chordwise distributions
 # and perform the static swirl analysis for lift and drag.
 
-import matplotlib as mpl
 import numpy as np
+import pandas as pd
 
 from matplotlib import cm
 from matplotlib import pyplot as plt
-from PyQt6.QtWidgets import QApplication
 
 from scipy.integrate import (
-    cumulative_trapezoid, simpson, trapezoid
+    simpson, trapezoid
 )
 from scipy.optimize import minimize
 from scipy.special import jv as besselj
@@ -29,6 +28,19 @@ from app.routines_audio import (
     parse_lookup_df,
     parse_harmonic_df
 )
+from app.routines_aero import (
+    calc_aero_coefficients,
+    load_cell_calibration
+)
+
+from app.results.graphing_tools import (
+    multi_function_plot,
+    filter_df
+)
+
+from app.results.residual_function_variation import (
+    fixed_speed_distance_regression
+)
 
 from app.bem import static_bem_swirl
 
@@ -38,7 +50,9 @@ def Psi(kx, X, fX):
     ans = simpson(f, x=X, axis=1)
     return ans
 
-def hanson_noise(prop, oper, airfoil_data, bem_res, r, theta, ms = np.arange(1, 10)):
+def hanson_noise(prop, oper, airfoil_data, bem_res, r_rt, theta, ms = np.arange(1, 10)):
+    # this form of hansons noise is dimensionless
+    # similar to g
 
     _, zf = sample_airfoil(airfoil_data, 2 * prop["nx"])
     tf = zf[: prop["nx"]] - zf[prop["nx"]:]
@@ -53,6 +67,7 @@ def hanson_noise(prop, oper, airfoil_data, bem_res, r, theta, ms = np.arange(1, 
     b = prop['c']
     B = prop['B']
     z = prop["r0_rt"]
+    r = r_rt * prop["rt"] # so we need the r term for an exponential
 
     harmonic_noise = np.zeros(len(ms), dtype=complex)
 
@@ -74,10 +89,9 @@ def hanson_noise(prop, oper, airfoil_data, bem_res, r, theta, ms = np.arange(1, 
         # large term top of p5
         term1 = -(
             oper["rho"]
-            * (prop["rt"] * oper['Omega'])**2
             * prop["B"]
             * np.exp(1j * m * prop["B"] * (r / oper["c0"] - np.pi / 2))
-        ) / (4 * np.pi * (r / prop['rt']) + 1e-10)
+        ) / (4 * np.pi)
 
         bess = besselj(
             m * prop["B"],
@@ -100,8 +114,8 @@ def hanson_noise(prop, oper, airfoil_data, bem_res, r, theta, ms = np.arange(1, 
             trapezoid(I2, z) +
             trapezoid(I3, z) )
     
-    REF = 20e-6
-    SPL = 10 * np.log10(harmonic_noise * np.conj(harmonic_noise) / REF**2)
+    # already non-dimensional
+    SPL = 10 * np.log10(harmonic_noise * np.conj(harmonic_noise))
     return SPL
 
 
@@ -110,46 +124,91 @@ def parse_tdf(hdf):
     half_width = angle_tolerance / 2
     bins = np.arange(-half_width, 181 + half_width + 1e-6, angle_tolerance)
     df = hdf.copy()
-    df['angle_bin'] = hdf.cut(df['angle'], bins=bins, labels=False) * angle_tolerance
-    
-    # Aggregate experimental data first
-    hdf_agg = df.groupby(['propeller', 'angle_bin', 'distance', 'harmonic']).agg({
-        'SPL': 'mean',  # or whatever aggregation you want
-        # add other columns you need
-    }).reset_index()
+    df['angle_bin'] = pd.cut(df['angle'], bins=bins, labels=False) * angle_tolerance
     
     av = AppVars()
     av.oper = load_oper_from_file("app/app_vars.json")
-    av.airfoil_data = load_foil("app/foils/naca0018.surf")
+    av.airfoil_data = load_foil("app/foils/naca4412.surf")
     av.xfoil_data = run_xfoil(av.airfoil_data)
     
     dict_array = []
-    for (propeller, angle_bin, distance), group in hdf_agg.groupby(['propeller', 'angle_bin', 'distance']):
+    # i wanted to group over just propeller and angle_bin, but
+    # the distance is needed for the hanson noise calculation
+    # so we will aggregate over distance, selecting the maximum
+    bem_results = {}  # Cache BEM results by propeller
+    for propeller in df['propeller'].unique():
         propf = f"app/props/{propeller}.prop"
         av.prop = load_prop_from_file(propf)
         av = static_bem_swirl(av)
+        bem_results[propeller] = {
+            'CT': av.res['CT'],
+            'CQ': av.res['CQ'], 
+            'FM': av.res['FM'],
+            'prop': av.prop.copy(),
+            'res': av.res.copy()
+        }
+
+    for (propeller, angle_bin, distance), group in df.groupby(['propeller', 'angle_bin', 'distance']):
+        
+        bem_data = bem_results[propeller]
+
         ms = group['harmonic'].unique()
         angle = angle_bin * np.pi / 180
         harmonic_noise = hanson_noise(
-            av.prop, av.oper, av.airfoil_data, av.res,
+            bem_data['prop'],
+            av.oper,
+            av.airfoil_data, 
+            bem_data['res'],
             distance, angle, ms=ms
         )
-        for i, m in enumerate(ms):  # use ms, not av.prop['ms']
+
+        #for i, m in enumerate(ms):  # use ms, not av.prop['ms']
+        for i,m in enumerate(ms):
             dict_array.append({
                 'propeller': propeller,
                 'angle_bin': angle_bin,
-                'distance': distance,
+                'distance' : distance,
                 'harmonic': m,
-                'SPLhanson': harmonic_noise[i]
+                'SPLhanson': harmonic_noise[i],
+                'CTbem': bem_data['CT'],
+                'CQbem': bem_data['CQ'],
+                'FMbem': bem_data['FM']
             })
-        
 
+        
+    tdf = pd.DataFrame(dict_array)
+    # TODO need a way to aggregate theoretical distance
+
+    return tdf
+    
 
 if __name__ == "__main__":
+
+    aero_coeffs = calc_aero_coefficients(
+        'app/results',
+        load_cell_calibration()
+    )
     
-    ldf = parse_lookup_df("app/data/lookup.csv")
-    hdf = parse_harmonic_df("app/data/harmonic.csv")
+    ldf = parse_lookup_df('app/results')
+    hdf = parse_harmonic_df(ldf, aero_coeffs)
+    rdf = fixed_speed_distance_regression(hdf)
     tdf = parse_tdf(hdf)
+
+    #'propeller', 'speed', 'angle', 'distance', 'harmonic', 'RMS', 'SPL',
+    #'SPLref', 'CT', 'CQ', 'FM', 'angle_bin', 'SPLhanson', 'CTbem', 'CQbem',
+    #'FMbem'
+
+    # merge tdf and rdf
+    rdf = rdf.merge(tdf, on=['propeller', 'angle_bin', 'harmonic'], how='left')
+
+    print(rdf.head())
+    
+    plt.show()
+
+
+
+
+
 
     
 

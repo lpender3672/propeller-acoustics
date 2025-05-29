@@ -19,7 +19,7 @@ from app.routines_aero import (
     load_cell_calibration
 )
 
-def filter_df(df, filter_dict):
+def filter_df(df, filter_dict, aggregate_dict = None):
 
     for key, value in filter_dict.items():
             if key in df.columns:
@@ -41,6 +41,10 @@ def filter_df(df, filter_dict):
                 
                 else:
                     df = df[df[key] == value]
+
+    if aggregate_dict is not None:
+        # aggregate the data if specified
+        df = df.groupby(list(aggregate_dict.keys())).agg(aggregate_dict).reset_index()
     
     return df
 
