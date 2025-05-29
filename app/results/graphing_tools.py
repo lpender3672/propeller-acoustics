@@ -58,7 +58,7 @@ def create_3point_colormap(name='custom_cmap', color_min='blue', color_mid='whit
 
 
 def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_polar=False, alpha=0.7, 
-             colour_by=None, cmap='viridis', two_slope_normalize=False, **kwargs):
+             colour_by=None, cmap='viridis', two_slope_normalize=False, size_by=None, sizes=None, size_scale=100, **kwargs):
     """
     Helper function to plot data with various plot types.
     
@@ -84,6 +84,12 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
         Variable to use for colouring points (only for scatter plots)
     cmap : str, optional
         colourmap name to use for colour mapping
+    size_by : str, optional
+        Variable to use for sizing points (only for scatter plots)
+    sizes : array-like, optional
+        Pre-calculated sizes for points (will be used instead of computing from size_by)
+    size_scale : float, optional
+        Scaling factor for marker sizes (default: 100)
         
     Returns:
     --------
@@ -92,7 +98,7 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
     """
 
     # Evaluate kwargs if custom lambda function is provided
-        # Evaluate kwargs if provided
+    # Evaluate kwargs if provided
     evaluated_kwargs = {}
     for key, value in kwargs.items():
         if callable(value):
@@ -122,6 +128,19 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
         x_radians = np.deg2rad(x_data) if x_var == 'angle' else np.deg2rad(group_df['angle'])
         ax.plot(x_radians, y_data, 'o-', label=label)
     elif plot_type == 'scatter':
+        # Use pre-calculated sizes if provided, otherwise check size_by
+        s = None
+        if sizes is not None:
+            s = sizes
+        elif size_by is not None and size_by in group_df.columns:
+            # This code is kept for backward compatibility but global normalization is preferred
+            s_data = group_df[size_by]
+            # Normalize sizes between 10 and size_scale for better visibility
+            if s_data.max() > s_data.min():
+                s = 10 + (s_data - s_data.min()) / (s_data.max() - s_data.min()) * size_scale
+            else:
+                s = size_scale * np.ones_like(s_data)  # Default size if all values are the same
+            
         if colour_by is not None and colour_by in group_df.columns:
             # Use the specified variable for colouring points
             c_data = group_df[colour_by]
@@ -129,9 +148,9 @@ def _plot_data(ax, group_df, x_var, y_var, label=None, plot_type='line', is_pola
             if two_slope_normalize:
                 #c_norm = TwoSlopeNorm(vmin=c_data.min(), vcenter=0, vmax=c_data.max())
                 c_norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
-            scatter = ax.scatter(x_data, y_data, c=c_data, cmap=cmap, label=label, alpha=alpha, norm=c_norm, **evaluated_kwargs)
+            scatter = ax.scatter(x_data, y_data, c=c_data, s=s, cmap=cmap, label=label, alpha=alpha, norm=c_norm, **evaluated_kwargs)
         else:
-            ax.scatter(x_data, y_data, label=label, alpha=alpha, **evaluated_kwargs)
+            ax.scatter(x_data, y_data, s=s, label=label, alpha=alpha, **evaluated_kwargs)
     elif plot_type == 'bar':
         ax.bar(x_data, y_data, label=label, alpha=alpha, **evaluated_kwargs)
     else:  # default to line plot
@@ -159,7 +178,7 @@ def _format_group_name(name, modified_group_by, original_group_by, units):
 def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=None, plot_type='line', 
                   title=None, fig_size=(8, 6), log_bin_factor=0.05,
                   max_groups=10, colour_by=None, cmap='viridis', colourbar_label=None,
-                  log_colourbar=False, units=None, **kwargs):
+                  log_colourbar=False, size_by=None, size_scale=100, units=None, **kwargs):
     """
     AI generated docstring to help me remember what this function does.
 
@@ -222,6 +241,27 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
         print("No data left after applying filters.")
         return None, None
     
+    # normalise sizes across the entire dataset
+    norm_size = (size_by and
+                size_by in processed_df.columns and
+                plot_type == 'scatter')
+    if norm_size:
+
+        # Get global min and max for normalization
+        s_data_all = processed_df[size_by]
+        s_min = s_data_all.min()
+        s_max = s_data_all.max()
+        
+        if s_max > s_min:
+
+            def _normalize_size(group_df):
+                s_data = group_df[size_by]
+                return 10 + (s_data - s_min) / (s_max - s_min) * size_scale
+        else:
+            # Default size if all values are the same
+            def _normalize_size(group_df):
+                return size_scale * np.ones(len(group_df))
+    
     # this is chatgpts idea to bin the speed values to help grouping
     if group_by and 'speed' in group_by:
         with np.errstate(divide='ignore'):  # Ignore log10(0) warnings
@@ -269,48 +309,52 @@ def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=N
         if len(grouped) > max_groups:
             print(f"Warning: Too many groups ({len(grouped)}). Limiting to {max_groups} most interesting groups.")
             
-            # Get group sizes
-            group_sizes = grouped.size()
-            
-            # Calculate the variance of y_var for each group to determine "interestingness"
-            group_variances = grouped[y_var].var()
-            
-            # Combine size and variance for ranking - groups with more data points and higher variance are more "interesting"
-            interestingness = group_sizes * group_variances
-            
-            # Get the keys (group names) of the top max_groups most interesting groups
-            top_groups = interestingness.nlargest(max_groups).index.tolist()
-            
-            # Create a filtered groups dictionary with only the top groups
-            filtered_groups = {key: grouped.get_group(key) for key in top_groups}
-            
-            # Iterate through the filtered groups
-            for name, group in filtered_groups.items():
+        # plot all groups
 
-                label = _format_group_name(name, modified_group_by, group_by, units)
-                
-                scatter = _plot_data(ax, group, x_var, y_var, label=label, plot_type=plot_type, 
-                                   is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
-                                   **kwargs)
-                
-                if scatter is not None:
-                    scatter_with_colourbar = scatter
-        else:
-            # plot all groups
-            for name, group in grouped:
+        # sort groups if numerical
+        group_items = list(grouped.groups.items())[:max_groups]
+        try:
+            if isinstance(group_items[0][0], tuple):
+                # multi-level grouping
+                [float(g[0][0]) for g in group_items]
 
-                label = _format_group_name(name, modified_group_by, group_by, units)
+                group_items.sort(
+                    key=lambda x: (
+                        float(x[0][0]) if isinstance(x[0], tuple) else float(x[0])
+                    ))
+            else:
+                # single-level grouping
+                [float(g[0]) for g in group_items]
+
+                group_items.sort(
+                    key=lambda x: float(x[0]))
                 
-                scatter = _plot_data(ax, group, x_var, y_var, label=label, plot_type=plot_type, 
-                                   is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
-                                   **kwargs)
-                
-                if scatter is not None:
-                    scatter_with_colourbar = scatter
+        except (ValueError, TypeError):
+            # anything goes wrong just keep the original order
+            pass
+        
+        # Now iterate through the sorted groups
+        for name, indices in group_items:
+            group = grouped.get_group(name)
+            
+            label = _format_group_name(name, modified_group_by, group_by, units)
+            
+            sizes = _normalize_size(group) if norm_size else None
+            
+            scatter = _plot_data(ax, group, x_var, y_var, label=label, plot_type=plot_type, 
+                                is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
+                                size_by=None, sizes=sizes,  # Pass pre-calculated sizes
+                                **kwargs)
+            
+            if scatter is not None:
+                scatter_with_colourbar = scatter
     else:
         # no grouping, plot all data
+        sizes = _normalize_size(processed_df) if norm_size else None
+        
         scatter_with_colourbar = _plot_data(ax, processed_df, x_var, y_var, plot_type=plot_type, 
                                          is_polar=is_polar, colour_by=colour_by, cmap=cmap, two_slope_normalize=two_slope_normalize,
+                                         size_by=None, sizes=sizes,  # Pass pre-calculated sizes
                                          **kwargs)
         
     # now plotting done maybe add colourbar

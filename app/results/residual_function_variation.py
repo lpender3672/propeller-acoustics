@@ -9,6 +9,9 @@ from app.routines_audio import (
     parse_spl_df,
     parse_harmonic_df
 )
+from app.routines import (
+    load_prop_from_file
+)
 from app.results.graphing_tools import (
     multi_function_plot,
 )
@@ -22,7 +25,7 @@ def fixed_speed_distance_regression(hdf):
     """
     For each group (propeller, angle_bin, harmonic):
       SPL ∝ k · speed^2 · distance^(-1)
-    ⇒ log10(SPL) = intercept + 2·log10(speed) + (−1)·log10(distance) + error
+    ⇒ log10(SPL) = intercept + 2·log10(speed) + (-1)·log10(distance) + error
     We fix the exponents and solve only for the intercept.
     """
     angle_tolerance = 22.5  # degrees
@@ -36,18 +39,23 @@ def fixed_speed_distance_regression(hdf):
         if len(group) < 3:
             continue
 
+        propf = f'app/props/{propeller}.prop'
+        prop = load_prop_from_file(propf)
+
         # Convert to SI
         omega = group['speed'].values * 2 * np.pi / 60   # rad/s
-        r     = group['distance'].values * 1e-3          # m
+        r     = group['distance'].values # already in R/rt
 
         # Log10 values
         log_speed    = np.log10(omega)
         log_distance = np.log10(r)
         log_spl      = group['SPLref'].values / 20
+        log_radius = np.log10(prop['rt'])  # m
 
         # Remove known physics trends:
         #   adjusted = log_spl − 2·log_speed + log_distance
-        adjusted = log_spl - 2*log_speed + log_distance
+        # only -2log radius because distance is already in R/rt
+        adjusted = log_spl - 2*log_speed + log_distance - 2*log_radius
 
         # Fit intercept only
         intercept = np.mean(adjusted)
@@ -181,6 +189,7 @@ if __name__ == "__main__":
         },
         group_by='angle_bin'
     )
+    ax.legend().set_title('Angle [deg]')
     ax.set_title('')
     fig.savefig('deliverables/final_report/figures/harmonic_sound_angle_for_dalprop5045.png', dpi=300)
 

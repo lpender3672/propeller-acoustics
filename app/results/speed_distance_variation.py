@@ -8,6 +8,10 @@ from app.results.graphing_tools import (
     filter_df
 )
 
+from app.routines import (
+    load_prop_from_file
+)
+
 from app.routines_audio import (
     parse_lookup_df,
     parse_harmonic_df,
@@ -68,12 +72,17 @@ def speed_distance_SPL_regression(hdf):
         if len(group_df) < 3:
             continue  # not enough points
 
+        propf = f'app/props/{propeller}.prop'
+        prop = load_prop_from_file(propf)
+
         speed = group_df['speed'].values * 2 * np.pi / 60  # to rad/s
         distance = group_df['distance'].values * 1e-3 # to m
 
         logSpeed = np.log10(speed)
         logDistance = np.log10(distance)
         logSPL = group_df['SPL'].values / 20
+        logSPL -= 2 * np.log10(prop['rt']) # remove the effect of propeller radius
+        # only -2log radius because distance is already in R/rt
 
         # normalization
         logSpeed_norm = (logSpeed - np.mean(logSpeed)) / np.std(logSpeed)
@@ -144,12 +153,17 @@ def speed_distance_OASPL_regression(sdf):
         if len(group_df) < 3:
             continue  # not enough points
 
+        propf = f'app/props/{propeller}.prop'
+        prop = load_prop_from_file(propf)
+
         speed = group_df['speed'].values * 2 * np.pi / 60  # to rad/s
-        distance = group_df['distance'].values * 1e-3 # to m
+        distance = group_df['distance'].values
 
         logSpeed = np.log10(speed)
         logDistance = np.log10(distance)
         logSPL = group_df['OASPL'].values / 20
+        logSPL -= 2 * np.log10(prop['rt']) # remove the effect of the propeller radius
+        # only -2log radius because distance is already in R/rt
 
         # normalization
         logSpeed_norm = (logSpeed - np.mean(logSpeed)) / np.std(logSpeed)
@@ -406,9 +420,12 @@ if __name__ == "__main__":
                         fig_size=(5,4),
                         group_by='angle_bin',
                         plot_type='scatter',
+                        size_by='residual_std',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
     ax.set_title('')
+    ax.set_ylabel(r'$\beta_\Omega$ [-]')
+    ax.set_xlabel(r'$m$ [-]')
     ax.legend().set_title('Angle [deg]')
     ax.axhline(2, color='black', linestyle='--', label='Expected')
     fig.savefig('deliverables/final_report/figures/speed_coefficient_for_angles_harmonics.png',
@@ -423,10 +440,13 @@ if __name__ == "__main__":
                         group_by='angle_bin',
                         plot_type='scatter',
                         fig_size=(5,4),
+                        size_by='residual_std',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
     
     ax.set_title('')
+    ax.set_ylabel(r'$\beta_r$ [-]')
+    ax.set_xlabel(r'$m$ [-]')
     ax.axhline(-1, color='black', linestyle='--', label='Expected')
     ax.legend().set_title('Angle [deg]')
     fig.savefig('deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.png',
@@ -442,6 +462,7 @@ if __name__ == "__main__":
                             'propeller': 'dalprop5045',
                         },
                         plot_type='scatter',
+                        size_by='residual_std',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
 
@@ -452,6 +473,7 @@ if __name__ == "__main__":
                             'propeller': 'dalprop5045',
                         },
                         plot_type='scatter',
+                        size_by='residual_std',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
 

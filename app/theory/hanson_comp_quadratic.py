@@ -233,8 +233,8 @@ if __name__ == "__main__":
     )
 
     fdf = filter_df(rdf, {'propeller': 'dalprop5045',
-                          'angle_bin': 135,
-                          'distance' : (19, 21)})
+                          'angle_bin': 112.5,
+                          'distance' : (10, 21)})
     fdf.plot.line(
         x='harmonic', y=['SPLhanson', 'intercept'], 
         title='Hanson Noise vs SPL for Dalprop 5045 at 135 degrees'
@@ -242,7 +242,7 @@ if __name__ == "__main__":
 
     fdf = filter_df(rdf, {'propeller': 'dalprop5045',
                           'harmonic': 4,
-                          'distance' : (19, 21)})
+                          'distance' : (10, 21)})
     fdf.plot.line(
         x='angle_bin', y=['SPLhanson', 'intercept'], 
         title='Hanson Noise vs SPL for Dalprop 5045 at 1st harmonic'

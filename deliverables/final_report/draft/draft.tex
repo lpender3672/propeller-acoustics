@@ -55,15 +55,17 @@
 
 \section*{Nomenclature}
 \begin{tabular}{ll}
-    $r$        & Propeller radius [m] \\
+    $r_t$        & Propeller radius [m] \\
     $B$        & Blade count [-] \\
     $T$        & Thrust [N] \\
     $Q$        & Torque [Nm] \\
     $C_T$      & Thrust coefficient [-] \\
     $C_Q$      & Torque coefficient [-] \\
     $R$        & Observer distance [m] \\
-    $\theta$   & Angle of observation [rad] \\
-    $\rho$     & Density of fluid [kg/m\textsuperscript{3}] \\
+    $\theta$   & Observer angle [rad] \\
+    $\rho_0$     & Density of fluid [kg/m\textsuperscript{3}] \\
+    $c_0$   & Speed of sound [m/s] \\
+    $p'$      & Pressure pertubation [Pa] \\
 \end{tabular}
 
 \newpage
@@ -233,7 +235,7 @@ shown below in equation \ref{eq:hansons_result}.
             P_{Vm} \\
             P_{Dm} \\
             P_{Lm}
-        \end{bmatrix} = - \frac{\rho_0 (r_t \Omega)^2}{4\pi (r / r_t)} \exp\left(jmB \left( \frac{\Omega r}{c_0} - \frac{\pi}{2} \right)\right) \\
+        \end{bmatrix} = - \frac{\rho_0 (r_t \Omega)^2}{4\pi (R / r_t)} \exp\left(jmB \left( \frac{\Omega R}{c_0} - \frac{\pi}{2} \right)\right) \\
         \times \int_0^1 z^2 \exp \left(j \left(k_y \frac{FA}{b} + k_x \frac{MCA}{b}\right) \right) J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right) \begin{bmatrix}
             k_x^2 t_b \Psi_V(k_x) \\
             jk_x (C_D / 2) \Psi_D(k_x) \\
@@ -579,6 +581,14 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 % handling of audio data
 
 % log normalisation 
+Equation \ref{eq:expected_plaw} can be rewritten logarithmically
+
+\begin{equation}
+    \frac{OASPL_m}{20} = \beta_\Omega \log_{10}(\Omega) + \beta_r \log_{10}(r_t) +  \beta_R \log_{10}(R) + \log_{10} \left( \frac{g(m, \theta, \text{geometry})}{p_\text{ref}} \right)
+\end{equation}
+
+Due to limitations of the setup, testing a wide enough range of propeller radii was not possible and so the radius coefficient $\beta_r$ was set to 3.
+The other coefficients $\beta_\Omega$, $\beta_R$ and the constant term 
 
 % rms normalised hanning window to prevent spectral leakage
 % frequency domain interpolation of microphone calibration data
@@ -797,7 +807,8 @@ but this was not observed.
     \label{fig:spl_speed_variation}
 \end{figure}
 
-Figure \ref{fig:spl_speed_variation} shows OASPL against 
+Figure \ref{fig:spl_speed_variation} shows OASPL against speed at $\theta = 180^\circ$ for the dalprop 5045 propeller.
+An obvious square power law can be seen from the data, with OASPL also increasing with decreasing distance.
 
 \begin{figure}[H]
     \centering
@@ -817,9 +828,11 @@ Figure \ref{fig:spl_speed_variation} shows OASPL against
 \end{figure}
 
 Figures \ref{fig:speed_coefficient_for_angles_harmonics} and \ref{fig:distance_coefficient_for_angles_harmonics} show the respective fitted power law coefficients for speed and distance for the dalprop 5045 propeller.
-The speed coefficients are significantly lower than the expected value of 2.0 over all the harmonics and angles.
-This must be due to some form of speed dependent interference.
-Interestingly, the angle of $180^\circ$ which is on the axis of the propeller, shows the closest agreement with the expected value of 2.0.
+They are plotted against the harmonic number, with colour representing the angle of the observer.
+The size of the marker represents the standard deviation of the residual.
+At low harmonics, the speed coefficient is close to the expected value of 2 for many angles.
+However, at higher harmonics this decreases below 2.
+% size of harmonics becoming insignificant?
 
 
 \begin{figure}[H]
