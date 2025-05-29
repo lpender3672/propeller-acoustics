@@ -116,7 +116,7 @@ def hanson_noise(prop, oper, airfoil_data, bem_res, r_rt, theta, ms = np.arange(
     
     # already non-dimensional
     SPL = 10 * np.log10(harmonic_noise * np.conj(harmonic_noise))
-    return SPL
+    return SPL - 20 * np.log10(20e-6)
 
 
 def parse_tdf(hdf):
@@ -180,7 +180,22 @@ def parse_tdf(hdf):
     # TODO need a way to aggregate theoretical distance
 
     return tdf
-    
+
+def merge_aero_coeffs(df, aero_coeffs):
+    # merge the aero coefficients into the dataframe
+
+    #aero_coeffs is a dict
+    # with key 'propeller' : [CQ, CT]
+
+    aero_coeffs_df = pd.DataFrame.from_dict(aero_coeffs, orient='index', columns=['CT', 'CQ'])
+    aero_coeffs_df.index.name = 'propeller'
+    aero_coeffs_df.reset_index(inplace=True)
+
+    aero_coeffs_df['FM'] = (aero_coeffs_df['CT'] ** (3/2)) / (np.sqrt(2) * aero_coeffs_df['CQ'])
+
+    # merge
+    rdf = df.merge(aero_coeffs_df, on='propeller', how='left')
+    return rdf
 
 if __name__ == "__main__":
 
@@ -190,6 +205,7 @@ if __name__ == "__main__":
     )
     
     ldf = parse_lookup_df('app/results')
+
     hdf = parse_harmonic_df(ldf, aero_coeffs)
     rdf = fixed_speed_distance_regression(hdf)
     tdf = parse_tdf(hdf)
@@ -200,8 +216,37 @@ if __name__ == "__main__":
 
     # merge tdf and rdf
     rdf = rdf.merge(tdf, on=['propeller', 'angle_bin', 'harmonic'], how='left')
+    rdf = merge_aero_coeffs(rdf, aero_coeffs)
 
-    print(rdf.head())
+    fdf = filter_df(rdf, {'harmonic': 1,
+                          'angle_bin':135,
+                          'distance' : (19, 21)})
+    
+    fdf.plot.bar(
+        x='propeller', y=['FMbem', 'FM'], 
+        title='Hanson Noise vs SPL for Harmonic 1 at 135 degrees'
+    )
+
+    fdf.plot.bar(
+        x='propeller', y=['SPLhanson', 'intercept'], 
+        title='Hanson Noise vs SPL for Harmonic 1 at 135 degrees'
+    )
+
+    fdf = filter_df(rdf, {'propeller': 'dalprop5045',
+                          'angle_bin': 135,
+                          'distance' : (19, 21)})
+    fdf.plot.line(
+        x='harmonic', y=['SPLhanson', 'intercept'], 
+        title='Hanson Noise vs SPL for Dalprop 5045 at 135 degrees'
+    )
+
+    fdf = filter_df(rdf, {'propeller': 'dalprop5045',
+                          'harmonic': 4,
+                          'distance' : (19, 21)})
+    fdf.plot.line(
+        x='angle_bin', y=['SPLhanson', 'intercept'], 
+        title='Hanson Noise vs SPL for Dalprop 5045 at 1st harmonic'
+    )
     
     plt.show()
 
@@ -210,5 +255,5 @@ if __name__ == "__main__":
 
 
 
-    
+
 

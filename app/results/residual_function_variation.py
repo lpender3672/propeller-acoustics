@@ -113,7 +113,7 @@ def plot_sound_FOM(hdf, aero_data):
 
     PM = xmesh / (10 ** (ymesh / 20))
     # contour with labels
-    CS = ax.contour(xmesh, ymesh, PM, colors='gray', levels=np.logspace(1, np.log10(300), 10))
+    CS = ax.contour(xmesh, ymesh, PM, colors='gray')
     ax.clabel(CS, inline=True, fontsize=10, fmt='%.2f')
 
     return fig, ax
