@@ -80,22 +80,22 @@ def speed_distance_SPL_regression(hdf):
 
         logSpeed = np.log10(speed)
         logDistance = np.log10(distance)
-        logSPL = group_df['SPL'].values / 20
-        logSPL -= 2 * np.log10(prop['rt']) # remove the effect of propeller radius
+        logP = group_df['SPL'].values / 20 + np.log10(20e-6)  # convert to logP
+        logP -= 2 * np.log10(prop['rt']) # remove the effect of propeller radius
         # only -2log radius because distance is already in R/rt
 
         # normalization
         logSpeed_norm = (logSpeed - np.mean(logSpeed)) / np.std(logSpeed)
         logDistance_norm = (logDistance - np.mean(logDistance)) / np.std(logDistance)
-        logSPL_norm = (logSPL - np.mean(logSPL)) / np.std(logSPL)
+        logP_norm = (logP - np.mean(logP)) / np.std(logP)
 
         # normalization factors
         speed_mean, speed_std = np.mean(logSpeed), np.std(logSpeed)
         distance_mean, distance_std = np.mean(logDistance), np.std(logDistance)
-        spl_mean, spl_std = np.mean(logSPL), np.std(logSPL)
+        spl_mean, spl_std = np.mean(logP), np.std(logP)
 
         X_norm = np.column_stack((np.ones_like(logSpeed_norm), logSpeed_norm, logDistance_norm))
-        y_norm = logSPL_norm
+        y_norm = logP_norm
 
         # least squares regression on normalized data
         normalized_coeffs, _, _, _ = np.linalg.lstsq(X_norm, y_norm, rcond=None)
@@ -112,9 +112,9 @@ def speed_distance_SPL_regression(hdf):
         coeffs = np.array([beta0, beta1, beta2])
         
         y_pred = X @ coeffs
-        residual = logSPL - y_pred
+        residual = logP - y_pred
         residual_std = np.std(residual)
-        data_std = np.std(logSPL)
+        data_std = np.std(logP)
         residual_std_norm = residual_std / data_std if data_std != 0 else np.inf
 
         data_rows.append({
@@ -127,7 +127,7 @@ def speed_distance_SPL_regression(hdf):
             'beta0_norm': beta0_norm,
             'beta1_norm': beta1_norm, 
             'beta2_norm': beta2_norm,
-            'r_squared': 1 - np.var(residual) / np.var(logSPL),
+            'r_squared': 1 - np.var(residual) / np.var(logP),
             'residual_std': residual_std,
             'residual_std_norm': residual_std_norm,
         })
@@ -161,22 +161,22 @@ def speed_distance_OASPL_regression(sdf):
 
         logSpeed = np.log10(speed)
         logDistance = np.log10(distance)
-        logSPL = group_df['OASPL'].values / 20
-        logSPL -= 2 * np.log10(prop['rt']) # remove the effect of the propeller radius
+        logP = group_df['OASPL'].values / 20
+        logP -= 2 * np.log10(prop['rt']) # remove the effect of the propeller radius
         # only -2log radius because distance is already in R/rt
 
         # normalization
         logSpeed_norm = (logSpeed - np.mean(logSpeed)) / np.std(logSpeed)
         logDistance_norm = (logDistance - np.mean(logDistance)) / np.std(logDistance)
-        logSPL_norm = (logSPL - np.mean(logSPL)) / np.std(logSPL)
+        logP_norm = (logP - np.mean(logP)) / np.std(logP)
 
         # normalization factors
         speed_mean, speed_std = np.mean(logSpeed), np.std(logSpeed)
         distance_mean, distance_std = np.mean(logDistance), np.std(logDistance)
-        spl_mean, spl_std = np.mean(logSPL), np.std(logSPL)
+        spl_mean, spl_std = np.mean(logP), np.std(logP)
 
         X_norm = np.column_stack((np.ones_like(logSpeed_norm), logSpeed_norm, logDistance_norm))
-        y_norm = logSPL_norm
+        y_norm = logP_norm
 
         # least squares regression on normalized data
         try:
@@ -198,9 +198,9 @@ def speed_distance_OASPL_regression(sdf):
         coeffs = np.array([beta0, beta1, beta2])
         
         y_pred = X @ coeffs
-        residual = logSPL - y_pred
+        residual = logP - y_pred
         residual_std = np.std(residual)
-        data_std = np.std(logSPL)
+        data_std = np.std(logP)
         residual_std_norm = residual_std / data_std if data_std != 0 else np.inf
 
         data_rows.append({
@@ -212,7 +212,7 @@ def speed_distance_OASPL_regression(sdf):
             'beta0_norm': beta0_norm,
             'beta1_norm': beta1_norm, 
             'beta2_norm': beta2_norm,
-            'r_squared': 1 - np.var(residual) / np.var(logSPL),
+            'r_squared': 1 - np.var(residual) / np.var(logP),
             'residual_std': residual_std,
             'residual_std_norm': residual_std_norm,
         })
@@ -371,7 +371,7 @@ if __name__ == "__main__":
     sdf = parse_spl_df(lookup_df, aero_coeffs)
 
     hdf_filtered = filter_df(hdf,
-                    { 'propeller' : '5045_s15'})
+                    { 'propeller' : 'dalprop5045'})
     
     coeff_df = speed_distance_SPL_regression(hdf_filtered)
     plot_best_coeffs_2D(hdf_filtered, coeff_df)
@@ -414,13 +414,10 @@ if __name__ == "__main__":
     fig, ax = multi_function_plot(coeff_df,
                         x_var='harmonic',
                         y_var='beta1',
-                        filter_dict={
-                            'propeller': '5045_s15',
-                        },
                         fig_size=(5,4),
                         group_by='angle_bin',
                         plot_type='scatter',
-                        size_by='residual_std',
+                        size_by='residual_std_norm',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
     ax.set_title('')
@@ -434,13 +431,10 @@ if __name__ == "__main__":
     fig, ax = multi_function_plot(coeff_df,
                         x_var='harmonic',
                         y_var='beta2',
-                        filter_dict={
-                            'propeller': '5045_s15',
-                        },
                         group_by='angle_bin',
                         plot_type='scatter',
                         fig_size=(5,4),
-                        size_by='residual_std',
+                        size_by='residual_std_norm',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
     
@@ -448,7 +442,9 @@ if __name__ == "__main__":
     ax.set_ylabel(r'$\beta_r$ [-]')
     ax.set_xlabel(r'$m$ [-]')
     ax.axhline(-1, color='black', linestyle='--', label='Expected')
-    ax.legend().set_title('Angle [deg]')
+    # hide legend
+    ax.legend().set_visible(False)
+    #ax.legend().set_title('Angle [deg]')
     fig.savefig('deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.png',
                     dpi = 300)
     
@@ -462,7 +458,7 @@ if __name__ == "__main__":
                             'propeller': 'dalprop5045',
                         },
                         plot_type='scatter',
-                        size_by='residual_std',
+                        size_by='residual_std_norm',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
                         )
 
@@ -473,10 +469,9 @@ if __name__ == "__main__":
                             'propeller': 'dalprop5045',
                         },
                         plot_type='scatter',
-                        size_by='residual_std',
+                        size_by='residual_std_norm',
                         #marker = lambda df: ['o' if row['beta2'] > 1 else 'x' for _, row in df.iterrows()]
-                        )
-
+                        )    
 
     plt.show()
 

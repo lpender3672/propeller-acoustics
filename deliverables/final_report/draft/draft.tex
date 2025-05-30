@@ -119,7 +119,7 @@ The theory will show how noise and efficiency are inherently coupled, providing 
 Sound is a pressure fluctuation in a medium.
 The overall sound pressure level (OASPL) is defined as the root mean square of the sound pressure, normalised to a reference pressure.
 It's expressed logarithmically, as shown in equation \ref{eq:OASPL}.
-Noise at discrete frequency intervals will later be shown to be of importance and so a definition of this frequency dependent sound pressure level (SPL) is provided in equation \ref{eq:SPL}.
+Noise at discrete frequency intervals will later be shown to be of importance and so a definition of this frequency dependent sound pressure level (SPL) is provided in equation \ref{eq:SPL_f}.
 
 \begin{equation}
     OASPL = 20 \log_{10} \left( \frac{p_\text{rms}}{p_\text{ref}} \right) \label{eq:OASPL}
@@ -130,7 +130,7 @@ Noise at discrete frequency intervals will later be shown to be of importance an
 \end{equation}
 
 \begin{equation}
-    OASPL_m = 10 \log_{10} \frac{\int^{m f_0 + \varepsilon}_{m f_0 - \varepsilon} PSD(f) df }{p^2_\text{ref}} \label{eq:OASPLm}
+    OASPL_m = 20 \log_{10} \frac{ p_m }{p_\text{ref}} \label{eq:OASPLm} \quad \text{where} \quad p_m^2 = \int^{m f_0 + \varepsilon}_{m f_0 - \varepsilon} PSD(f) df
 \end{equation}
 
 % introduce intuitively how the sound pressure level would be expected to vary with speed, diameter, distance
@@ -143,13 +143,15 @@ This means that the sound pressure level will vary with distance in an inverse l
 Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
 
 \begin{equation}
-    p_\text{rms} = \frac{\rho (r \Omega)^2}{R/r} g(\theta, \text{geometry}) \label{eq:expected_plaw}
+    p_m = \frac{\rho (r \Omega)^2}{R/r} g(m, \theta, \text{geometry}) \label{eq:expected_plaw}
 \end{equation}
 
 Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
-The dependence on $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
+The dependence on $m$ and $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
 This means sound generated from different pressure differentials along the blade span, or chord, will interfere.
 To build a picture of the function $g()$ its required to model the sound generated over the entire surface of the propeller.
+
+% BAM hansons theory
 
 % justify the focus on lift being the primary source of propeller noise
 % introduce concepts of interference with definition of wavenumber to explain directivity.
@@ -252,8 +254,14 @@ shown below in equation \ref{eq:hansons_result}.
 
 TODO Define all the variables and justify simplifications.
 The first term in Hansons result is the expected dimensional and distance dependence of the sound pressure level.
-The second term is an overall phase lag of the harmonic from the observer's location.
-The integral is over the non-dimensional blade span $z = r_0 / r_t$, where $r_0$ is the local radius.
+The second term is an overall phase lag of the harmonic from the observer's location, important for $OASPL$, but not $OASPL_m$.
+The integral of the different components is over the non-dimensional blade span $z = r_0 / r_t$ and is denoted $I_n$.
+Revisiting our function $g()$, it can be written in terms of Hanson's integral.
+\begin{equation}
+    g(m, \theta, r_t, \Omega, \text{geometry}) = -\frac{1}{4\pi} \sum_n I_n
+\end{equation}
+
+This shows additional dependence on the propeller radius and angular speed.
 
 The variables $k_x$ and $k_y$ are non-dimensional wavenumbers
 % what the hell are wavenumbers explain this
@@ -273,20 +281,40 @@ A method to solve for the aerodynamic coefficients is presented later in section
 % explain the origin of thrust and torque
 The thrust of a propeller is the axial force exerted by the air on the propeller due to imparted momentum and profile losses.
 The torque is the rotational force exerted by the air on the propeller and is a result of imparted angular momentum to the air and profile losses.
-% actuator theory
-% dependence of these aeroydynamic forces with speed, diameter, introduce invarient coefficients
-% thrust and torque coefficients
-
-% torque, thrust coefficients and FoM definition
+% origin of aerodynamic coefficients static hover
 
 Torque and thrust coefficients are defined as
 \begin{equation}
     C_T = \frac{T}{\frac{1}{2} \rho (r\omega)^2 A} \quad \quad \quad C_Q = \frac{Q}{\frac{1}{2} \rho (r\omega)^2 A r} \label{eq:CT_CQ}
 \end{equation}
 
+
+Typically, the efficiency is defined as the ratio of propulsive power to the input power.
 \begin{equation}
-    FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q} = \frac{1}{\sqrt{2\pi \rho}} \frac{T^{3/2}}{Q} \frac{1}{R}
+    \eta = \frac{2 V}{V + V_e}
 \end{equation}
+Propulsive power here is the useful work done by the propeller in moving the aircraft forward, defined as the thrust force multiplied by the flight speed.
+For a drone designed to hover, this definition of efficiency isn't meaningful.
+Instead, a figure of merit (FM) is defined as the ratio of ideal power to hover to the actual power.
+
+To find the ideal power to hover let us consider a propeller of area $A$, thrust force $T$, and torque $Q$.
+\begin{equation}
+    FM = \frac{Tv}{Q \Omega} \label{eq:FM_raw}
+\end{equation}
+The term $v$ represents an axial velocity induced on the air by the propeller.
+Standard actuator disk theory, involving momentum and energy balance, gives the thrust from this induced velocity as $ T = 2 \rho v^2 A$.
+Substituting this into the equation \ref{eq:FM_raw} and using definitions of thrust and torque coefficients gives equation \ref{eq:FM}
+\begin{equation}
+    FM = \frac{1}{ \sqrt{2 \rho A}} \frac{T^{3/2}}{Q \Omega} = \frac{C_T^{3/2}}{\sqrt{2}C_Q} \label{eq:FM}
+\end{equation}
+
+% actuator theory
+% dependence of these aeroydynamic forces with speed, diameter, introduce invarient coefficients
+% thrust and torque coefficients
+
+% torque, thrust coefficients and FoM definition
+
+
 
 \subsection{Actuator Disk Theory \label{sec:actuator_disk}}
 
@@ -580,7 +608,22 @@ The data was read by a Raspberry Pi Pico microcontroller and transmitted over se
 
 % handling of audio data
 
-% log normalisation 
+Spectral leakage was minimised by applying a Hanning window to the audio data before the Fourier transform.
+The window was normalised to have a root mean square (RMS) value of 1 to prevent the SPL from being affected by the window.
+The audio data was calibrated by correcting the transformed signal by the interpolated factor at each frequency bin.
+
+% rms normalised hanning window to prevent spectral leakage
+% frequency domain interpolation of microphone calibration data
+
+% method of integrating harmonics and definition pf HSPL
+The harmonics had to be numerically integrated according to equation \ref{eq:OASPLm}.
+Despite the Hanning window, spectral leakage still caused the broadening of the harmonic peaks.
+The frequency bin width is $ \Delta = 51200 / 56000 = 0.914$ Hz, and numerical integration between $ m f_0 \pm 2 \Delta $ 
+captures the harmonic peak.
+This corresponds to $\pm2$ frequency bins around the harmonic centre frequency $m f_0$.
+
+
+% log regression of distance and speed
 Equation \ref{eq:expected_plaw} can be rewritten logarithmically
 
 \begin{equation}
@@ -588,13 +631,8 @@ Equation \ref{eq:expected_plaw} can be rewritten logarithmically
 \end{equation}
 
 Due to limitations of the setup, testing a wide enough range of propeller radii was not possible and so the radius coefficient $\beta_r$ was set to 3.
-The other coefficients $\beta_\Omega$, $\beta_R$ and the constant term 
+The other coefficients $\beta_\Omega$, $\beta_R$ and the $\log_{10}(g)$ term were determined by the logarithmic regression of the experimental data.
 
-% rms normalised hanning window to prevent spectral leakage
-% frequency domain interpolation of microphone calibration data
-
-% method of integrating harmonics and definition pf HSPL
-% log regression of distance and speed
 
 \subsection{Propeller Design Tool}
 
@@ -751,6 +789,7 @@ This could be used at low torque values which were unable to be read by
 \end{figure}
 
 Figure \ref{fig:microphone_calibration} shows the calibration for the GRAS 46BD microphones used in the acoustic setup.
+Low frequencies are shown to have little correction, while frequencies above the human range of hearing require correction.
 
 \subsection{Aerodynamic performance}
 
@@ -815,23 +854,39 @@ An obvious square power law can be seen from the data, with OASPL also increasin
     \begin{subfigure}[t]{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/speed_coefficient_for_angles_harmonics.pdf}
-        \caption{}
+        \caption{Speed coefficient}
         \label{fig:speed_coefficient_for_angles_harmonics}
     \end{subfigure}
     \begin{subfigure}[t]{0.49\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/distance_coefficient_for_angles_harmonics.pdf}
-        \caption{}
+        \caption{Distance coefficient}
         \label{fig:distance_coefficient_for_angles_harmonics}
     \end{subfigure}
     \caption{Power law coefficients for various observer angles and harmonics for the dalprop 5045 propeller.}
 \end{figure}
 
-Figures \ref{fig:speed_coefficient_for_angles_harmonics} and \ref{fig:distance_coefficient_for_angles_harmonics} show the respective fitted power law coefficients for speed and distance for the dalprop 5045 propeller.
+Figures \ref{fig:speed_coefficient_for_angles_harmonics} and \ref{fig:distance_coefficient_for_angles_harmonics} 
+show the respective fitted power law coefficients for speed and distance for the dalprop 5045 propeller.
 They are plotted against the harmonic number, with colour representing the angle of the observer.
-The size of the marker represents the standard deviation of the residual.
+The size of the marker represents the relative standard deviation of the residual.
+
 At low harmonics, the speed coefficient is close to the expected value of 2 for many angles.
-However, at higher harmonics this decreases below 2.
+The angle of 157.5 degrees shows a small deviation in residuals, indicating a strong fit, and the highest 
+dependence on speed.
+This is thought to be due to increased constructive interference occuring at higher speeds
+At higher harmonics the coefficient decreases below 2 for all angles indicating destructive interference.
+Another observation is that at higher harmonics, there is typically higher variation in the residuals, indicating a worse fit.
+This worse fit could be due to speed or distance dependence.
+
+The distance coefficient is shown to be negative for nearly all angles and harmonics but varies significantly.
+This is partly due to the narrow range and number of logarithmic distances tested.
+However, its also evident that testing was not done far enough away from the propeller.
+
+At $\theta=180^\circ$, the microphone is in the propeller wake where the sound is dominated by turbulent velocity which is an 8th power law \cite{lighthill_1952}.
+The strongly negative distance coefficient shown in figure \ref{fig:distance_coefficient_for_angles_harmonics} is due to both this and the turbulent wake velocity distance dependence.
+
+
 % size of harmonics becoming insignificant?
 
 

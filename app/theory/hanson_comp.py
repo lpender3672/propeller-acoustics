@@ -632,8 +632,8 @@ def radial_locus_sweep(av):
 
         colour = cm.jet(i / nsweeps)
         ax = radial_locus(
-            oper, prop, ax=ax, colour=colour, label=f"$\\psi= {
-                sweep[i] * 180 / np.pi:.2f}$"
+            oper, prop, ax=ax, colour=colour, label=f"""$\\psi= {
+                sweep[i] * 180 / np.pi:.2f}$"""
         )
 
     fig.legend(loc="lower center", bbox_to_anchor=(0.5, 0.0), ncol=4, frameon=False)

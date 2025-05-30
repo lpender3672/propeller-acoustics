@@ -49,13 +49,13 @@ def fixed_speed_distance_regression(hdf):
         # Log10 values
         log_speed    = np.log10(omega)
         log_distance = np.log10(r)
-        log_spl      = group['SPLref'].values / 20
+        log_p      = group['SPLref'].values / 20  + np.log10(20e-6)
         log_radius = np.log10(prop['rt'])  # m
 
         # Remove known physics trends:
         #   adjusted = log_spl − 2·log_speed + log_distance
         # only -2log radius because distance is already in R/rt
-        adjusted = log_spl - 2*log_speed + log_distance - 2*log_radius
+        adjusted = log_p - 2*log_speed + log_distance - 2*log_radius
 
         # Fit intercept only
         intercept = np.mean(adjusted)
@@ -70,7 +70,7 @@ def fixed_speed_distance_regression(hdf):
         std_adj   = np.std(adjusted, ddof=0)
         std_norm  = std_res/std_adj if std_adj != 0 else np.inf
 
-        intercept_db = 20 * (intercept - np.log10( 20e-6))
+        intercept_db = 20 * intercept # convert back to dB
 
         results.append({
             'propeller':          propeller,
@@ -125,7 +125,6 @@ def plot_sound_FOM(hdf, aero_data):
     ax.clabel(CS, inline=True, fontsize=10, fmt='%.2f')
 
     return fig, ax
-
 
 
 if __name__ == "__main__":

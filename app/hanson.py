@@ -205,17 +205,18 @@ def sum_harmonics(Vm, Dm, Lm, pref):
     return V, L, D, total
 
 
-def hanson_secondary_variables(av, compact_chord=True):
+def hanson_secondary_variables(av, obs = None, compact_chord=True):
 
     oper = av.oper.copy()
     prop = av.prop.copy()
     res = av.res.copy()
 
     # Observer
-    obs = {}
-    Nobs = 100
-    obs["r"] = oper["r_obs"] * prop["rt"] * np.ones((Nobs))
-    obs["theta"] = np.linspace(0, np.pi, Nobs)
+    if obs is None:
+        obs = {}
+        Nobs = 100
+        obs["r"] = oper["r_obs"] * prop["rt"] * np.ones((Nobs))
+        obs["theta"] = np.linspace(0, np.pi, Nobs)
 
     # Spanwise variables
     prop["Bd"] = prop["c"] / (2 * prop["rt"])

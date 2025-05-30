@@ -42,6 +42,11 @@ from app.results.residual_function_variation import (
     fixed_speed_distance_regression
 )
 
+from app.hanson import (
+    hanson_secondary_variables,
+    hanson
+)
+
 from app.bem import static_bem_swirl
 
 def Psi(kx, X, fX):
@@ -76,7 +81,7 @@ def hanson_noise(prop, oper, airfoil_data, bem_res, r_rt, theta, ms = np.arange(
     quadratic = xc[:, 0][:, np.newaxis]**2 - xc**2
     quadratic /= simpson(quadratic, xc, axis=1)[:, np.newaxis]
 
-    _, thickness = np.meshgrid(b, tf, indexing="ij")
+    thickness = tf[np.newaxis, :] * np.ones((prop['nr'], 1))
     thickness /= simpson(thickness, xc, axis=1)[:, np.newaxis]
 
     for i, m in enumerate(ms):
@@ -115,8 +120,8 @@ def hanson_noise(prop, oper, airfoil_data, bem_res, r_rt, theta, ms = np.arange(
             trapezoid(I3, z) )
     
     # already non-dimensional
-    SPL = 10 * np.log10(harmonic_noise * np.conj(harmonic_noise))
-    return SPL - 20 * np.log10(20e-6)
+    SPL = 20 * np.log10( np.abs(harmonic_noise) )
+    return SPL
 
 
 def parse_tdf(hdf):
@@ -197,26 +202,8 @@ def merge_aero_coeffs(df, aero_coeffs):
     rdf = df.merge(aero_coeffs_df, on='propeller', how='left')
     return rdf
 
-if __name__ == "__main__":
 
-    aero_coeffs = calc_aero_coefficients(
-        'app/results',
-        load_cell_calibration()
-    )
-    
-    ldf = parse_lookup_df('app/results')
-
-    hdf = parse_harmonic_df(ldf, aero_coeffs)
-    rdf = fixed_speed_distance_regression(hdf)
-    tdf = parse_tdf(hdf)
-
-    #'propeller', 'speed', 'angle', 'distance', 'harmonic', 'RMS', 'SPL',
-    #'SPLref', 'CT', 'CQ', 'FM', 'angle_bin', 'SPLhanson', 'CTbem', 'CQbem',
-    #'FMbem'
-
-    # merge tdf and rdf
-    rdf = rdf.merge(tdf, on=['propeller', 'angle_bin', 'harmonic'], how='left')
-    rdf = merge_aero_coeffs(rdf, aero_coeffs)
+def useless_plots(rdf):
 
     fdf = filter_df(rdf, {'harmonic': 1,
                           'angle_bin':135,
@@ -247,9 +234,138 @@ if __name__ == "__main__":
         x='angle_bin', y=['SPLhanson', 'intercept'], 
         title='Hanson Noise vs SPL for Dalprop 5045 at 1st harmonic'
     )
-    
-    plt.show()
 
+def useful_plots(rdf):
+
+    fig, ax = multi_function_plot(
+        rdf,
+        'harmonic',
+        'SPLhanson',
+        filter_dict={
+            'propeller' : [
+                'printed5045',
+                '5045_s15',
+                '5045_s30',
+                '5045_s45'
+            ],
+            'angle_bin': 135
+        },
+        group_by='propeller'
+    )
+
+
+    fig, ax = multi_function_plot(
+        rdf,
+        x_var='FMbem',
+        y_var='FM',
+        group_by=['propeller'],
+        title='Hanson Noise vs SPL for Harmonics',
+        plot_type='scatter'
+    )
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    fig, ax = multi_function_plot(
+        rdf,
+        x_var='SPLhanson',
+        y_var='intercept',
+        group_by=['propeller'],
+        title='Hanson Noise vs SPL for Harmonics',
+        plot_type='scatter'
+    )
+
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+
+def hanson_speed_dependence():
+    
+    
+    av = AppVars()
+    av.oper = load_oper_from_file("app/app_vars.json")
+    av.airfoil_data = load_foil("app/foils/naca4412.surf")
+    av.xfoil_data = run_xfoil(av.airfoil_data)
+
+    propf = "app/props/printed5045.prop"
+    av.prop = load_prop_from_file(propf)
+    av = static_bem_swirl(av)
+
+    fig,ax = plt.subplots()
+
+    nspeeds = 1000
+    speeds = np.logspace(1.5, 4.0, nspeeds)
+    ms = [1, 6]
+
+    sounds = np.zeros((nspeeds, len(ms)))
+
+    for i,om in enumerate(speeds):
+        av.oper['Omega'] = om
+
+        SPL = hanson_noise( 
+            av.prop,
+            av.oper,
+            av.airfoil_data, 
+            av.res,
+            20, 3 * np.pi / 4, ms=ms )
+
+        #obs = {}
+        #obs["r"] = [20 * av.prop["rt"]]
+        #obs["theta"] = [3 * np.pi / 4]
+        #oper, prop, obs = hanson_secondary_variables(av, obs)
+        #PVm, PDm, PLm = hanson(oper, prop, obs, np.arange(1, 10))
+        #SPL = np.log10(np.abs(PVm + PDm + PLm) / 20e-6)
+        #print(SPL.shape)
+        
+        sounds[i, :] = SPL #+ 20 * np.log10(om**2)
+
+    # plot the results
+    for i, m in enumerate(ms):
+        ax.plot(speeds, sounds[:, i], label=f'Harmonic {m}')
+
+    ax.set_xscale('log')
+    xlo, xhi = ax.get_xlim()
+    xcont = np.logspace(np.log10(xlo), np.log10(xhi), 1000)
+    ax.plot(xcont, - 20 * np.log10(xcont), 'k--', label='$-20 \log_{10}(\Omega)$')
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.legend()
+    ax.set_ylim(-120, -20)
+    ax.set_xlabel('$\Omega$ [rad/s]')
+    ax.set_ylabel('$\log_{10} g()$ [dB]')
+
+    fig.savefig('deliverables/final_report/figures/hanson_speed_dependence.png', bbox_inches='tight')
+
+
+def main():
+
+    aero_coeffs = calc_aero_coefficients(
+        'app/results',
+        load_cell_calibration()
+    )
+    
+    ldf = parse_lookup_df('app/results')
+
+    hdf = parse_harmonic_df(ldf, aero_coeffs)
+    rdf = fixed_speed_distance_regression(hdf)
+    tdf = parse_tdf(hdf)
+
+    #'propeller', 'speed', 'angle', 'distance', 'harmonic', 'RMS', 'SPL',
+    #'SPLref', 'CT', 'CQ', 'FM', 'angle_bin', 'SPLhanson', 'CTbem', 'CQbem',
+    #'FMbem'
+
+    # merge tdf and rdf
+    rdf = rdf.merge(tdf, on=['propeller', 'angle_bin', 'harmonic'], how='left')
+    rdf = merge_aero_coeffs(rdf, aero_coeffs)
+
+    print(rdf.columns)
+    useful_plots(rdf)
+
+     
+
+if __name__ == "__main__":
+
+    hanson_speed_dependence()
+
+    plt.show()
 
 
 
