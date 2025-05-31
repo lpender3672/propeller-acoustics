@@ -167,12 +167,14 @@ From conservation of energy the sound intensity must be an inverse square law wi
 The sound energy can be shown to be proportional to the square of the sound pressure.
 This means that the sound pressure level will vary with distance in an inverse law.
 Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
+The propeller, being axi-symmetric, will produce an identical sound for observers at different azimuthal angles.
+The observer position is then defined by only the distance $R$ and angle from the axis $\theta$.
 
 \begin{equation}
-    p_m = \frac{\rho (r \Omega)^2}{R/r} |g(m, \theta, \text{geometry})| \label{eq:expected_plaw}
+    p_m = \frac{\rho (r \Omega)^2}{R/r} |g(m, \theta, \text{geometry}, ?)| \label{eq:expected_plaw}
 \end{equation}
 
-Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
+The non-dimensional function $g()$ accounts for directivity of the observer and geometry of the propeller.
 The dependence on $m$ and $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
 This means sound generated from different pressure differentials along a propeller blade span, or chord, will interfere.
 Its important to note that this function is the square root of PSD, and so represents the magnitude sound pressure at each frequency.
@@ -181,7 +183,7 @@ To build a picture of the function $g()$ its required to model the sound generat
 \subsection{Noise Reduction Through Interference}
 
 Hanson \cite{hanson_theory} derived the far field noise by convecting sources along a helicoidal surface.
-His result, simplified for incompressible and zero flight speed, shows the magnitude of $g()$ defined here also depends on the propeller radius $r$ and angular speed $\Omega$.
+His result, simplified for incompressible and zero flight speed, shows the actual magnitude of $g()$ defined here also depends on the propeller radius $r$ and angular speed $\Omega$.
 The phase of $g()$ is also shown to linearly vary with observer distance.
 The harmonic far field sound is then an integral of spanwise sources with a magnitude and phase.
 The spanwise phase is shown to depend on the local sweep angle.
@@ -289,10 +291,8 @@ And similar definitions can be made for $OASPL$ and $OASPL_m$.
       $M_{\rm tip}$      &      &      & $\displaystyle(\dots)$ \\[6pt]
       \hline
     \end{tabular}
-    \caption{Upper-right entries are the ratios $X_{\rm eff}/X$ when holding the row-variable constant.}
+    \caption{Varying reference quantities at which to compare the sound pressure level. The $'$ denotes the reference value.}
   \end{table}
-
-
 
 \section{Methodology}
 
@@ -308,12 +308,6 @@ The experimental work was carried out in the acoustics lab at University of Camb
 Two separate setups were used to measure the aerodynamic and acoustic performance of the propellers.
 The primary reason for this separation was to ensure better measurements in each domain.
 The setups were designed to have near identical propeller and motor conditions, allowing for a direct comparison of the results.
-The drone motor, Emax ECO II Series 2207 1700KV, was used to drive the propellers with an Odrive S1 motor controller.
-This controller allowed for precise measurement and control of both motor speed and torque.
-A high speed AS5047P encoder was used to measure the angular position of the motor, which was numerically differentiated by the controller to obtain the angular velocity.
-This required a temperature resistant diametric magnet to rotate on the axis of the motor shaft.
-A push fit magnet mount was precision machined on a lathe to prevent vibration at the high speeds required.
-An identical 6 cell, 3300 mAh lithium polymer battery was also used to power the motor for both setups.
 
 \subsubsection{Saftey}
 The safety of the experimental setup was a key consideration throughout the project.
@@ -321,8 +315,20 @@ The testing required high speed rotating propellers which could cause serious in
 The custom 3D printed propellers were expected to be pushed to their material limits and so the risk of failure was high.
 For these reasons, all 3D printed propellers were tested solely in the foam anechoic chamber with the door closed and the operator outside.
 A watchdog timer was enabled with the controller to ensure safe shutdown if any communication from outside the chamber was lost.
+Additionally, the controller continuously monitors the correlation between the commanded mechanical power and the actual electrical power sent to the motor \cite{odrive_doc}.
+This means it will detect a sudden load imbalance, such as a propeller failure, and disarm to prevent further damage.
 A thermistor was attached to the motor to monitor the temperature and prevent overheating.
 This was especially important for the acoustic setup where the motor was enclosed in a foam box.
+The battery was placed under the table to prevent the risk of it being damaged by a propeller failure.
+
+\subsection{Hardware}
+A drone motor, specifically the Emax ECO II Series 2207 1700KV, was used to drive the propellers with an Odrive S1 motor controller.
+This controller uses a field oriented control (FOC) algorithm to drive the motor with minimal cogging torque \cite{en13102534}.
+This reduces vibration and acoustic noise \cite{motor_vibration}.
+A high speed AS5047P encoder was used to measure the angular position of the motor, which was numerically differentiated by the controller to obtain the angular velocity.
+This required a temperature resistant diametric magnet to rotate on the axis of the motor shaft.
+A push fit magnet mount was precision machined on a lathe to ensure balance and prevent vibration at the high speeds required.
+An identical 6 cell, 3300 mAh lithium polymer battery was also used to power the motor for both setups.
 
 \subsubsection{Data Collection}
 % software used, majority python, C++
@@ -544,7 +550,12 @@ This causes the triangle generation to be more complicated at the tip to avoid b
 Five commercial off the shelf propeller designs were bought for the project, four Dalprop designs shown in figure \ref{fig:dalprop_series} and one Foxeer looped design shown in figure \ref{fig:loop_series}.
 This was to compare the performance of 3D printed propellers to standard propellers used in the industry.
 The dalprops from left to right are 5045bnr, 4045, 5045, 6045.
-The first is a 3 bladed version of the 5045 and the last three are different sizes, 4", 5" and 6" respectively.
+The convention is that the first two digits represent the diameter in inches and the last two digits represent the pitch.
+This means that 5045 has a diameter of 5 inches and a pitch of 4.5 inches.
+The twist is found from local radius $r$ and the pitch $p$ of the propeller.
+\begin{equation}
+    \beta = \alpha + \arctan \left( \frac{p}{2\pi r} \right) \label{eq:twist}
+\end{equation}
 
 Ten propellers were manufactured from the models generated by the software.
 Clones of the 5045bnr and 5045 were printed, shown in figure \ref{fig:sweep_series}, along with a series of swept propellers.
@@ -573,7 +584,9 @@ The propellers were otherwise identical to the printed 5045 for consistency.
     \label{fig:loop_series}
 \end{figure}
 
-A highly swept $60^\circ$ propeller was also designed and printed, but broke.
+From the images taken after testing, it can be seen that both looped designs were damaged during testing.
+The 50loop\_s40 suffered a break at the hub and tips, whereas the 50loop\_s50 suffered a break at the tip.
+A highly swept $60^\circ$ propeller was also designed and printed, but broke at the mid-span during testing.
 
 \section{Results and Discussion}
 
@@ -590,7 +603,7 @@ A highly swept $60^\circ$ propeller was also designed and printed, but broke.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{../tikz/loadcell_caltab.pdf}
+    \includegraphics[width=0.99\textwidth]{../tikz/loadcell_caltab.pdf}
     \caption{Calibration graphs for the load cells used in the aerodynamic setup.}
     \label{fig:loadcell_caltab}
 \end{figure}
@@ -644,8 +657,9 @@ This could be used at low torque values which were unable to be read by
     \label{fig:microphone_calibration}
 \end{figure}
 
-Figure \ref{fig:microphone_calibration} shows the calibration for the GRAS 46BD microphones used in the acoustic setup.
+Figure \ref{fig:microphone_calibration} shows the calibration for the GRAS 46BL microphones used in the acoustic setup.
 Low frequencies are shown to have little correction, while frequencies above the human range of hearing require correction.
+GRAS guarantees the calibrated response to be within 2 dB up to 20 kHz.
 
 \subsection{Aerodynamic performance}
 
@@ -811,6 +825,9 @@ The reason for this is also not understood, as it cant be due to broadband. It c
 \end{figure}
 
 Figures \ref{fig:harmonic_hanson_sweep_for_135deg} and \ref{fig:harmonic_sound_sweep_for_135deg} show the theoretical and experimental harmonic interference for the differently swept propellers at $\theta = 135^\circ$.
+The theory shows very little difference in the harmonic pressure factor $g$ for the small range of sweep angles tested.
+It can also be seen that while some reduce in magnitude, other harmonics increase.
+As previously discussed, the phase of each harmonic 
 
 
 \begin{figure}[H]

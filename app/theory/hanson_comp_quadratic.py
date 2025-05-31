@@ -255,8 +255,6 @@ def useless_plots(rdf):
         'deliverables/final_report/figures/FM_bar.pdf',
     )
     
-    return
-
     fdf.plot.bar(
         x='propeller', y=['SPLhanson', 'intercept'], 
         title='Hanson Noise vs SPL for Harmonic 1 at 135 degrees'
@@ -281,7 +279,7 @@ def useless_plots(rdf):
 def useful_plots(rdf):
 
     fig, ax = multi_function_plot(
-        rdf,
+        rdf.copy(),
         'harmonic',
         'SPLhanson',
         filter_dict={
@@ -423,6 +421,7 @@ def main():
         'app/results',
         load_cell_calibration()
     )
+
     
     ldf = parse_lookup_df('app/results')
 
@@ -438,15 +437,20 @@ def main():
     rdf = rdf.merge(tdf, on=['propeller', 'angle_bin', 'harmonic'], how='left')
     rdf = merge_aero_coeffs(rdf, aero_coeffs)
 
+    print(rdf)
+
+    print(aero_coeffs)
+
     print(rdf.head())
     print(rdf.columns)
+
+    useless_plots(rdf)
+    useful_plots(rdf)
 
     rdf_filt = filter_df(rdf, {'harmonic': 1, 'angle_bin': 135, 'distance': (19, 21)})
     rdf_filt = rdf_filt.drop(columns=['distance', 'r_squared', 'residual_std', 'harmonic'])
 
     print(rdf_filt)
-    useful_plots(rdf)
-    useless_plots(rdf)
 
      
 

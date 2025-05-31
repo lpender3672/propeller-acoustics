@@ -15,9 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from app.bem import (
-    betz_off_design,
-    guaranteed_convergence_BEM,
-    operating_range,
+    static_bem_swirl,
     static_bem_basic
 )
 from app.hanson import (

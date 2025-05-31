@@ -91,7 +91,7 @@ def plot_sound_FOM(hdf, aero_data):
     
     fm_dict = {
         prop: Ct**(3/2) / (np.sqrt(2) * Cq)
-        for prop, (Ct, Cq) in aero_data.items()
+        for prop, (Ct, Cq, _, _) in aero_data.items()
     }
     
     hdf['FM'] = hdf['propeller'].map(fm_dict)
@@ -108,6 +108,10 @@ def plot_sound_FOM(hdf, aero_data):
         },
         group_by='propeller'
     )
+
+    # set x and y labels
+    ax.set_xlabel('FM [-]')
+    ax.set_ylabel('$20 \log_{10} G()  $ [dB]')
 
     # get xlim and ylim
     xlo, xhi = ax.get_xlim()

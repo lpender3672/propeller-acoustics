@@ -3,7 +3,6 @@ import numpy as np
 
 from matplotlib import cm
 from matplotlib import pyplot as plt
-from PyQt6.QtWidgets import QApplication
 
 from scipy.integrate import (
     cumulative_trapezoid, simpson, trapezoid
@@ -652,7 +651,7 @@ def operating_range(
 
     for i, J in enumerate(Js):
         av.oper["V"] = J * av.oper["Omega"] * av.prop["rt"]
-        av = betz_off_design(av)
+        av = static_bem_swirl(av)
 
         if not av.res["converged"]:
             CPs[i] = np.nan
@@ -905,7 +904,7 @@ def main():
 
     av.xfoil_data = run_xfoil(av.airfoil_data)
 
-    av = guaranteed_convergence_BEM(av)
+    av = static_bem_swirl(av)
 
     av.res["alpha"] = 5 * np.ones(av.prop["nr"])
 
@@ -924,8 +923,8 @@ def main():
     plot_simple_optimised_harmonic(av, 10)
     generate_and_save_propeller_mesh(av, "app/props/twin_conopt.stl")
 
-    chord_locus_alpha(av, np.arange(0, 10, 2), 3)
-    hanson_sweep(av)
+    #chord_locus_alpha(av, np.arange(0, 10, 2), 3)
+    #hanson_sweep(av)
 
     plt.show()
 
@@ -999,4 +998,4 @@ def main2():
 
 
 if __name__ == "__main__":
-    main2()
+    main()

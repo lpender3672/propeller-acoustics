@@ -5,6 +5,7 @@ import numpy as np
 import os
 import sys
 from scipy.optimize import curve_fit, OptimizeWarning
+from scipy import stats
 
 from app.routines import (
     load_prop_from_file,
@@ -33,13 +34,29 @@ def fit_cexp(x, y, initial_guess = [1000, 5, -1000]):
     y = y[sorted_indices]
 
     try:
-        params, _ = curve_fit(cexp, x, y, p0=initial_guess)
+        params, pcov = curve_fit(cexp, x, y, p0=initial_guess)
+        
+        # calc 90% confidence intervals
+        n = len(x)
+        p = len(params)
+        dof = max(0, n - p)
+        
+        # t-value for 90% confidence interval
+        t_value = stats.t.ppf(1.0 - 0.1/2, dof)
+        
+        #  standard errors
+        perr = np.sqrt(np.diag(pcov))
+        
+        # Calculate confidence intervals
+        conf_intervals = []
+        for i, p in enumerate(params):
+            conf_intervals.append([p - t_value * perr[i], p + t_value * perr[i]])
+        
+        return params, conf_intervals
     except RuntimeError:
         
         print("Error: Curve fitting failed. Returning max value.")
-        return [0, 0, np.max(y)]
-    
-    return params
+        return [0, 0, np.max(y)], None
 
 
 def calc_mean_forces(aero_data, tcal_data, qcal_data):
@@ -113,9 +130,9 @@ def calc_aero_coefficients(
 
         full_path = Path(prop_result_path).resolve()
 
-        if 'old' in full_path.parts:
-            continue
-        if 'noprop.prop' in full_path.parts:
+        if ('old' in full_path.parts or
+            'noprop.prop' in full_path.parts or
+            'nonlinear' in full_path.name):
             continue
 
         fprop = full_path.parent.parent / "props" / full_path.name
@@ -164,22 +181,38 @@ def calc_aero_coefficients(
 
         if np.std(CT) / np.mean(CT) > 0.1:
             print(f"Warning: High variance in thrust coefficients for {prop_result_path.name}")
-            params_t = fit_cexp(np.log10(speed_q), CT)
+            params_t, _ = fit_cexp(np.log10(speed_q), CT)
             converged_thrust_coefficient = params_t[0] + params_t[2]
         else:
             converged_thrust_coefficient = np.mean(CT)
         
         # fit torque curve
-        params_q = fit_cexp(np.log10(speed_q), CQ)
+        params_q, bounds_q = fit_cexp(np.log10(speed_q), CQ)
         
         converged_torque_coefficient = params_q[0] + params_q[2]
+
+        # calc improved std_CQ using the confidence intervals
+        improved_std_CQ = None
+        if bounds_q is not None:
+              # [lower, upper]
+            a_bounds = bounds_q[0]
+            c_bounds = bounds_q[2]
+            
+            # coefficient is (a+c)
+            coef_lower = a_bounds[0] + c_bounds[0]
+            coef_upper = a_bounds[1] + c_bounds[1]
+            
+            # z-score (1.645 for 90% confidence)
+            improved_std_CQ = (coef_upper - coef_lower) / (2 * 1.645)
+            # this is rubbish 
+        
         prop_name = prop_result_path.name.replace(".prop", "")
 
         output_aero_coefficients[prop_name] = [
             converged_thrust_coefficient, 
             converged_torque_coefficient,
             np.max(std_CT),  # max standard deviation in thrust coefficient
-            np.max(std_CQ)   # max
+            np.max(std_CQ)  # Improved standard deviation in torque coefficient
         ]
         
     return output_aero_coefficients
