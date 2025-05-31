@@ -42,7 +42,6 @@ def fixed_speed_distance_regression(hdf):
         propf = f'app/props/{propeller}.prop'
         prop = load_prop_from_file(propf)
 
-        # Convert to SI
         omega = group['speed'].values * 2 * np.pi / 60   # rad/s
         r     = group['distance'].values # already in R/rt
 
@@ -52,8 +51,6 @@ def fixed_speed_distance_regression(hdf):
         log_p      = group['SPLref'].values / 20  + np.log10(20e-6)
         log_radius = np.log10(prop['rt'])  # m
 
-        # Remove known physics trends:
-        #   adjusted = log_spl − 2·log_speed + log_distance
         # only -2log radius because distance is already in R/rt
         adjusted = log_p - 2*log_speed + log_distance - 2*log_radius
 
@@ -150,6 +147,7 @@ if __name__ == "__main__":
         filter_dict={
             'harmonic': 4,
             'propeller' : [
+                'dalprop5045',
                 'printed5045',
                 '5045_s15',
                 '5045_s30',
@@ -166,6 +164,7 @@ if __name__ == "__main__":
         'intercept',
         filter_dict={
             'propeller' : [
+                'dalprop5045',
                 'printed5045',
                 '5045_s15',
                 '5045_s30',
@@ -173,9 +172,12 @@ if __name__ == "__main__":
             ],
             'angle_bin': 135
         },
+        fig_size=(8, 6),
         group_by='propeller'
     )
     ax.set_title('')
+    ax.set_xlabel('Harmonic [-]')
+    ax.set_ylabel('$20 \log_{10} G()  $ [dB]')
     fig.savefig('deliverables/final_report/figures/harmonic_sound_sweep_for_135deg.png', dpi=300)
 
     # harmonic variation for different angles
@@ -186,10 +188,13 @@ if __name__ == "__main__":
         filter_dict={
             'propeller' : 'dalprop5045'
         },
-        group_by='angle_bin'
+        group_by='angle_bin',
+        fig_size=(8, 6)
     )
     ax.legend().set_title('Angle [deg]')
     ax.set_title('')
+    ax.set_xlabel('Harmonic [-]')
+    ax.set_ylabel('$20 \log_{10} G()  $ [dB]')
     fig.savefig('deliverables/final_report/figures/harmonic_sound_angle_for_dalprop5045.png', dpi=300)
 
 

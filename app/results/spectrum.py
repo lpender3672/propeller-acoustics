@@ -53,6 +53,9 @@ def plot_motor_comparison_spectrums():
 
     axes[0].set_xlim(0, 10)
     axes[1].set_xlim(0, 10)
+    
+    axes[0].set_ylim(-20, 60)
+    axes[1].set_ylim(-20, 60)
 
     axes[0].set_ylabel('$SPL [dB]$')
     axes[1].set_ylabel('$SPL [dB]$')

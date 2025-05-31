@@ -24,6 +24,7 @@
 \usepackage{subcaption}
 
 \usepackage{amsmath,amssymb}
+\usepackage{adjustbox}
 
 \usepackage[backend=biber,style=numeric]{biblatex}
 \addbibresource{../../allrefs.bib}
@@ -32,6 +33,7 @@
 \usepackage{xr}
 \externaldocument{../tikz/software.tex} % for tikz figures
 
+% 14/312 students proposed their own project
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \title{\vspace{-2cm}Technical Abstract: \textit{Acoustics of Quadcopter Propellers}}
@@ -49,6 +51,8 @@
 \thispagestyle{empty} % No header/footer on title page
 
 \section*{Abstract}
+
+
 
 \newpage
 \tableofcontents
@@ -85,13 +89,24 @@ One such propeller design, commonly referred to as toroidal, features looped bla
 These have been shown experimentally to reduce overall sound pressure level (OASPL) and psychoacoustic annoyance (PA) factors \cite{shima_toroidal}, \cite{ijerph20031955}.
 Such PA factors indicate noise at discrete frequencies, or tones, to be a major source of annoyance in propeller noise \cite{ijerph20031955}. %using an extension of Zwicker's psychoacoustic model \cite{DI2016164}.
 
-Mechanisms for tonal noise reduction of standard propellers through sweep and uneven blade spacing are well understood \cite{hanson_influence}, \cite{DOBRZYNSKI1993123}, \cite{doi:10.2514/3.22938}.
-However this acoustic theory has not been applied to looped designs, which feature unevenly spaced and highly swept blades.
-Looped propellers structure also allows for larger sweep than standard propellers \cite{shima_toroidal}.
+Features such as sweep and uneven blade spacing have been shown to reduce tonal noise by destructive interference \cite{hanson_influence}, \cite{DOBRZYNSKI1993123}, \cite{doi:10.2514/3.22938} \cite{Wiedemann_swept}.
+However, these acoustic benefits come at a performance cost 
+% However this acoustic theory has not been applied to looped designs, which feature unevenly spaced and highly swept blades.
+% Looped propellers structure also allows for larger sweep than standard propellers \cite{shima_toroidal}.
 
 The noise that a given propeller spinning at constant speed emits to an observer is easily measured.
 However, a method to compare this noise to a propeller of different size, speed or blade geometry is not straightforward.
+Such a method is sought after for application to a wide range of operating points and applications.
 
+Hanson \cite{hanson_influence} showed that the far field noise can be reduced through destructive interference by sweeping the blades.
+However, swept blades have reduced lift to drag ratios \cite{bergmann_sweep} and so a tradeoff between noise and performance is expected.
+
+\subsection{Hypotheses}
+
+\begin{itemize}
+    \item Increasing the propeller sweep will increase the destructive interference at some observer positions.
+    \item Comparisons at reference aerodynamic coefficients will show that this reduction in noise is not at the expense of aerodynamic performance.
+\end{itemize}
 
 % why is there a tradeoff 
 
@@ -106,7 +121,7 @@ However, a method to compare this noise to a propeller of different size, speed 
 % hover conditions used throughout. justify this
 
 \begin{itemize}
-    \item To develop comparative measures for drone propeller noise for varying geometry, speed and observer distance.
+    \item To develop a comparative metric for drone propeller noise for varying geometry, speed and observer distance.
     \item To experimentally measure noise for a range of propeller geometries and observer positions.
     \item To compare noise relative to reference aerodynamic performance.
     \item To explore the influence of propeller geometry on noise and aerodynamic performance.
@@ -117,20 +132,21 @@ However, a method to compare this noise to a propeller of different size, speed 
 % sentence about the theory of this report not going into a lot of detail because
 % of the broad scope of the report but will be crucial nevertheless
 
-To develop comparative measures invariant to 
+To develop comparative measures invariant to propeller size and speed, the dependence 
 This section outlines theory behind aerodynamic and acoustic performance of propellers.
 Due to the broad scope of this report, only the central principles will be introduced.
 
 \subsection{Acoustic definitions and relationships}
 % acoustic side
 Sound refers to the observed time varying pressure fluctuation in a medium and is denoted $p'(t)$ with units of Pascals (Pa).
-There are a number of different measures of the sound signal.
-The overall sound pressure level (OASPL) is the root mean square of the sound pressure over time, normalised to a reference pressure.
+There are several measures to quantify a sound signal.
+The overall sound pressure level $(OASPL)$ is the root mean square of the sound pressure over time, normalised to a reference pressure.
 It's expressed logarithmically, as shown in equation \ref{eq:OASPL}.
-The time varying signal can be transformed into the frequency domain 
-Noise at integers, or harmonics, of the blade passage frequency $f_0 = \Omega B/ 2\pi$ will later be shown to be of importance.
+The fourier transform of the sound pressure signal to the frequency domain assists with analysis of interference.
+The noise at integers, or harmonics, of a fundamental frequency $f_0$ will later be shown to be of importance.
+This frequency is known as the blade passing frequency (BPF) and is defined as $f_0 = \Omega B/ 2\pi$, where $\Omega$ is the angular speed of the propeller and $B$ is the blade count.
 The $OASPL_m$ based on the harmonic number $m$ is defined in equation \ref{eq:OASPLm}.
-
+The reference pressure $p_\text{ref}$ is commonly defined as $20 \mu$Pa.
 \begin{equation}
     OASPL = 20 \log_{10} \left( \frac{p_\text{rms}}{p_\text{ref}} \right) \label{eq:OASPL}
 \end{equation}
@@ -140,7 +156,7 @@ The $OASPL_m$ based on the harmonic number $m$ is defined in equation \ref{eq:OA
 \end{equation}
 
 \begin{equation}
-    OASPL_m = 20 \log_{10} \frac{ p_m }{p_\text{ref}} \label{eq:OASPLm} \quad \text{where} \quad p_m^2 = \int^{m f_0 + \varepsilon}_{m f_0 - \varepsilon} PSD(f) df
+    OASPL_m = 20 \log_{10} \left( \frac{ p_m }{p_\text{ref}} \right) \label{eq:OASPLm} \quad \text{where} \quad p_m^2 = \int^{m f_0 + \varepsilon}_{m f_0 - \varepsilon} PSD(f) df
 \end{equation}
 
 % introduce intuitively how the sound pressure level would be expected to vary with speed, diameter, distance
@@ -153,17 +169,42 @@ This means that the sound pressure level will vary with distance in an inverse l
 Equation \ref{eq:expected_plaw} shows the general form of the expected sound pressure level from a propeller.
 
 \begin{equation}
-    p_m = \frac{\rho (r \Omega)^2}{R/r} g(m, \theta, \text{geometry}) \label{eq:expected_plaw}
+    p_m = \frac{\rho (r \Omega)^2}{R/r} |g(m, \theta, \text{geometry})| \label{eq:expected_plaw}
 \end{equation}
 
 Where $g()$ is a non-dimensional function which accounts for directivity of the observer and geometry of the propeller.
 The dependence on $m$ and $\theta$ is due to interference patterns as the propeller is similar in size to the wavelengths of sound that it emits.
-This means sound generated from different pressure differentials along the blade span, or chord, will interfere.
+This means sound generated from different pressure differentials along a propeller blade span, or chord, will interfere.
+Its important to note that this function is the square root of PSD, and so represents the magnitude sound pressure at each frequency.
 To build a picture of the function $g()$ its required to model the sound generated over the entire surface of the propeller.
 
-Hanson \cite{hanson_theory} showed by convecting sources along a helicoidal surface
-that the magnitude of the function $g()$ also depends on the propeller radius $r$ and angular speed $\Omega$.
-Considering only sound generated by the 
+\subsection{Noise Reduction Through Interference}
+
+Hanson \cite{hanson_theory} derived the far field noise by convecting sources along a helicoidal surface.
+His result, simplified for incompressible and zero flight speed, shows the magnitude of $g()$ defined here also depends on the propeller radius $r$ and angular speed $\Omega$.
+The phase of $g()$ is also shown to linearly vary with observer distance.
+The harmonic far field sound is then an integral of spanwise sources with a magnitude and phase.
+The spanwise phase is shown to depend on the local sweep angle.
+The magnitude is scaled by a bessel function which accounts for the modulation of phase with changing observer distance.
+The last term is the magnitude dependent on the sectional coefficient and a chordwise integral.
+The chordwise integral accounts interference of chordwise sources with phases calculated by a chordwise wavenumber $k_x$.
+An increased wavenumber $k_x$ leads to non-compactness where the phases of the sources vary significantly and theres more interference.
+
+It then follows that significant reduction in noise can be achieved by choosing the magnitudes and phases of the sources such that they destructively interfere at the observer.
+Strong peaks in the chordwise lift distribution are explained by Hanson \cite{hanson_influence} to cause compact, large magnitude sources.
+At the tip these high amplitude compact sources are difficult to be cancelled out \cite{hanson_influence}.
+However, these strong suction peaks are a standard feature of performance airfoils 
+and so are difficult to avoid without compromising on aerodynamic performance.
+
+A spanwise sweep distribution can finely tune the phase of the sources along the span.
+However, swept blades have reduced lift to drag ratios \cite{Wiedemann_swept}.
+
+\subsection{Hypotheses}
+
+\begin{itemize}
+    \item Increasing the propeller sweep will increase the destructive interference at some observer positions.
+    \item Comparisons at reference aerodynamic coefficients will show that this reduction in noise is not at the expense of aerodynamic performance.
+\end{itemize}
 
 % aero side
 \subsection{Aerodynamic definitions and relationships}
@@ -235,6 +276,7 @@ And thus to convert the sound pressure level to the reference thrust and torque 
 \begin{equation}
     SPL_{ref} = SPL + 20 \log_{10} \left( \frac{K_Q}{K_T^2} \frac{C_T^2}{C_Q}  \right)
 \end{equation}
+And similar definitions can be made for $OASPL$ and $OASPL_m$.
 
 \begin{table}[H]
     \centering
@@ -247,13 +289,17 @@ And thus to convert the sound pressure level to the reference thrust and torque 
       $M_{\rm tip}$      &      &      & $\displaystyle(\dots)$ \\[6pt]
       \hline
     \end{tabular}
-    \caption{Upper‐right entries are the ratios $X_{\rm eff}/X$ when holding the row-variable constant.}
+    \caption{Upper-right entries are the ratios $X_{\rm eff}/X$ when holding the row-variable constant.}
   \end{table}
+
+
 
 \section{Methodology}
 
 % brief explaination of the overall approach
 % propellers designed using the theoretical model
+
+To investigate the hypotheses for a range of propeller geometries and operating conditions
 
 \subsection{Experimental}
 % where was the testing done
@@ -275,7 +321,8 @@ The testing required high speed rotating propellers which could cause serious in
 The custom 3D printed propellers were expected to be pushed to their material limits and so the risk of failure was high.
 For these reasons, all 3D printed propellers were tested solely in the foam anechoic chamber with the door closed and the operator outside.
 A watchdog timer was enabled with the controller to ensure safe shutdown if any communication from outside the chamber was lost.
-
+A thermistor was attached to the motor to monitor the temperature and prevent overheating.
+This was especially important for the acoustic setup where the motor was enclosed in a foam box.
 
 \subsubsection{Data Collection}
 % software used, majority python, C++
@@ -306,7 +353,7 @@ Load cells to measure induced strain were chosen over null balance scales due to
 Measuring the small torque produced by the motor proved to be a challenge with 3 setups being designed, built and tested before a suitable solution was found.
 This originated from a misunderstanding of the wheatstone bridge layout of strain gauges on the load cells that were purchased for the project.
 The first setup shown in figure \ref{fig:aero1} used two 1kg load cells in series, the second setup \ref{fig:aero2} used a 200g torque cell for increased sensitivity.
-The final setup consisted of a moving platform with ceramic bearings to reduce friction, and the 200g load cell positioned 3cm from the motor shaft.
+The final setup consisted of a free rotating platform on a ceramic bearing to reduce friction, and the 200g load cell positioned 3cm from the motor shaft.
 This gave an upper bound on the torque of 0.0589 Nm.
 
 The data was collected by the software tool for different speeds, following a logarithmic speed pyramid.
@@ -367,6 +414,8 @@ Smaller speeds tested \~4000 RPM could excite this mode and produce noise in the
 % acousic isolation inside the foam box
 % acoustic isolation worsened vibration noise ?
 
+A significant limitation of the acoustic setup was the motor temperature 
+
 % box vs no box
 % floor test
 
@@ -424,23 +473,20 @@ The audio data was calibrated by correcting the transformed signal by the interp
 % frequency domain interpolation of microphone calibration data
 
 % method of integrating harmonics and definition pf HSPL
-The harmonics had to be numerically integrated according to equation \ref{eq:OASPLm}.
+The harmonics had to be numerically integrated to obtain $OASPL_m$ from equation \ref{eq:OASPLm}.
 Despite the Hanning window, spectral leakage still caused the broadening of the harmonic peaks.
-The frequency bin width is $ \Delta = 51200 / 56000 = 0.914$ Hz, and numerical integration between $ m f_0 \pm 2 \Delta $ 
-captures the harmonic peak.
+The frequency bin width is $ \Delta = 51200 / 56000 = 0.914$ Hz, and numerical integration between the bounds $ m f_0 \pm 2 \Delta $ 
+was found to capture the peak.
 This corresponds to $\pm2$ frequency bins around the harmonic centre frequency $m f_0$.
 
-
 % log regression of distance and speed
-Equation \ref{eq:expected_plaw} can be rewritten logarithmically
-
+Equation \ref{eq:expected_plaw} can be rewritten logarithmically.
 \begin{equation}
-    \frac{OASPL_m}{20} = \beta_\Omega \log_{10}(\Omega) + \beta_r \log_{10}(r_t) +  \beta_R \log_{10}(R) + \log_{10} \left( \frac{g(m, \theta, \text{geometry})}{p_\text{ref}} \right)
+    \log_{10}(p_m) = \beta_\Omega \log_{10}(\Omega) + \beta_r \log_{10}(r_t) +  \beta_R \log_{10}(R) + \log_{10}  g(m, \theta, \text{geometry}) 
 \end{equation}
-
 Due to limitations of the setup, testing a wide enough range of propeller radii was not possible and so the radius coefficient $\beta_r$ was set to 3.
 The other coefficients $\beta_\Omega$, $\beta_R$ and the $\log_{10}(g)$ term were determined by the logarithmic regression of the experimental data.
-
+The experimental value for $g()$ will be referred to as $G()$.
 
 \subsection{Propeller Design Tool}
 
@@ -515,7 +561,7 @@ The propellers were otherwise identical to the printed 5045 for consistency.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.99\textwidth]{../figures/sweep_series.pdf}
+    \includegraphics[width=0.8\textwidth]{../figures/sweep_series.pdf}
     \caption{Swept propeller designs used in the project.}
     \label{fig:sweep_series}
 \end{figure}
@@ -526,6 +572,8 @@ The propellers were otherwise identical to the printed 5045 for consistency.
     \caption{Looped propeller designs used in the project.}
     \label{fig:loop_series}
 \end{figure}
+
+A highly swept $60^\circ$ propeller was also designed and printed, but broke.
 
 \section{Results and Discussion}
 
@@ -637,18 +685,6 @@ This demonstrates destructive interference between the motor noise and the prope
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figures/stream_spectrum_plot.pdf}
-    \caption{Spectrum of the dalprop 5045 propeller at 12000 RPM.}
-    \label{fig:stream_spectrum}
-\end{figure}
-
-Figure \ref{fig:stream_spectrum} shows audio spectrums for the same distance of 10 blade diameters, but at different observer angles.
-At $180^\circ$, the microphone lies in the propeller wake and so there is a higher steady state pressure level from the stagnation of flow on the microphone.
-It was expected for the broadband noise to be higher due to turbulence far downstream of the propeller,
-but this was not observed.
-
-\begin{figure}[H]
-    \centering
     \includegraphics[width=0.8\textwidth]{../figures/spl_speed_variation.pdf}
     \caption{OASPL of the dalprop 5045 propeller }
     \label{fig:spl_speed_variation}
@@ -682,7 +718,7 @@ The size of the marker represents the relative standard deviation of the residua
 At low harmonics, the speed coefficient is close to the expected value of 2 for many angles.
 The angle of 157.5 degrees shows a small deviation in residuals, indicating a strong fit, and the highest 
 dependence on speed.
-This is thought to be due to increased constructive interference occuring at higher speeds
+This must be due to increased constructive interference occuring at higher speeds
 At higher harmonics the coefficient decreases below 2 for all angles indicating destructive interference.
 Another observation is that at higher harmonics, there is typically higher variation in the residuals, indicating a worse fit.
 This worse fit could be due to speed or distance dependence.
@@ -694,23 +730,69 @@ However, its also evident that testing was not done far enough away from the pro
 At $\theta=180^\circ$, the microphone is in the propeller wake where the sound is dominated by turbulent velocity which is an 8th power law \cite{lighthill_1952}.
 The strongly negative distance coefficient shown in figure \ref{fig:distance_coefficient_for_angles_harmonics} is due to both this and the turbulent wake velocity distance dependence.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/hanson_speed_dependence.pdf}
+    \caption{Hanson's function $g$ against speed for harmonics 1 and 6}
+    \label{fig:hanson_speed_dependence}
+\end{figure}
+
+Figure \ref{fig:hanson_speed_dependence} shows the function $g$ derived from Hansons theory gainst speed for an observer at $\theta = 135^\circ$.
+The speed dependence shows an initially strong positive dependence on speed, before decreasing to an inverse dependence.
+The speed at which the transition occurs reduces with increasing harmonic number.
+This is thought to explain the overshoot in speed coefficient at low harmonics shown in figure \ref{fig:speed_coefficient_for_angles_harmonics}.
+This also explains the subsequent decrease at higher harmonics as the fit is dominated by the negative speed dependence.
 
 % size of harmonics becoming insignificant?
 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figures/harmonic_sound_angle_for_dalprop5045.pdf}
-    \caption{Variation of sound with harmonic for various observer angles for the dalprop 5045 propeller.}
-    \label{fig:harmonic_sound_angle_for_dalprop5045}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/harmonic_hanson_angle_for_dalprop5045.pdf}
+        \caption{Theoretical}
+        \label{fig:harmonic_hanson_angle_for_dalprop5045}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/harmonic_sound_angle_for_dalprop5045.pdf}
+        \caption{Experimental}
+        \label{fig:harmonic_sound_angle_for_dalprop5045}
+    \end{subfigure}
+    \caption{Theoretical and experimental harmonic interference for the dalprop5045 at different observer angles.}
 \end{figure}
+
+Figures \ref{fig:harmonic_hanson_angle_for_dalprop5045} and \ref{fig:harmonic_sound_angle_for_dalprop5045} show the theoretical and experimental harmonic interference for the dalprop 5045 propeller at different observer angles.
+Theory predicts the harmonic noise at $\theta=180^\circ, 0^\circ$ to be negligible, which is why these are not seen in figure \ref{fig:harmonic_hanson_angle_for_dalprop5045}.
+The experimental results show a strong presence of noise at $180^\circ$, which could be due to turbulence from the propeller not accounted for in the theory.
+However, as discussed previously, the noise on this microphone is thought to be dominated by the turbulent wake itself.
+The noise at $0^\circ$ is also seen in the experimental results to be significant in magnitude, differing from theory, which is not understood.
+The theoretical results and experimental results agree that noise at all harmonics and the angle $157.5^\circ$ are the highest, ignoring the $180^\circ$ and $0^\circ$ angles.
+It also agrees that the noise at $90^\circ$ is the lowest.
+Theory finds the noise at $135^\circ$ to be higher than that at $112.5^\circ$ but the experimental results show the opposite.
+Another observation is that the experimental results show a decreasing trend in noise with increasing harmonic number.
+The reason for this is also not understood, as it cant be due to broadband. It could however be due to interference from another noise source.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{../figures/harmonic_sound_sweep_for_135deg.pdf}
-    \caption{Variation of sound with harmonic for differently swept propellers at $\theta = 135^\circ$.}
-    \label{fig:harmonic_sound_sweep_for_135deg}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/harmonic_hanson_sweep_for_135deg.pdf}
+        \caption{Theoretical}
+        \label{fig:harmonic_hanson_sweep_for_135deg}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/harmonic_sound_sweep_for_135deg.pdf}
+        \caption{Experimental}
+        \label{fig:harmonic_sound_sweep_for_135deg}
+    \end{subfigure}
+    \caption{Theoretical and experimental harmonic interference for differently swept propellers at $\theta = 135^\circ$.}
 \end{figure}
+
+Figures \ref{fig:harmonic_hanson_sweep_for_135deg} and \ref{fig:harmonic_sound_sweep_for_135deg} show the theoretical and experimental harmonic interference for the differently swept propellers at $\theta = 135^\circ$.
+
 
 \begin{figure}[H]
     \centering
@@ -814,7 +896,7 @@ Alongside the improvements mentioned in the previous section, there are a number
             P_{Dm} \\
             P_{Lm}
         \end{bmatrix} = - \frac{\rho_0 (r_t \Omega)^2}{4\pi (R / r_t)} \exp\left(jmB \left( \frac{\Omega R}{c_0} - \frac{\pi}{2} \right)\right) \\
-        \times \int_0^1 z^2 \exp \left(j \left(k_y \frac{FA}{b} + k_x \frac{MCA}{b}\right) \right) J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right) \begin{bmatrix}
+        \times \int_0^1 z^2 \exp \left(j z \frac{r_t}{b} \left(k_y \sin \gamma + k_x \cos \gamma\right) \right) J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right) \begin{bmatrix}
             k_x^2 t_b \Psi_V(k_x) \\
             jk_x (C_D / 2) \Psi_D(k_x) \\
             -jk_y (C_L / 2) \Psi_L(k_x)
@@ -826,9 +908,15 @@ Alongside the improvements mentioned in the previous section, there are a number
 The terms $k_x$ and $k_y$ represent non-dimensional wavenumbers in the $x$ and $y$ directions respectively.
 
 \begin{equation}
-    k_x = \frac{mB b}{r_0}, \quad
+    k_x = \frac{mB b}{z r_t}, \quad
     k_y = \frac{mB\Omega b}{z c_0} \cos \theta, \quad
 \end{equation}
+
+\begin{equation}
+    \Psi_L(k_x) = \int_{-1/2}^{1/2} L(X) \exp(jk_x X) dX
+\end{equation}
+$\Psi$ is the chordwise spatial fourier transform of the respective sectional thickness, drag and lift distributions.
+The distributions are normalised such that $\Psi(0) = 1$.
 
 \subsection{Comparison of swirl and tiploss for BEM}
 

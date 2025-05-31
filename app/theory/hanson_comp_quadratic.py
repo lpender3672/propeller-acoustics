@@ -209,10 +209,15 @@ def useless_plots(rdf):
                           'angle_bin':135,
                           'distance' : (19, 21)})
     
-    fdf.plot.bar(
-        x='propeller', y=['FMbem', 'FM'], 
-        title='Hanson Noise vs SPL for Harmonic 1 at 135 degrees'
+    ax = fdf.plot.bar(
+        x='propeller', y=['CT', 'CQ'], 
+        title='Hanson Noise vs SPL for Harmonic 1 at 135 degrees',
+        ylabel='Coefficient [-]',
+        xlabel='Propeller',
     )
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    plt.tight_layout()
+    return
 
     fdf.plot.bar(
         x='propeller', y=['SPLhanson', 'intercept'], 
@@ -277,6 +282,45 @@ def useful_plots(rdf):
 
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
+    fig, ax = multi_function_plot(
+        rdf,
+        'harmonic',
+        'SPLhanson',
+        filter_dict={
+            'propeller' : [
+                'dalprop5045',
+                'printed5045',
+                '5045_s15',
+                '5045_s30',
+                '5045_s45'
+            ],
+            'angle_bin': 135
+        },
+        fig_size=(8, 6),
+        group_by='propeller'
+    )
+    ax.set_title('')
+    ax.set_xlabel('Harmonic [-]')
+    ax.set_ylabel('$20 \log_{10} g()$ [dB]')
+    fig.savefig('deliverables/final_report/figures/harmonic_hanson_sweep_for_135deg.png', dpi=300)
+
+    fig, ax = multi_function_plot(
+        rdf,
+        'harmonic',
+        'SPLhanson',
+        filter_dict={
+            'propeller' : 'dalprop5045'
+        },
+        group_by='angle_bin',
+        fig_size=(8, 6),
+    )
+    ax.legend().set_title('Angle [deg]')
+    ax.set_title('')
+    ax.set_xlabel('Harmonic [-]')
+    ax.set_ylabel('$20 \log_{10} g()  $ [dB]')
+    ax.set_ylim(-160, -20)
+    fig.savefig('deliverables/final_report/figures/harmonic_hanson_angle_for_dalprop5045.png', dpi=300)
+
 
 def hanson_speed_dependence():
     
@@ -332,7 +376,7 @@ def hanson_speed_dependence():
     ax.set_xlabel('$\Omega$ [rad/s]')
     ax.set_ylabel('$\log_{10} g()$ [dB]')
 
-    fig.savefig('deliverables/final_report/figures/hanson_speed_dependence.png', bbox_inches='tight')
+    fig.savefig('deliverables/final_report/figures/hanson_speed_dependence.png', bbox_inches='tight', dpi=300)
 
 
 def main():
@@ -356,14 +400,22 @@ def main():
     rdf = rdf.merge(tdf, on=['propeller', 'angle_bin', 'harmonic'], how='left')
     rdf = merge_aero_coeffs(rdf, aero_coeffs)
 
+    print(rdf.head())
     print(rdf.columns)
+
+    rdf_filt = filter_df(rdf, {'harmonic': 1, 'angle_bin': 135, 'distance': (19, 21)})
+    rdf_filt = rdf_filt.drop(columns=['distance', 'r_squared', 'residual_std', 'harmonic'])
+
+    print(rdf_filt)
     useful_plots(rdf)
+    useless_plots(rdf)
 
      
 
 if __name__ == "__main__":
 
-    hanson_speed_dependence()
+    main()
+    #hanson_speed_dependence()
 
     plt.show()
 

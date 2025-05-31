@@ -293,6 +293,8 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
     CTs = np.empty(total_rows)
     CQs = np.empty(total_rows)
     FMs = np.empty(total_rows)
+    currents = np.empty(total_rows)
+    temperatures = np.empty(total_rows)
     
     # Process data and fill arrays
     row_idx = 0
@@ -369,6 +371,8 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         angles[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 2], harmonics)  # angle from mic state file
         distances[row_idx:row_idx + nnext] = np.repeat(mic_data[:, 3], harmonics)  # distance from mic state file
         distances[row_idx:row_idx + nnext] /= 1e3 * prop["rt"]  # normalize distance by propeller radius
+        currents[row_idx:row_idx + nnext] = np.repeat(row["current"], nnext)
+        temperatures[row_idx:row_idx + nnext] = np.repeat(row["temperature"], nnext)
 
         CTs[row_idx:row_idx + nnext] = CT
         CQs[row_idx:row_idx + nnext] = CQ
@@ -424,7 +428,9 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         'SPLref': ndhspl_values,
         'CT': CTs,
         'CQ': CQs,
-        'FM': FMs
+        'FM': FMs,
+        'current': currents,
+        'temperature': temperatures
     })
 
     # Save processed data to cache if caching is enabled
