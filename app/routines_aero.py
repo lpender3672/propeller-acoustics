@@ -136,7 +136,8 @@ def calc_aero_coefficients(
         mean_speed, mean_thrust, mean_torque = calc_mean_forces(
             aero_data, tcal_data, qcal_data
         )
-        #std_speed, std_thrust, std_torque = calc_std_forces(aero_data, tcal_data, qcal_data)
+
+        std_speed, std_thrust, std_torque = calc_std_forces(aero_data, tcal_data, qcal_data)
 
         rt = prop["rt"]
         A = np.pi * rt**2
@@ -146,15 +147,27 @@ def calc_aero_coefficients(
 
         speed_t = mean_speed[mask_t]
         thrust = mean_thrust[mask_t]
+        std_thrust_filtered = std_thrust[mask_t]
 
         speed_q = mean_speed[mask_q]
         torque = mean_torque[mask_q]
+        std_torque_filtered = std_torque[mask_q]
 
         # compute coefficients
         CT = thrust / (rho * A * speed_t**2 * rt**2)
         CQ = torque / (rho * A * speed_q**2 * rt**3)
+        
+        # compute standard deviations in coefficients
+        # std_CT = CT * (std_thrust/thrust)
+        std_CT = CT * (std_thrust_filtered / thrust)
+        std_CQ = CQ * (std_torque_filtered / torque)
 
-        converged_thrust_coefficient = np.mean(CT)
+        if np.std(CT) / np.mean(CT) > 0.1:
+            print(f"Warning: High variance in thrust coefficients for {prop_result_path.name}")
+            params_t = fit_cexp(np.log10(speed_q), CT)
+            converged_thrust_coefficient = params_t[0] + params_t[2]
+        else:
+            converged_thrust_coefficient = np.mean(CT)
         
         # fit torque curve
         params_q = fit_cexp(np.log10(speed_q), CQ)
@@ -163,7 +176,11 @@ def calc_aero_coefficients(
         prop_name = prop_result_path.name.replace(".prop", "")
 
         output_aero_coefficients[prop_name] = [
-            converged_thrust_coefficient, converged_torque_coefficient]
+            converged_thrust_coefficient, 
+            converged_torque_coefficient,
+            np.max(std_CT),  # max standard deviation in thrust coefficient
+            np.max(std_CQ)   # max
+        ]
         
     return output_aero_coefficients
 
@@ -177,4 +194,4 @@ if __name__ == "__main__":
     rho=1.225,
     )
     print(aerocoeffs)
-    
+

@@ -1,5 +1,3 @@
-
-
 # this file will assume quadratic chordwise distributions
 # and perform the static swirl analysis for lift and drag.
 
@@ -189,14 +187,25 @@ def parse_tdf(hdf):
 def merge_aero_coeffs(df, aero_coeffs):
     # merge the aero coefficients into the dataframe
 
-    #aero_coeffs is a dict
-    # with key 'propeller' : [CQ, CT]
+    # aero_coeffs is a dict
+    # with key 'propeller' : [CQ, CT, std_CT, std_CQ]
 
-    aero_coeffs_df = pd.DataFrame.from_dict(aero_coeffs, orient='index', columns=['CT', 'CQ'])
+    aero_coeffs_df = pd.DataFrame.from_dict(aero_coeffs, orient='index', columns=['CT', 'CQ', 'std_CT', 'std_CQ'])
     aero_coeffs_df.index.name = 'propeller'
     aero_coeffs_df.reset_index(inplace=True)
 
     aero_coeffs_df['FM'] = (aero_coeffs_df['CT'] ** (3/2)) / (np.sqrt(2) * aero_coeffs_df['CQ'])
+    
+    # For FM = CT^(3/2) / (sqrt(2) * CQ)
+    # standard error propagation
+    # dFM/dCT = 3/2 * CT^(1/2) / (sqrt(2) * CQ)
+    # dFM/dCQ = -CT^(3/2) / (sqrt(2) * CQ^2)
+    
+    dFM_dCT = 3/2 * aero_coeffs_df['CT']**(1/2) / (np.sqrt(2) * aero_coeffs_df['CQ'])
+    dFM_dCQ = -aero_coeffs_df['CT']**(3/2) / (np.sqrt(2) * aero_coeffs_df['CQ']**2)
+    
+    var_FM = (dFM_dCT**2 * aero_coeffs_df['std_CT']**2) + (dFM_dCQ**2 * aero_coeffs_df['std_CQ']**2)
+    aero_coeffs_df['std_FM'] = np.sqrt(var_FM)
 
     # merge
     rdf = df.merge(aero_coeffs_df, on='propeller', how='left')
@@ -209,14 +218,43 @@ def useless_plots(rdf):
                           'angle_bin':135,
                           'distance' : (19, 21)})
     
-    ax = fdf.plot.bar(
-        x='propeller', y=['CT', 'CQ'], 
-        title='Hanson Noise vs SPL for Harmonic 1 at 135 degrees',
-        ylabel='Coefficient [-]',
-        xlabel='Propeller',
+    # Create a figure and axis for the CT and CQ plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    x = np.arange(len(fdf['propeller']))
+    width = 0.35
+    ct_bars = ax.bar(x - width/2, fdf['CT'], width, label='CT', color='#1f77b4')
+    ax.errorbar(x - width/2, fdf['CT'], yerr=fdf['std_CT'], fmt='none', ecolor='black', capsize=5)
+    cq_bars = ax.bar(x + width/2, fdf['CQ'], width, label='CQ', color='#ff7f0e')
+    ax.errorbar(x + width/2, fdf['CQ'], yerr=fdf['std_CQ'], fmt='none', ecolor='black', capsize=5)
+    
+    ax.set_xlabel('Propeller')
+    ax.set_ylabel('Coefficient [-]')
+    ax.set_xticks(x)
+    ax.set_xticklabels(fdf['propeller'], rotation=45)
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    
+    fig.tight_layout()
+    fig.savefig(
+        'deliverables/final_report/figures/CT_CQ_bar.pdf',
     )
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
-    plt.tight_layout()
+
+    # Create a figure and axis for the FM plot with error bars
+    fig, ax = plt.subplots(figsize=(10, 6))
+    fm_bars = ax.bar(x, fdf['FM'], width=0.5, color='#2ca02c')
+    ax.errorbar(x, fdf['FM'], yerr=fdf['std_FM'], fmt='none', ecolor='black', capsize=5)
+    
+    ax.set_xlabel('Propeller')
+    ax.set_ylabel('Figure of Merit [-]')
+    ax.set_xticks(x)
+    ax.set_xticklabels(fdf['propeller'], rotation=45)
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    
+    fig.tight_layout()
+    fig.savefig(
+        'deliverables/final_report/figures/FM_bar.pdf',
+    )
+    
     return
 
     fdf.plot.bar(
@@ -302,7 +340,7 @@ def useful_plots(rdf):
     ax.set_title('')
     ax.set_xlabel('Harmonic [-]')
     ax.set_ylabel('$20 \log_{10} g()$ [dB]')
-    fig.savefig('deliverables/final_report/figures/harmonic_hanson_sweep_for_135deg.png', dpi=300)
+    fig.savefig('deliverables/final_report/figures/harmonic_hanson_sweep_for_135deg.pdf')
 
     fig, ax = multi_function_plot(
         rdf,
@@ -319,7 +357,7 @@ def useful_plots(rdf):
     ax.set_xlabel('Harmonic [-]')
     ax.set_ylabel('$20 \log_{10} g()  $ [dB]')
     ax.set_ylim(-160, -20)
-    fig.savefig('deliverables/final_report/figures/harmonic_hanson_angle_for_dalprop5045.png', dpi=300)
+    fig.savefig('deliverables/final_report/figures/harmonic_hanson_angle_for_dalprop5045.pdf')
 
 
 def hanson_speed_dependence():
@@ -376,7 +414,7 @@ def hanson_speed_dependence():
     ax.set_xlabel('$\Omega$ [rad/s]')
     ax.set_ylabel('$\log_{10} g()$ [dB]')
 
-    fig.savefig('deliverables/final_report/figures/hanson_speed_dependence.png', bbox_inches='tight', dpi=300)
+    fig.savefig('deliverables/final_report/figures/hanson_speed_dependence.pdf', bbox_inches='tight')
 
 
 def main():
@@ -416,7 +454,7 @@ if __name__ == "__main__":
 
     main()
     #hanson_speed_dependence()
-
+    plt.tight_layout()
     plt.show()
 
 

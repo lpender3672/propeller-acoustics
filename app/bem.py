@@ -318,7 +318,7 @@ def main():
     #av = static_bem(av)
 
     fig, axes = compare_tilloss_and_swirl(av)
-    fig.savefig('deliverables/final_report/figures/bem_comparison.png', dpi=300, bbox_inches='tight')
+    fig.savefig('deliverables/final_report/figures/bem_comparison.pdf', bbox_inches='tight')
     plt.show()
 
 

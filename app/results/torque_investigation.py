@@ -141,8 +141,7 @@ if __name__ == "__main__":
     )
 
     fig.savefig(
-        'deliverables/final_report/figures/controller_vs_loadcell_torque.png',
-        dpi=300
+        'deliverables/final_report/figures/controller_vs_loadcell_torque.pdf',
     )
 
     plt.show()

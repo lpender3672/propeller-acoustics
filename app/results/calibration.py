@@ -53,10 +53,10 @@ def plot_loadcell_calibration(cal_data):
 
             # build a safe filename, e.g. Sensor_A_thrust.png
             safe_name = sensor.replace(" ", "_")
-            filename = f"{safe_name}_{cal_label.lower()}.png"
+            filename = f"{safe_name}_{cal_label.lower()}.pdf"
             path = output_dir / filename
             fig.tight_layout()
-            fig.savefig(path, bbox_inches='tight', dpi=300)
+            fig.savefig(path, bbox_inches='tight')
             plt.close(fig)
 
 def plot_microphone_calibration(raw_calib_data):
@@ -87,8 +87,7 @@ def plot_microphone_calibration(raw_calib_data):
 
     fig.tight_layout()
     fig.savefig(
-        'deliverables/final_report/figures/microphone_calibration.png',
-        dpi=300
+        'deliverables/final_report/figures/microphone_calibration.pdf',
     )
 
 

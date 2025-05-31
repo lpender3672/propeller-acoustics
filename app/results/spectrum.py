@@ -70,7 +70,7 @@ def plot_motor_comparison_spectrums():
     axes[1].legend()
 
     fig.savefig(
-        "deliverables/final_report/figures/spectrum_plot.png", dpi=300
+        "deliverables/final_report/figures/spectrum_plot.pdf"
     )
 
 
@@ -91,7 +91,7 @@ def plot_stream_comparison_spectrums():
     ax.legend()
 
     fig.savefig(
-        "deliverables/final_report/figures/stream_spectrum_plot.png", dpi=300
+        "deliverables/final_report/figures/stream_spectrum_plot.pdf"
     )
 
 

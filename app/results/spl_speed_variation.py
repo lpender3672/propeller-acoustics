@@ -92,8 +92,7 @@ if __name__ == "__main__":
     ax.set_title("")
     ax.legend().set_title("Distance [-]")
     fig.savefig(
-        'deliverables/final_report/figures/spl_speed_variation.png',
-        dpi=300
+        'deliverables/final_report/figures/spl_speed_variation.pdf',
     )
 
     plot_hrmsndp_speed(hdf)

@@ -228,7 +228,7 @@ def sweep_comparison_plot(cal_data):
     ax[1].legend(loc="upper left")
 
     fig.savefig(
-        "deliverables/final_report/figures/sweep_aero_coeffs.png", dpi=300
+        "deliverables/final_report/figures/sweep_aero_coeffs.pdf"
     )
 
 
@@ -236,16 +236,16 @@ def printed_comparison_plot(cal_data):
 
     fig, ax = plt.subplots(2, 1, sharex=True)
 
-    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 5045")
-    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 5045")
-    plot_prop("app/results/dalprop5045bnr.prop", ax[0], ax[1], cal_data, label="dalprop 5045 3 blade")
-    plot_prop("app/results/printed5045bnr.prop", ax[0], ax[1], cal_data, label="printed 3 blade")
+    plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop5045")
+    plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed5045")
+    plot_prop("app/results/dalprop5045bnr.prop", ax[0], ax[1], cal_data, label="dalprop5045bnr")
+    plot_prop("app/results/printed5045bnr.prop", ax[0], ax[1], cal_data, label="printed5045bnr")
 
     ax[0].set_xlabel('')
     ax[1].legend(loc="upper left")
 
     fig.savefig(
-        "deliverables/final_report/figures/printed_aero_coeffs.png", dpi=300
+        "deliverables/final_report/figures/printed_aero_coeffs.pdf"
     )
 
 
@@ -262,7 +262,7 @@ def diameter_comparison_plot(cal_data):
     ax[1].legend(loc="upper left")
 
     fig.savefig(
-        "deliverables/final_report/figures/diameter_aero_coeffs.png", dpi=300
+        "deliverables/final_report/figures/diameter_aero_coeffs.pdf"
     )
 
 def looped_comparison_plot(cal_data):
@@ -277,7 +277,7 @@ def looped_comparison_plot(cal_data):
     ax[1].legend(loc="upper left")
 
     fig.savefig(
-        "deliverables/final_report/figures/looped_aero_coeffs.png", dpi=300
+        "deliverables/final_report/figures/looped_aero_coeffs.pdf"
     )
 
 def FoM_comparison_plot(cal_data):

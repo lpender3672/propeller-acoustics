@@ -215,7 +215,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
 
     mic_calibration_data = load_microphone_calibration()
 
-    KT, KQ = np.mean(list(aero_coefficients.values()), axis=0)
+    KT, KQ, _, _ = np.mean(list(aero_coefficients.values()), axis=0)
     reference_FOM = KT ** (3/2) / (2 ** (1/2) * KQ)
 
     # Generate a unique hash for the lookup_df and aero_coefficients
@@ -320,7 +320,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         bpf_hz = speed_hz * prop['B']
         propeller_name = prop_path.name.replace(".prop", "")
         try:
-            CT, CQ = aero_coefficients[propeller_name]
+            CT, CQ, _, _ = aero_coefficients[propeller_name]
         except KeyError:
             print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
             continue

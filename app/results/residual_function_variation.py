@@ -178,7 +178,7 @@ if __name__ == "__main__":
     ax.set_title('')
     ax.set_xlabel('Harmonic [-]')
     ax.set_ylabel('$20 \log_{10} G()  $ [dB]')
-    fig.savefig('deliverables/final_report/figures/harmonic_sound_sweep_for_135deg.png', dpi=300)
+    fig.savefig('deliverables/final_report/figures/harmonic_sound_sweep_for_135deg.pdf')
 
     # harmonic variation for different angles
     fig, ax = multi_function_plot(
@@ -195,10 +195,10 @@ if __name__ == "__main__":
     ax.set_title('')
     ax.set_xlabel('Harmonic [-]')
     ax.set_ylabel('$20 \log_{10} G()  $ [dB]')
-    fig.savefig('deliverables/final_report/figures/harmonic_sound_angle_for_dalprop5045.png', dpi=300)
+    fig.savefig('deliverables/final_report/figures/harmonic_sound_angle_for_dalprop5045.pdf')
 
 
     fig, ax = plot_sound_FOM(results, aero_coeffs)
-    fig.savefig('deliverables/final_report/figures/prop_sound_FOM.png', dpi=300)
+    fig.savefig('deliverables/final_report/figures/prop_sound_FOM.pdf')
 
     plt.show()
