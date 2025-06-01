@@ -467,10 +467,15 @@ Seven GRAS 46BL microphones were sampled at a rate of 51.2 kHz from a National I
 Four microphones were mounted to stands at key angles $0^\circ$, $180^\circ$ and two at $90^\circ$ but at different azimuthal angles.
 The remaining three were mounted on a movable gantry with two at a fixed distance either side from the central microphone.
 For each propeller and distance, the gantry was moved between three equally spaced angular positions $[112.5^\circ, 135^\circ, 157.5^\circ]$.
-A diagram showing the floor plan of the setup is shown in figure \ref{fig:mfloor_plan}.
+A diagram showing the floor plan of the setup is shown in figure \ref{fig:floor_plan}.
 At each position, an audio pyramid test was performed which, similar to the aerodynamic pyramid,
 records audio at logarithmically increasing and decreasing speed values .
 A piece of string was attached from the gantry to below the propeller to ensure the same distance was maintained at each gantry position.
+
+The far field is where $R/r >> r \cdot mf_0 / c_0$.
+For a propeller of radius 8cm spinning at 17000 RPM the far field approximation would start to break down for the first harmonic at
+$ R/r \approx 0.4$. At the 10th harmonic this would be $R/r \approx 4$.
+
 
 \begin{figure}
     
@@ -735,6 +740,10 @@ Comparing 3D printed versions of the dalprop designs show a reduction of 25\% an
 Figure \ref{fig:prop_fms} shows the figure of merit for all propellers tested.
 The error bars are propagated from the errors in thrust and torque coefficient shown in figure \ref{fig:prop_aero_coeffs}.
 
+The 5045\_s45 propeller is shown to have the highest figure of merit at 0.83.
+The value is significantly higher than the similar geometry 5045\_s30, which shows a reduction from the 5045\_s15.
+This high value is thought to be an error in the measurement of the torque for this propeller.
+Theory shows the reduction  \cite{bergmann_sweep}
 
 The reference values for the thrust and torque coefficients were chosen to be the average coefficients accross all propellers tested.
 This gives $K_T = 0.01535$ and $K_Q = 0.002812$ for a reference figure of merit of $FM_\text{ref} = 0.4781$.
@@ -765,18 +774,10 @@ An obvious square power law can be seen from the data, with OASPL also increasin
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[t]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/speed_coefficient_for_angles_harmonics.pdf}
-        \caption{Speed coefficient}
-        \label{fig:speed_coefficient_for_angles_harmonics}
-    \end{subfigure}
-    \begin{subfigure}[t]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/distance_coefficient_for_angles_harmonics.pdf}
-        \caption{Distance coefficient}
-        \label{fig:distance_coefficient_for_angles_harmonics}
-    \end{subfigure}
+    \includegraphics[width=0.8\textwidth]{../figures/speed_coefficient_for_angles_harmonics.pdf}
+    \caption{Speed coefficient}
+    \label{fig:speed_coefficient_for_angles_harmonics}
+        
     \caption{Power law coefficients for various observer angles and harmonics for the dalprop 5045 propeller.}
 \end{figure}
 
@@ -793,13 +794,6 @@ At higher harmonics the coefficient decreases below 2 for all angles indicating 
 Another observation is that at higher harmonics, there is typically higher variation in the residuals, indicating a worse fit.
 This worse fit could be due to speed or distance dependence.
 
-The distance coefficient is shown to be negative for nearly all angles and harmonics but varies significantly.
-This is partly due to the narrow range and number of logarithmic distances tested.
-However, its also evident that testing was not done far enough away from the propeller.
-
-At $\theta=180^\circ$, the microphone is in the propeller wake where the sound is dominated by turbulent velocity, known to be an 8th power law \cite{lighthill_1952}.
-The strongly negative distance coefficient shown in figure \ref{fig:distance_coefficient_for_angles_harmonics} is due to both this and the turbulent wake velocity distance dependence.
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{../figures/hanson_speed_dependence.pdf}
@@ -812,6 +806,21 @@ The speed dependence shows an initially strong positive dependence on speed, bef
 The speed at which the transition occurs reduces with increasing harmonic number.
 This is thought to explain the overshoot in speed coefficient at low harmonics shown in figure \ref{fig:speed_coefficient_for_angles_harmonics}.
 This also explains the subsequent decrease at higher harmonics as the fit is dominated by the negative speed dependence.
+The high frequency part of the graph is due to a lack of spanwise resolution in the integration.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/distance_coefficient_for_angles_harmonics.pdf}
+    \caption{Distance coefficient}
+    \label{fig:distance_coefficient_for_angles_harmonics}
+\end{figure}
+
+The distance coefficients in figure \ref{fig:distance_coefficient_for_angles_harmonics} are shown to be negative for nearly all angles and harmonics but varies significantly.
+This is partly due to the narrow range and number of logarithmic distances tested.
+
+At $\theta=180^\circ$, the microphone is in the propeller wake where the sound is dominated by turbulent velocity, known to be an 8th power law \cite{lighthill_1952}.
+The strongly negative distance coefficient shown in figure \ref{fig:distance_coefficient_for_angles_harmonics} is due to both this and the turbulent wake velocity distance dependence.
+
 
 % size of harmonics becoming insignificant?
 
@@ -834,7 +843,7 @@ This also explains the subsequent decrease at higher harmonics as the fit is dom
 \end{figure}
 
 Figures \ref{fig:harmonic_hanson_angle_for_dalprop5045} and \ref{fig:harmonic_sound_angle_for_dalprop5045} show the theoretical and experimental harmonic interference for the dalprop 5045 propeller at different observer angles.
-Theory predicts the harmonic noise at $\theta=180^\circ and 0^\circ$ to be negligible, which is why these are not seen in figure \ref{fig:harmonic_hanson_angle_for_dalprop5045}.
+Theory predicts the harmonic noise at $\theta=180^\circ$ and $0^\circ$ to be negligible, which is why these are not seen in figure \ref{fig:harmonic_hanson_angle_for_dalprop5045}.
 The experimental results show a strong presence of noise at $180^\circ$, which could be due to turbulence from the propeller not accounted for in the theory.
 However, as discussed previously, the noise on this microphone is thought to be dominated by the turbulent wake itself.
 The noise at $0^\circ$ is also seen in the experimental results to be significant in magnitude, differing from theory, which is not understood.
@@ -906,6 +915,8 @@ Figure \ref{fig:prop_sound_FOM} shows the OASPL against the figure of merit for 
 % results show ... ?
 % agreement between theory and experiment
 
+% Careful consideration of experimental was considered and 
+
 \subsection{Improvements}
 
 \subsubsection{Experimental Setup}
@@ -935,6 +946,7 @@ Figure \ref{fig:prop_sound_FOM} shows the OASPL against the figure of merit for 
 \subsection{Future Work}
 Alongside the improvements mentioned in the previous section, there are a number of avenues for future work.
 % what questions were left unanswered
+The comparative measure discussed can be implemented in an objective function 
 
 % design work
 % optimisation work of designs using an objective function
