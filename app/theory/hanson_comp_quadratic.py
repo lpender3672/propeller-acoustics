@@ -28,7 +28,8 @@ from app.routines_audio import (
 )
 from app.routines_aero import (
     calc_aero_coefficients,
-    load_cell_calibration
+    load_cell_calibration,
+    merge_aero_coeffs
 )
 
 from app.results.graphing_tools import (
@@ -184,33 +185,6 @@ def parse_tdf(hdf):
 
     return tdf
 
-def merge_aero_coeffs(df, aero_coeffs):
-    # merge the aero coefficients into the dataframe
-
-    # aero_coeffs is a dict
-    # with key 'propeller' : [CQ, CT, std_CT, std_CQ]
-
-    aero_coeffs_df = pd.DataFrame.from_dict(aero_coeffs, orient='index', columns=['CT', 'CQ', 'std_CT', 'std_CQ'])
-    aero_coeffs_df.index.name = 'propeller'
-    aero_coeffs_df.reset_index(inplace=True)
-
-    aero_coeffs_df['FM'] = (aero_coeffs_df['CT'] ** (3/2)) / (np.sqrt(2) * aero_coeffs_df['CQ'])
-    
-    # For FM = CT^(3/2) / (sqrt(2) * CQ)
-    # standard error propagation
-    # dFM/dCT = 3/2 * CT^(1/2) / (sqrt(2) * CQ)
-    # dFM/dCQ = -CT^(3/2) / (sqrt(2) * CQ^2)
-    
-    dFM_dCT = 3/2 * aero_coeffs_df['CT']**(1/2) / (np.sqrt(2) * aero_coeffs_df['CQ'])
-    dFM_dCQ = -aero_coeffs_df['CT']**(3/2) / (np.sqrt(2) * aero_coeffs_df['CQ']**2)
-    
-    var_FM = (dFM_dCT**2 * aero_coeffs_df['std_CT']**2) + (dFM_dCQ**2 * aero_coeffs_df['std_CQ']**2)
-    aero_coeffs_df['std_FM'] = np.sqrt(var_FM)
-
-    # merge
-    rdf = df.merge(aero_coeffs_df, on='propeller', how='left')
-    return rdf
-
 
 def useless_plots(rdf):
 
@@ -332,12 +306,11 @@ def useful_plots(rdf):
             ],
             'angle_bin': 135
         },
-        fig_size=(8, 6),
         group_by='propeller'
     )
     ax.set_title('')
     ax.set_xlabel('Harmonic [-]')
-    ax.set_ylabel('$20 \log_{10} g()$ [dB]')
+    ax.set_ylabel('$20 \log_{10} |g()|$ [dB]')
     fig.savefig('deliverables/final_report/figures/harmonic_hanson_sweep_for_135deg.pdf')
 
     fig, ax = multi_function_plot(
@@ -348,12 +321,11 @@ def useful_plots(rdf):
             'propeller' : 'dalprop5045'
         },
         group_by='angle_bin',
-        fig_size=(8, 6),
     )
     ax.legend().set_title('Angle [deg]')
     ax.set_title('')
     ax.set_xlabel('Harmonic [-]')
-    ax.set_ylabel('$20 \log_{10} g()  $ [dB]')
+    ax.set_ylabel('$20 \log_{10} |g()|  $ [dB]')
     ax.set_ylim(-160, -20)
     fig.savefig('deliverables/final_report/figures/harmonic_hanson_angle_for_dalprop5045.pdf')
 
@@ -410,7 +382,7 @@ def hanson_speed_dependence():
     ax.legend()
     ax.set_ylim(-120, -20)
     ax.set_xlabel('$\Omega$ [rad/s]')
-    ax.set_ylabel('$\log_{10} g()$ [dB]')
+    ax.set_ylabel('$\log_{10} |g()|$ [dB]')
 
     fig.savefig('deliverables/final_report/figures/hanson_speed_dependence.pdf', bbox_inches='tight')
 

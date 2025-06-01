@@ -454,8 +454,10 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
 
     mic_calibration_data = load_microphone_calibration()
 
-    KT, KQ = np.mean(list(aero_coefficients.values()), axis=0)
+    KT, KQ, _, _ = np.mean(list(aero_coefficients.values()), axis=0)
     reference_FOM = KT ** (3/2) / (2 ** (1/2) * KQ)
+
+    print(KT, KQ, reference_FOM)
 
     # Generate a unique hash for the lookup_df and aero_coefficients
     cache_key = _generate_cache_key(lookup_df, aero_coefficients, reference_FOM)
@@ -525,6 +527,7 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
     rms_values = np.empty(total_rows)
     spl_values = np.empty(total_rows)
     ndspl_values = np.empty(total_rows)
+    ref_offsets = np.empty(total_rows)
     
     # Process data and fill arrays
     row_idx = 0
@@ -549,7 +552,7 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
             
         propeller_name = prop_path.name.replace(".prop", "")
         try:
-            CT, CQ = aero_coefficients[propeller_name]
+            CT, CQ, _, _ = aero_coefficients[propeller_name]
         except KeyError:
             print(f"Warning: No aero coefficients found for {propeller_name}. Skipping.")
             continue
@@ -581,6 +584,8 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
         ref_offset = 20 * np.log10(
             KQ / CQ * (CT / KT) ** 2
         )
+
+        ref_offsets[row_idx:row_idx + total_channels] = ref_offset
         
         num_mics = len(mic_data)
         for i in range(num_mics):
@@ -617,7 +622,8 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
         'distance': distances,
         'RMS': rms_values,
         'OASPL': spl_values,
-        'OASPLref': ndspl_values
+        'OASPLref': ndspl_values,
+        'reference' : ref_offsets
     })
 
     # Save processed data to cache if caching is enabled

@@ -425,8 +425,8 @@ if __name__ == "__main__":
     ax.set_xlabel(r'$m$ [-]')
     ax.legend().set_title('Angle [deg]')
     ax.axhline(2, color='black', linestyle='--', label='Expected')
-    fig.savefig('deliverables/final_report/figures/speed_coefficient_for_angles_harmonics.png',
-                    dpi = 300)
+    fig.savefig('deliverables/final_report/figures/speed_coefficient_for_angles_harmonics.pdf',
+                    )
     
     fig, ax = multi_function_plot(coeff_df,
                         x_var='harmonic',
@@ -445,8 +445,8 @@ if __name__ == "__main__":
     # hide legend
     ax.legend().set_visible(False)
     #ax.legend().set_title('Angle [deg]')
-    fig.savefig('deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.png',
-                    dpi = 300)
+    fig.savefig('deliverables/final_report/figures/distance_coefficient_for_angles_harmonics.pdf',
+                    )
     
 
     coeff_df2 = speed_distance_OASPL_regression(sdf)

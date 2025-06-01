@@ -2,6 +2,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import os
 import sys
 from scipy.optimize import curve_fit, OptimizeWarning
@@ -165,19 +166,22 @@ def calc_aero_coefficients(
         speed_t = mean_speed[mask_t]
         thrust = mean_thrust[mask_t]
         std_thrust_filtered = std_thrust[mask_t]
+        std_speed_t = std_speed[mask_t]
 
         speed_q = mean_speed[mask_q]
         torque = mean_torque[mask_q]
         std_torque_filtered = std_torque[mask_q]
+        std_speed_q = std_speed[mask_q]
 
-        # compute coefficients
         CT = thrust / (rho * A * speed_t**2 * rt**2)
         CQ = torque / (rho * A * speed_q**2 * rt**3)
         
-        # compute standard deviations in coefficients
-        # std_CT = CT * (std_thrust/thrust)
-        std_CT = CT * (std_thrust_filtered / thrust)
-        std_CQ = CQ * (std_torque_filtered / torque)
+        rel_error_CT = np.sqrt((std_thrust_filtered/thrust)**2 + (2*std_speed_t/speed_t)**2)
+        std_CT = CT * rel_error_CT
+        
+        rel_error_CQ = np.sqrt((std_torque_filtered/torque)**2 + (2*std_speed_q/speed_q)**2)
+        std_CQ = CQ * rel_error_CQ
+        std_CQ = CQ * rel_error_CQ
 
         if np.std(CT) / np.mean(CT) > 0.1:
             print(f"Warning: High variance in thrust coefficients for {prop_result_path.name}")
@@ -216,6 +220,33 @@ def calc_aero_coefficients(
         ]
         
     return output_aero_coefficients
+
+def merge_aero_coeffs(df, aero_coeffs):
+    # merge the aero coefficients into the dataframe
+
+    # aero_coeffs is a dict
+    # with key 'propeller' : [CQ, CT, std_CT, std_CQ]
+
+    aero_coeffs_df = pd.DataFrame.from_dict(aero_coeffs, orient='index', columns=['CT', 'CQ', 'std_CT', 'std_CQ'])
+    aero_coeffs_df.index.name = 'propeller'
+    aero_coeffs_df.reset_index(inplace=True)
+
+    aero_coeffs_df['FM'] = (aero_coeffs_df['CT'] ** (3/2)) / (np.sqrt(2) * aero_coeffs_df['CQ'])
+    
+    # For FM = CT^(3/2) / (sqrt(2) * CQ)
+    # standard error propagation
+    # dFM/dCT = 3/2 * CT^(1/2) / (sqrt(2) * CQ)
+    # dFM/dCQ = -CT^(3/2) / (sqrt(2) * CQ^2)
+    
+    dFM_dCT = 3/2 * aero_coeffs_df['CT']**(1/2) / (np.sqrt(2) * aero_coeffs_df['CQ'])
+    dFM_dCQ = -aero_coeffs_df['CT']**(3/2) / (np.sqrt(2) * aero_coeffs_df['CQ']**2)
+    
+    var_FM = (dFM_dCT**2 * aero_coeffs_df['std_CT']**2) + (dFM_dCQ**2 * aero_coeffs_df['std_CQ']**2)
+    aero_coeffs_df['std_FM'] = np.sqrt(var_FM)
+
+    # merge
+    rdf = df.merge(aero_coeffs_df, on='propeller', how='left')
+    return rdf
 
 if __name__ == "__main__":
 
