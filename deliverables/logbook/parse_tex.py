@@ -1,24 +1,5 @@
 import re
 
-def escape_latex(s):
-    """
-    Escapes LaTeX special characters in a string.
-    """
-    replacements = {
-        '&': r'\&',
-        '%': r'\%',
-        '$': r'\$',
-        '#': r'\#',
-        '_': r'\_',
-        '{': r'\{',
-        '}': r'\}',
-        '~': r'\textasciitilde{}',
-        '^': r'\textasciicircum{}',
-        '\\': r'\textbackslash{}',
-    }
-    pattern = re.compile('|'.join(re.escape(key) for key in replacements.keys()))
-    return pattern.sub(lambda match: replacements[match.group()], s)
-
 def parse_git_log_with_numstat(input_file, output_file):
     with open(input_file, 'r') as f:
         lines = f.readlines()
@@ -34,18 +15,24 @@ def parse_git_log_with_numstat(input_file, output_file):
             current = {'files': []}
         elif '|' in line and 'files' in current:
             parts = [x.strip() for x in line.split('|')]
-            current['date'], current['author'], current['message'] = parts
-        elif line and line[0].isdigit():
+            if len(parts) == 3:
+                current['date'], current['author'], current['message'] = parts
+            else:
+                print(f"Skipping malformed commit line: {line}")
+        elif line and current.get('files') is not None and line[0].isdigit() or line.startswith('-'):
             parts = line.split('\t')
             if len(parts) == 3:
                 added, removed, filename = parts
                 try:
-                    current['files'].append((int(added), int(removed), filename))
+                    added = int(added) if added != '-' else 0
+                    removed = int(removed) if removed != '-' else 0
+                    current['files'].append((added, removed, filename))
                 except ValueError:
-                    continue
+                    print(f"Skipping non-numeric line: {line}")
     if current:
         entries.append(current)
 
+    # Write LaTeX output
     with open(output_file, 'w') as f:
         f.write(r"""\documentclass{article}
 \usepackage{longtable}
@@ -58,6 +45,8 @@ def parse_git_log_with_numstat(input_file, output_file):
 
 """)
         for entry in entries:
+            if 'date' not in entry or 'author' not in entry or 'message' not in entry:
+                continue
             f.write(r"\section*{" + f"{escape_latex(entry['date'])} --- {escape_latex(entry['author'])}" + "}\n")
             f.write(r"\textbf{Message:} " + escape_latex(entry['message']) + "\n\n")
             if entry['files']:
@@ -68,14 +57,3 @@ def parse_git_log_with_numstat(input_file, output_file):
                 f.write(r"\end{longtable}" + "\n\n")
 
         f.write(r"\end{document}")
-
-if __name__ == "__main__":
-
-    # first run the command
-    # git log --date=short --pretty=format:"--COMMIT--%n%ad | %an | %s%n" --numstat > deliverables/logbook/detailed_commits.txt
-
-    input_file = 'deliverables/logbook/detailed_commits.txt'  # Replace with your actual git log file
-    output_file = 'deliverables/logbook/logbook.tex'
-    parse_git_log_with_numstat(input_file, output_file)
-    print(f"Logbook written to {output_file}")
-

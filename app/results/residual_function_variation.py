@@ -14,6 +14,7 @@ from app.routines import (
 )
 from app.results.graphing_tools import (
     multi_function_plot,
+    filter_df
 )
 
 from app.routines_aero import (
@@ -113,7 +114,7 @@ def fixed_speed_distance_regression_oaspl(sdf):
         # Log10 values
         log_speed    = np.log10(omega)
         log_distance = np.log10(r)
-        log_p      = group['OASPLref'].values / 20  + np.log10(20e-6)
+        log_p      = group['OASPL'].values / 20  + np.log10(20e-6)
         log_radius = np.log10(prop['rt'])  # m
 
         # only -2log radius because distance is already in R/rt
@@ -140,6 +141,7 @@ def fixed_speed_distance_regression_oaspl(sdf):
             'intercept':          intercept_db,
             'r_squared':          r_squared,
             'residual_std':       std_res,
+            'reference' : group['reference'].values[0],
             #'residual_std_norm':  std_norm
         })
 
@@ -170,7 +172,7 @@ def plot_sound_FOM(hdf, aero_data):
             'harmonic': harmonic,
             'angle_bin': angle,
         },
-        fig_size=(8, 5),
+        fig_size=(8, 4),
         group_by='propeller'
     )
 
@@ -255,8 +257,81 @@ def hdf_plots(hdfr, aero_coeffs):
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     ax.set_title('')
     fig.tight_layout()
+    #fig.savefig('deliverables/final_report/figures/prop_sound_FOM.pdf')
+
+
+def plot_oaspl_ref_propellers(sdf):
+
+    print(sdf.columns)
+    print(sdf['reference'].values)
+
+    fdf = filter_df(sdf, {'angle_bin':135,
+                          })
+
+    # Create a figure and axis for the CT and CQ plot
+    fig, ax = plt.subplots(figsize=(6, 5))
+    x = np.arange(len(fdf['propeller']))
+    width = 0.7
+    OASPL_bars = ax.bar(x, fdf['intercept'], width,
+                        label='$20\log_{10} g$ [dB]',
+                        color="#0095ff", alpha=0.7)
+    ref_bars = ax.bar(x + width/4, fdf['reference'], width,  fdf['intercept'],
+                       label=r'$20 \log_{10} \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4$',
+                         color="#ff6600", alpha=0.7)
+    #ct_bars = ax.bar(x + width/2, fdf['OASPLref'], width, label='CT', color='#1f77b4')
+
+    ax.set_xlabel('Propeller')
+    ax.set_ylabel('Reference interference factor [dB]')
+    ax.set_xticks(x)
+    ax.set_xticklabels(fdf['propeller'], rotation=60)
+    ax.legend(loc='upper right')
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+    ax.set_ylim(5, -70)
+    
+    fig.tight_layout()
+    fig.savefig(
+        'deliverables/final_report/figures/OASPLref_bar.pdf',
+    )
+
+def plot_fm_oaspl_propellers(sdfr):
+
+    fig, ax = multi_function_plot(
+        sdfr,
+        'FM',
+        'intercept',
+        filter_dict={
+            'angle_bin': 135,
+            'propeller' : [
+                '5045_s15',
+                '5045_s30',
+                '5045_s45',
+                '50loop_s50',
+                #'dalprop4045',
+                'dalprop5045',
+                'dalprop5045bnr',
+                'dalprop6045',
+                'foxeer_toroidal',
+                'printed5045',
+                'printed5045bnr'
+            ]
+        },
+        fig_size=(6, 4),
+        group_by='propeller',
+        max_groups=11
+    )
+
+    # set x and y labels
+    ax.set_xlabel('FM [-]')
+    ax.set_ylabel('Interference factor $20\log_{10}g()$ [dB]')
+
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax.set_title('')
+    fig.tight_layout()
+
     fig.savefig('deliverables/final_report/figures/prop_sound_FOM.pdf')
 
+    return fig, ax
 
 def sdf_plots(sdfr, aero_data):
 
@@ -322,5 +397,8 @@ if __name__ == "__main__":
 
     hdf_plots(hdfr, aero_coeffs)
     sdf_plots(sdfr, aero_coeffs)
+
+    plot_oaspl_ref_propellers(sdfr)
+    plot_fm_oaspl_propellers(sdfr)
 
     plt.show()

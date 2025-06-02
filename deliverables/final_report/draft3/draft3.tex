@@ -56,6 +56,20 @@
 \section*{Abstract}
 
 
+As drones become increasingly integrated into commercial and urban environments,
+their acoustic signatures has emerged as a barrier to public acceptance and regulatory approval.
+Propeller noise, often tonal and high-pitched, reaches high psychoacoustic annoyance factors and has proven difficult to mitigate without compromising aerodynamic performance.
+This report compares two promising blade geometries—blade sweep and toroidal (looped) designs—for reducing propeller noise while maintaining efficiency.
+To enable fair comparisons, acoustic metrics are scaled to fixed reference thrust and torque coefficients using an effective radius and tip speed.
+
+Experiments were conducted in an anechoic chamber using custom-built rigs to measure thrust, torque, and far-field sound pressure levels for a range of 3D printed propeller geometries.
+Strong agreement was found between measured aerodynamic performance and theoretical power-law scaling with speed.
+Similarly, acoustic measurements followed expected scaling with distance and tip speed
+Among the tested designs, both swept and certain looped blades achieved reduction in overall noise;
+however, these were offset by reductions in aerodynamic efficiency.
+The quietest propeller overall was the largest tested, despite the dimensionless analysis.
+%A theoretical framework is developed based on Hanson's blade loading noise model to define an interference factor, which captures the directional and harmonic structure of radiated sound.
+%This is combined with aerodynamic performance metrics through a novel scaling law that enables comparison of noise emissions at fixed reference thrust and torque coefficients.
 
 \newpage
 \tableofcontents
@@ -109,8 +123,8 @@ The noise that a given propeller spinning at constant speed emits to an observer
 However, a method to compare this noise to a propeller of different size, speed or blade geometry is not straightforward.
 Such a method is sought after for application to a wide range of operating points and applications.
 
-Hanson \cite{hanson_influence} showed that the far field noise can be reduced through destructive interference by sweeping the blades.
-However, swept blades have reduced lift to drag ratios \cite{bergmann_sweep} and so a tradeoff between noise and performance is expected.
+%Hanson \cite{hanson_influence} showed that the far field noise can be reduced through destructive interference by sweeping the blades.
+%However, swept blades have reduced lift to drag ratios \cite{bergmann_sweep} and so a tradeoff between noise and performance is expected.
 
 % why is there a tradeoff 
 
@@ -135,8 +149,8 @@ However, swept blades have reduced lift to drag ratios \cite{bergmann_sweep} and
 \subsection{Hypotheses}
 
 \begin{itemize}
-    \item Increasing the propeller sweep will increase the destructive interference at some observer positions.
-    \item Comparisons at reference aerodynamic coefficients will show that this reduction in noise is not at the expense of aerodynamic performance.
+    \item Toroidal propellers will have reduced noise compared to standard propellers.
+    \item The benefits of noise reduction are outweighed by the a performance cost.
 \end{itemize}
 
 \section{Theory}
@@ -202,13 +216,16 @@ This will be done by a log regression on pressure data.
     \log_{10}(p_m) = \beta_\Omega \log_{10}(\Omega) + \beta_r \log_{10}(r_t) +  \beta_R \log_{10}(R) + \log_{10}  g(m, \theta, \text{geometry}) 
 \end{equation}
 %With the coefficients set to $2$ and $-1$ an experimental version of $g()$ is found by least squares regression.
+The coefficients $\beta_\Omega$, $\beta_r$ and $\beta_R$ are fixed to the expected values of $2$, $1$ and $-1$ for plots of g().
 Its also possible to build a theoretical picture of the function $g()$ by considering sound generated over the entire surface of the propeller.
 
 \subsection{Noise Reduction Through Interference}
 
+This section is secondary to the main objective of performance comparison, but provides insight into the mechanisms behind noise reduction.
 Hanson \cite{hanson_theory} derived the far field noise by convecting sources along a helicoidal surface.
 His result, simplified for incompressible and hover conditions, provides a mathematical expression for our defined interference factor.
-This also neglects noise terms due to turbulence, drag and thickness terms.
+This also neglects noise terms due to turbulence which is beyond the scope of this report.
+Noise due to drag and thickness terms are negligible compared to the lift noise.
 
 \begin{equation}
     \begin{aligned}
@@ -252,15 +269,20 @@ However, swept blades have reduced lift to drag ratios \cite{Wiedemann_swept}.
 % aero side
 \subsection{Aerodynamic definitions and relationships}
 % explain the origin of thrust and torque
+To compare the noise for propellers of different aerodynamic abilities, it is required to characterise this performance ability.
 The thrust of a propeller is the axial force exerted by the air on the propeller due to imparted momentum and profile losses.
 The torque is the rotational force exerted by the air on the propeller and is a result of imparted angular momentum to the air and profile losses.
+The shaft power is the product of the torque and angular speed.
 % origin of aerodynamic coefficients static hover
 It then follows that the thrust force can be normalised by the same dynamic pressure term, multiplied by the propeller area $A$.
 The torque is due to aerodynamic forces acting at the same length scale from the axis and so is normalised by an additional radius.
 \begin{equation}
-    C_T = \frac{T}{\frac{1}{2} \rho (r_t\Omega)^2 A} \quad \quad \quad C_Q = \frac{Q}{\frac{1}{2} \rho (r_t\Omega)^2 A r_t} \label{eq:CT_CQ}
+    C_T = \frac{T}{\frac{1}{2} \rho (r_t\Omega)^2 A} \quad \quad \quad C_Q = \frac{Q}{\frac{1}{2} \rho (r_t\Omega)^2 A r_t} \quad \quad \quad C_P = \frac{P}{\frac{1}{2} \rho (r_t\Omega)^2 A r_t \Omega} \label{eq:CT_CQ}
 \end{equation}
 The normalised quantities are known as the thrust and torque coefficients $C_T$ and $C_Q$ respectively.
+The shaft power is similar to the torque coefficient normalised by an additional speed term, which is equivalent at hover conditions.
+
+
 Typically, the efficiency is defined as the ratio of propulsive power to the input power.
 \begin{equation}
     \eta = \frac{2 V}{V + V_e}
@@ -285,21 +307,21 @@ Substituting this into the equation \ref{eq:FM_raw} and using definitions of thr
 \subsection{Comparison at reference aerodynamic coefficients}
 % relate the two sides of theory and explain how they are linked
 % reiterate the objective of reducing noise for a given efficiency
-Following previous definitions, the objective can now be better defined to reduce the SPL for a given FOM.
-A propeller of any design can be scaled to have the same FOM as another propeller.
+Following previous definitions, the objective can now be better defined to reduce the SPL for a given FM.
+A propeller of any design can be scaled to have the same FM as another propeller.
 However, due to practical limitations this is not always possible. 
-This means that a clever way to normalise the SPL relative to the FOM is required.
+This means that a clever way to normalise the SPL relative to the FM is required.
 % explain the effective radius that equates the figures of merit for different propellers
 % this effective radius non dimensionalises the sound pressure level
 % allowing us to compare the acoustic to efficiency of different propellers
 
-A propeller can be scaled differently and spun at a different speed such that its thrust and torque coefficients equal reference values.
+A propeller can be scaled differently and spun at a different speed such that its thrust and power coefficients equal reference values.
 Consider the real propeller coefficients $C$ and reference coefficients $K$ at which the sound pressure is to be compared at.
 The subscripts $T$ and $Q$ are for thrust and torque respectively.
 The ratio of this effective radius $r_{ef}$ to the actual radius $r_t$ can be found from the definition of the coefficients themselves in equation \ref{eq:CT_CQ}.
 
 \begin{equation}
-    \frac{r_{ef}}{r_t} = \frac{C_Q}{C_T}\frac{K_T}{K_Q}
+    \frac{r_{ef}}{r_t} = \frac{FM}{FM_\text{ref}}
 \end{equation}
 
 Similarly, the ratio of effective speed $\Omega_{ef}$ to the actual speed $\Omega$ can be found by substituting the previous result.
@@ -311,27 +333,17 @@ Similarly, the ratio of effective speed $\Omega_{ef}$ to the actual speed $\Omeg
 And thus to convert the sound pressure level to the reference thrust and torque coefficients,
 
 \begin{equation}
-    p'_{ref} = p' \left(\frac{r_{ef}}{r_t}\right)^3 \left( \frac{\Omega_{ef}}{\Omega}\right)^2 = p' \frac{K_Q}{K_T^2} \frac{C_T^2}{C_Q} 
+    p'_{ref} = p' \left(\frac{r_{ef}}{r_t}\right)^3 \left( \frac{\Omega_{ef}}{\Omega}\right)^2 = p' \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4
 \end{equation}
 
 \begin{equation}
-    SPL_{ref} = SPL + 20 \log_{10} \left( \frac{K_Q}{K_T^2} \frac{C_T^2}{C_Q}  \right)
+    SPL_{ref} = SPL + 20 \log_{10} \left( \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4  \right)
 \end{equation}
 And similar definitions can be made for $OASPL$ and $OASPL_m$.
+This can extend to any acoustic metric calculated from pressure data, including psychoacoustic annoyance (PA) factors.
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|c|c|c|c|c|}
-      \hline
-      & $C_Q$ & $M_{\rm tip}$ & $Re_{\rm tip}$ \\ 
-      \hline
-      $C_T$              & $\frac{C_Q'}{C_Q}\left(\frac{C_T}{C_T'}\right)^2$ & $ \frac{M'}{M}\sqrt{\frac{C_T}{C_T'}} $ & $\displaystyle(\dots)$ \\[6pt]
-      $C_Q$              &      & $\displaystyle(\dots)$ & $\displaystyle(\dots)$ \\[6pt]
-      $M_{\rm tip}$      &      &      & $\displaystyle(\dots)$ \\[6pt]
-      \hline
-    \end{tabular}
-    \caption{Varying reference quantities at which to compare the sound pressure level. The $'$ denotes the reference value at which the sound pressure is to be compared at. The quantity in the table is the scale factor at which to multiply the sound pressure to convert it to the reference value.}
-  \end{table}
+However, its most useful to compare the dimensionless interference factor $g$ at reference aerodynamic coefficients.
+The regressed interference factor $g$ can then be objectively compared between different propellers.
 
 \section{Methodology}
 
@@ -674,32 +686,7 @@ However, there is still variation outside of these error bars, indicating out of
 The torque due to the propeller is calculated from subtracting the no load torque from the measured propeller.
 However, the no load torque at all speeds were measured to be negligible on the calibration curves.
 This is likely due to smaller forces required to overcome friction of motor bearings compared to ceramic platform bearings.
-
-The motors phase currents are measured by the controller and are used to calculate a torque producing current, $I$.
-A torque constant $k_Q$, covered in more detail in the appendix \ref{sec:appendix_motor_calibration}, can then be used to calculate torque.
-
-\begin{equation}
-    Q = k_Q (I_\text{load}  - I_\text{noload}) \label{eq:torque_from_current}
-\end{equation}
-
-The equation is expected to be accurate for small motor currents and temperatures where load and noload losses are similar.
-The presence of a control system, increasing the current to maintain speed when there are increased losses, further complicates the relationship.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../figures/controller_vs_loadcell_torque.pdf}
-    \caption{Torque measured by calibrated load cell compared to torque calculated from measured motor current for the dalprop 5045bnr propeller.}
-    \label{fig:controller_vs_loadcell_torque}
-\end{figure}
-
-Figure \ref{fig:controller_vs_loadcell_torque} shows the torque power law with speed.
-Two points at each speed are shown which represents the measurements both on the way up and down the speed pyramid.
-The load cell measurements are below the expected square power law for small values, likely due to similar friction in the bearings.
-For high values of torque, the measurements agree with the power law.
-The current calculated torque shows a strong agreement with the power law over the full range of speeds.
-These values also agree within 7\% of the calibrated load cell values
-This could be used at low torque values which were unable to be read by the load cell.
-
+Torque can also be calculated from motor current, as described in the appendix \ref{sec:appendix_motor_calibration}.
 
 \begin{figure}[H]
     \centering
@@ -750,7 +737,10 @@ The thrust coefficient for dalprop5045bnr is 86\% higher than the similar dalpro
 Intuitively, a 50\% in coefficients would be expected from the additional blade.
 This could be explained by reduced tip losses from the additional blade \cite{prandtl_loss}.
 Comparing 3D printed versions of the dalprop designs show a reduction of 25\% and 48\% in thrust coefficient for 2 and 3 bladed models respectively.
+This is thought to be due to thicker airfoil sections reducing lift and drag coefficients near the tips.
 
+The reference values for the thrust and torque coefficients were chosen to be those of the dalprop5045.
+This gives $K_T = 0.01535$ and $K_Q = 0.002812$ for a reference figure of merit of $FM_\text{ref} = 0.4781$.
 
 \begin{figure}[H]
     \centering
@@ -767,9 +757,7 @@ The value is significantly higher than the similar geometry 5045\_s30, which sho
 This reduction is thought to be due to reduced lift and drag coefficients acting at higher sweep angles.
 The high FM of 5045\_s45 is then thought to be an error in the measurement of the torque for this propeller.
 This can easily originate from the curve fitting of the asymptote to the torque coefficients.
-
-The reference values for the thrust and torque coefficients were chosen to be the average coefficients accross all propellers tested.
-This gives $K_T = 0.01535$ and $K_Q = 0.002812$ for a reference figure of merit of $FM_\text{ref} = 0.4781$.
+Despite reduction in aerodynamic coefficients of the 3D printed propellers, the figure of merits appear slightly higher.
 
 \subsection{Acoustic performance}
 
@@ -799,6 +787,171 @@ Figure \ref{fig:spl_speed_variation} shows OASPL against speed at $\theta = 180^
 An obvious square power law can be seen from the data, with OASPL also increasing with decreasing distance.
 The distance 18.1 blade radii shows audio data that was indexed ahead of the motor data, which was meant to be corrected for,
 However, in this case it was 2 indexes ahead and so went unnoticed.
+In the appendix $OASPL_m$ is shown to have a reduced coefficient with speed, however the $OASPL$ depends on the dominant harmonics and so does not show the same dependence \ref{sec:appendix_harmonic_interference}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/spl_distance_variation.pdf}
+    \caption{OASPL of the dalprop 5045 propeller against distance for a range of speeds.}
+    \label{fig:spl_distance_variation}
+\end{figure}
+
+Figure \ref{fig:spl_distance_variation} shows the OASPL against distance for the dalprop 5045 propeller.
+The inverse law is most apparent at high speeds, with the OASPL decreasing with increasing distance.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/prop_sound_FOM.pdf}
+    \caption{Interference factor $20\log_{10}(g)$ for $\theta = 135^\circ$ against figure of merit for all propeller designs.}
+    \label{fig:prop_sound_FOM}
+\end{figure}
+
+Figure \ref{fig:prop_sound_FOM} shows the interference factor against the figure of merit for all propeller designs.
+The graph shows a diverse range of interference factors and figures of merit.
+
+The dalprop5045bnr shows the highest noise, where the other 3 bladed design printed5045bnr shows noise similar to swept designs.
+The additional blade is expected to increase the noise.
+The points are scattered and do not show any kind of trend or tradeoff associated between noise and efficiency.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/OASPLref_bar.pdf}
+    \caption{}
+    \label{fig:OASPLref_bar}
+\end{figure}
+
+Figure \ref{fig:OASPLref_bar} shows the OASPL for the various propellers with dalprop5045 reference coefficients.
+The vertical axis is flipped and so represents decreased noise.
+Higher figure of merits than the standard dalprop5045 decrease the sound pressure level to the reference point, where low figure of merits reduce the sound pressure level.
+The two smaller swept designs show increased reference interference factors to the standard dalprop5045.
+The highly swept 45 degree propeller showed little OASPL reduction below its counterpart and its incorrect small torque measurement gives it high efficiency, reducing the reference interference factor to be the quietest.
+The foxeer looped propeller recieves a penalty for its smaller figure of merit which is not able to be offset by its reduced noise.
+Similarly, the 50loop\_s50 propeller which was already louder than the reference dalprop5045 recieves a penalty for its low figure of merit.
+This shows the looped propellers show worse performance adjusted noise emissions than the standard propellers.
+The larger radius dalprop6045 propeller is believed to be the quietest propeller after ignoring the believed error in 5045\_s45.
+Its important to remember however, that this noise is relative to its size and speed.
+
+The magnitudes of the corrective comparative factors, relative to the changes in the reference interference factor indicate
+that its significantly easier to reduce noise by increasing efficiency than it is to increase efficiency by reducing noise.
+% load cell calibration graphs
+
+% aerodynamic coefficient graphs
+
+% figure of merit graphs
+
+% microphone calibration graphs?
+
+% spectrum of 2 and 3 blades
+% identify bpf harmonics, 50hz electrical noise, motor ppf, broadband turbulence
+
+% speed varying graphs
+% distance varying graphs
+
+% coefficient graphs?
+% f graph
+
+
+\section{Conclusion}
+
+% a lot of testing was done
+% software tools and experimental apparatus were developed
+% results show ... ?
+% agreement between theory and experiment
+
+This report has presented the key acoustic and aerodynamic performance metrics for propellers.
+The definition of effective radius and speed allow for comparison of different propeller noise at reference thrust and torque coefficients.
+Theory is discussed involving an interference factor which is shown to have more complex dependence than intuitively expected.
+Experimental setups are carefully designed to investigate the relationships and apply the comparative measures.
+Strong agreement with expected powerlaws are observed for aerodynamic thrust and torque with speed.
+Acoustic sound pressure level also agreed with expected power laws for distance and speed.
+Analysis of results was unable to find a clear tradeoff between noise and efficiency, however was able to compare
+the performance of the swept and looped designs.
+Reductions in noise were observed for swept and one of the looped designs, however the reduction in FM was not able to be offset by the reduction in noise.
+The quietest propeller was found to also be the largest propeller tested, the dalprop6045, after disregarding the error in the 5045\_s45 propeller.
+
+% Careful consideration of experimental was considered and 
+
+\subsection{Improvements}
+
+% better experimental setup
+% sample longer audio recording and use welches method
+% better motor vibration isolation (belt driven)
+% the dynamic balancing of rotating bodies to reduce motor vibration
+% massively better load cells and faster sampling rates
+
+\begin{itemize}
+    \item Sample longer audio recordings and use Welch's method to improve frequency resolution.
+    \item Better isolate motor vibration, driving the propeller with a belt drive.
+    \item Dynamically balance rotating bodies to reduce motor vibration.
+    \item A factory calibrated 6 axis load cell such as ATI Mini43 would provide both improved accuracy and precision in the thrust and torque measurements.
+        An improved data acquisition system would also allow for faster sampling rates to investigate motor cogging.
+\end{itemize}
+
+% better theoretical models
+%% accounting for swirl and tip losses in current solver
+%% interpolating airfoil data with reynolds number in current solver
+%% panel method, wake vortex model
+%% inclusion of volume displacement noise
+
+\subsection{Future Work}
+Alongside the improvements mentioned in the previous section, there are a number of avenues for future work.
+The dependence of interference factor with propeller radius was not investigated and may show significant differences,
+reducing the suitability of the performance metric.
+% what questions were left unanswered
+The comparative measure discussed can be implemented in an optimisation based approach as an objective function.
+Consideration of pscyhoacoustic factors would provide better results in line with abstracted goals to improve the public acceptance of drones.
+
+% design work
+% optimisation work of designs using an objective function
+% integration of psychoacoustic models
+
+\section{Appendix}
+
+\subsection{Calculation of stand resonant frequency \label{sec:appendix_stand_frequency}}
+
+For rubber feet with a Young's modulus of $E = 10^6$, the total area of the feet is $A = 8 * \pi D^2/4$ where $D$ was measured to be 30mm.
+The length of the feet $L=30mm$ and the mass of the stand was measured to be $m=5.7kg$.
+The stiffness is calculated as $k = EA/L = 1.13 \times 10^6 N/m$.
+The natural frequency is then $f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} = 70.9 Hz$.
+
+
+\subsection{Motor torque from current \label{sec:appendix_motor_calibration}}
+
+The motors phase currents are measured by the controller and are used to calculate a torque producing current, $I$.
+A torque constant $k_Q$ can then be used to calculate torque.
+
+\begin{equation}
+    Q = k_Q (I_\text{load}  - I_\text{noload}) \label{eq:torque_from_current}
+\end{equation}
+
+The motor voltage constant, $k_V$, is provided by the manufacturer as 1700 KV, or 1700 revolutions per minute per unit line voltage.
+The torque constant, $k_Q$, can be calculated from this using the following relationship.
+
+\begin{equation}
+    k_Q = \frac{3}{2} \frac{1}{\sqrt{3}} \frac{60}{2\pi} \frac{1}{k_V}
+\end{equation}
+
+The factors $2\pi/60$ and $1/\sqrt{3}$ simply converts this constant to radians per second per unit phase voltage.
+The final $3/2$ factor arises from the conversion of 3 phase power to mechanical torque of per phase quantities.
+The equation is expected to be accurate for small motor currents and temperatures where load and no load losses are similar.
+The presence of a control system, increasing the current to maintain speed when there are increased losses, further complicates the relationship.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../figures/controller_vs_loadcell_torque.pdf}
+    \caption{Torque measured by calibrated load cell compared to torque calculated from measured motor current for the dalprop 5045bnr propeller.}
+    \label{fig:controller_vs_loadcell_torque}
+\end{figure}
+
+Figure \ref{fig:controller_vs_loadcell_torque} shows the torque power law with speed.
+Two points at each speed are shown which represents the measurements both on the way up and down the speed pyramid.
+The load cell measurements are below the expected square power law for small values, likely due to similar friction in the bearings.
+For high values of torque, the measurements agree with the power law.
+The current calculated torque shows a strong agreement with the power law over the full range of speeds.
+These values also agree within 7\% of the calibrated load cell values
+This could be used at low torque values which were unable to be read by the load cell.
+
+\subsection{Harmonic Interference \label{sec:appendix_harmonic_interference}}
 
 \begin{figure}[H]
     \centering
@@ -904,127 +1057,6 @@ The theory shows very little difference in the harmonic interference factor $g$ 
 It can also be seen that while some harmonics reduce in magnitude, other harmonics increase.
 Experimental results show a significant difference in interference factor between the propellers over the range of harmonics considered.
 
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../figures/prop_sound_FOM.pdf}
-    \caption{First harmonic sound at $\theta = 135^\circ$ against figure of merit for all propeller designs.}
-    \label{fig:prop_sound_FOM}
-\end{figure}
-
-Figure \ref{fig:prop_sound_FOM} shows the OASPL against the figure of merit for all propeller designs.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../figures/OASPLref_bar.pdf}
-    \caption{}
-    \label{fig:OASPLref_bar}
-\end{figure}
-
-Figure \ref{fig:OASPLref_bar} shows the OASPL for the various propellers at reference coefficients defined earlier.
-High figure of merits increase the sound pressure level to the reference point, where low figure of merits reduce the sound pressure level.
-This is unexpected
-TODO
-
-% load cell calibration graphs
-
-% aerodynamic coefficient graphs
-
-% figure of merit graphs
-
-% microphone calibration graphs?
-
-% spectrum of 2 and 3 blades
-% identify bpf harmonics, 50hz electrical noise, motor ppf, broadband turbulence
-
-% speed varying graphs
-% distance varying graphs
-
-% coefficient graphs?
-% f graph
-
-
-\section{Conclusion}
-
-% a lot of testing was done
-% software tools and experimental apparatus were developed
-% results show ... ?
-% agreement between theory and experiment
-
-This report has presented key acoustic and aerodynamic performance metrics for propellers.
-The definition of effective radius and speed allow for comparison of different propeller noise at reference thrust and torque coefficients.
-Theory is discussed involving an interference factor which is shown to have more complex dependence than intuitively expected.
-Experimental setups are carefully designed to investigate the relationships and apply comparative measures.
-
-Which propeller was the best?
-
-Tradeoff between noise and efficiency?
-
-% Careful consideration of experimental was considered and 
-
-\subsection{Improvements}
-
-% better experimental setup
-% sample longer audio recording and use welches method
-% better motor vibration isolation (belt driven)
-% the dynamic balancing of rotating bodies to reduce motor vibration
-% massively better load cells and faster sampling rates
-
-\begin{itemize}
-    \item Sample longer audio recordings and use Welch's method to improve frequency resolution.
-    \item Better isolate motor vibration, driving the propeller with a belt drive.
-    \item Dynamically balance rotating bodies to reduce motor vibration.
-    \item A factory calibrated 6 axis load cell such as ATI Mini43 would provide both improved accuracy and precision in the thrust and torque measurements.
-        An improved data acquisition system would also allow for faster sampling rates to investigate motor cogging.
-\end{itemize}
-
-% better theoretical models
-%% accounting for swirl and tip losses in current solver
-%% interpolating airfoil data with reynolds number in current solver
-%% panel method, wake vortex model
-%% inclusion of volume displacement noise
-
-\subsection{Future Work}
-Alongside the improvements mentioned in the previous section, there are a number of avenues for future work.
-The dependence of interference factor with propeller radius was not investigated and may show significant differences,
-reducing the suitability of the performance metric.
-% what questions were left unanswered
-The comparative measure discussed can be implemented in an objective function 
-
-% design work
-% optimisation work of designs using an objective function
-% integration of psychoacoustic models
-
-\section{Appendix}
-
-\subsection{Comparison of swirl and tiploss for BEM}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{../figures/bem_comparison.pdf}
-    \caption{Comparison of the BEM solver with and without swirl and tip losses.}
-    \label{fig:bem_comparison}
-\end{figure}
-
-\subsection{Calculation of stand resonant frequency \label{sec:appendix_stand_frequency}}
-
-For rubber feet with a Young's modulus of $E = 10^6$, the total area of the feet is $A = 8 * \pi D^2/4$ where $D$ was measured to be 30mm.
-The length of the feet $L=30mm$ and the mass of the stand was measured to be $m=5.7kg$.
-The stiffness is calculated as $k = EA/L = 1.13 \times 10^6 N/m$.
-The natural frequency is then $f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} = 70.9 Hz$.
-
-
-\subsection{Calculation of motor torque constant \label{sec:appendix_motor_calibration}}
-
-The motor voltage constant, $k_V$, is provided by the manufacturer as 1700 KV, or 1700 revolutions per minute per unit line voltage.
-The torque constant, $k_Q$, can be calculated from this using the following relationship.
-
-\begin{equation}
-    k_Q = \frac{3}{2} \frac{1}{\sqrt{3}} \frac{60}{2\pi} \frac{1}{k_V}
-\end{equation}
-
-The factors $2\pi/60$ and $1/\sqrt{3}$ simply converts this constant to radians per second per unit phase voltage.
-The final $3/2$ factor arises from the conversion of 3 phase power to mechanical torque of per phase quantities.
 
 \newpage
 

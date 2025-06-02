@@ -42,11 +42,37 @@ def plot_rmsndp_speed(sdf):
 
     xlo, xhi = ax.get_xlim()
     xcont = np.linspace(xlo, xhi, 1000)
-    ax.plot(xcont, -10 + 2 * 20 * np.log10(xcont), "k--", label="$x^2$")
+    ax.plot(xcont, -10 + 2 * 20 * np.log10(xcont), "k--", label="Quadratic")
 
     ax.legend(loc="upper left")
     ax.set_xscale("log")
     ax.grid(True, which='both')
+
+    return fig, ax
+
+def plot_rmsndp_distance(sdf):
+
+    fig, ax = multi_function_plot(
+        sdf,
+        x_var="distance",
+        y_var="OASPL",
+        filter_dict={
+            "propeller": "dalprop5045",
+            "angle": 180,
+        },
+        colour_by='speed',
+        plot_type="scatter",
+        fig_size=(6, 4),
+    )
+
+    xlo, xhi = ax.get_xlim()
+    xcont = np.linspace(xlo, xhi, 1000)
+    ax.plot(xcont, 140 - 20 * np.log10(xcont), "k--", label="$Inverse$")
+
+    ax.legend(loc="lower left")
+    ax.set_xscale("log")
+    ax.grid(True, which='both')
+    ax.set_xlabel("Distance $R/r_t$ [-]")
 
     return fig, ax
 
@@ -85,12 +111,13 @@ def plot_oaspl_ref_propellers(sdf):
 
     fdf = filter_df(sdf, {'angle':135,
                           'distance' : (19, 21),
-                          'speed' : (15000 * np.pi / 30, 17000* np.pi / 30)
+                          'speed' : (13000 * np.pi / 30, 14000* np.pi / 30)
                           })
     # agg
     fdf = fdf.groupby('propeller').agg({
         'OASPL' : 'first',
-        'reference' : 'first'
+        'reference' : 'first',
+        'FM' : 'first',
     }).reset_index()
     
     # Create a figure and axis for the CT and CQ plot
@@ -99,7 +126,7 @@ def plot_oaspl_ref_propellers(sdf):
     width = 0.35
     OASPL_bars = ax.bar(x, fdf['OASPL'], width, label='OASPL', color="#0095ff", alpha=0.7)
     ref_bars = ax.bar(x + width/4, fdf['reference'], width,  fdf['OASPL'],
-                       label=r'$20 \log_{10} \left( \frac{K_Q}{K_T^2} \frac{C_T^2}{C_Q}  \right)$',
+                       label=r'$20 \log_{10} \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4$',
                          color="#ff6600", alpha=0.7)
     #ct_bars = ax.bar(x + width/2, fdf['OASPLref'], width, label='CT', color='#1f77b4')
 
@@ -107,14 +134,37 @@ def plot_oaspl_ref_propellers(sdf):
     ax.set_ylabel('$OASPL_{ref}$ [dB]')
     ax.set_xticks(x)
     ax.set_xticklabels(fdf['propeller'], rotation=45)
-    ax.legend()
+    ax.legend(loc='lower right')
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
-    ax.set_ylim(60, 85)
+    ax.set_ylim(40, 85)
     
     fig.tight_layout()
-    fig.savefig(
-        'deliverables/final_report/figures/OASPLref_bar.pdf',
+    #fig.savefig(
+    #    'deliverables/final_report/figures/OASPLref_bar.pdf',
+    #)
+
+    fig, ax = multi_function_plot(
+        fdf,
+        'FM',
+        'OASPL',
+        filter_dict={
+            'angle_bin': 135,
+        },
+        fig_size=(6, 4),
+        group_by='propeller'
     )
+
+    # set x and y labels
+    ax.set_xlabel('FM [-]')
+    ax.set_ylabel('$OASPL$ [dB]')
+
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax.set_title('')
+    fig.tight_layout()
+
+    fig.savefig('deliverables/final_report/figures/prop_sound_FOM.pdf')
+
+    return fig, ax
 
 
 if __name__ == "__main__":
@@ -131,9 +181,15 @@ if __name__ == "__main__":
 
     fig, ax = plot_rmsndp_speed(sdf)
     ax.set_title("")
-    ax.legend().set_title("Distance [-]")
+    ax.legend().set_title("$R/r_t$ [-]")
     fig.savefig(
         'deliverables/final_report/figures/spl_speed_variation.pdf',
+    )
+
+    fig, ax = plot_rmsndp_distance(sdf)
+    ax.set_title("")
+    fig.savefig(
+        'deliverables/final_report/figures/spl_distance_variation.pdf',
     )
 
     asdf = merge_aero_coeffs(sdf, aero_coeffs)

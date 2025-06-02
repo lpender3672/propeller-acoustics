@@ -39,7 +39,7 @@ def plot_audio_psd(audio_path, speed, ax, channel = 3, **kwargs):
 
 def plot_motor_comparison_spectrums():
 
-    fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+    fig, axes = plt.subplots(2, 1, figsize=(6, 4))
 
     plot_audio_psd('app/results/floor/F_ambient.bin', 
                    200, axes[0], color='C1', alpha = 0.8, label='Ambient noise')
@@ -76,7 +76,7 @@ def plot_motor_comparison_spectrums():
 
 def plot_stream_comparison_spectrums():
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     plot_audio_psd('app/results/floor/F_motor12.bin', 
                    200, ax, color='C1', alpha = 0.8, label=r'$\theta=135^\circ$')

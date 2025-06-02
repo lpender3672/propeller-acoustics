@@ -215,7 +215,8 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
 
     mic_calibration_data = load_microphone_calibration()
 
-    KT, KQ, _, _ = np.mean(list(aero_coefficients.values()), axis=0)
+    #KT, KQ, _, _ = np.mean(list(aero_coefficients.values()), axis=0)
+    KT, KQ, _, _ = aero_coefficients["dalprop5045"]
     reference_FOM = KT ** (3/2) / (2 ** (1/2) * KQ)
 
     # Generate a unique hash for the lookup_df and aero_coefficients
@@ -383,7 +384,7 @@ def parse_harmonic_df(lookup_df, aero_coefficients, harmonics = 10, use_cache=Tr
         #nd_pressure = rho * (reff * speed_rad)**2
 
         ref_offset = 20 * np.log10(
-            KQ / CQ * (CT / KT) ** 2
+            (KT / CT) ** (7/2) * (CQ / KQ) ** 4
         )
 
         for i in range(num_mics):
@@ -454,7 +455,8 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
 
     mic_calibration_data = load_microphone_calibration()
 
-    KT, KQ, _, _ = np.mean(list(aero_coefficients.values()), axis=0)
+    #KT, KQ, _, _ = np.mean(list(aero_coefficients.values()), axis=0)
+    KT, KQ, _, _ = aero_coefficients["dalprop5045"]
     reference_FOM = KT ** (3/2) / (2 ** (1/2) * KQ)
 
     print(KT, KQ, reference_FOM)
@@ -582,7 +584,7 @@ def parse_spl_df(lookup_df, aero_coefficients, use_cache=True):
         #nd_pressure = rho * (reff * speed_rad)**2
 
         ref_offset = 20 * np.log10(
-            KQ / CQ * (CT / KT) ** 2
+            (KT / CT) ** (7/2) * (CQ / KQ) ** 4
         )
 
         ref_offsets[row_idx:row_idx + total_channels] = ref_offset

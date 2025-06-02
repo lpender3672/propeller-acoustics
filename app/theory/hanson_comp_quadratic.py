@@ -193,7 +193,7 @@ def useless_plots(rdf):
                           'distance' : (19, 21)})
     
     # Create a figure and axis for the CT and CQ plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(5, 4))
     x = np.arange(len(fdf['propeller']))
     width = 0.35
     ct_bars = ax.bar(x - width/2, fdf['CT'], width, label='CT', color='#1f77b4')
@@ -214,7 +214,7 @@ def useless_plots(rdf):
     )
 
     # Create a figure and axis for the FM plot with error bars
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(5, 4))
     fm_bars = ax.bar(x, fdf['FM'], width=0.5, color='#2ca02c')
     ax.errorbar(x, fdf['FM'], yerr=fdf['std_FM'], fmt='none', ecolor='black', capsize=5)
     
