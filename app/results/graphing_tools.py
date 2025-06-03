@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import matplotlib.image as mpimg
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+
 from pathlib import Path
 from matplotlib.colors import (
     LogNorm,
@@ -174,35 +177,97 @@ def _format_group_name(name, modified_group_by, original_group_by, units):
     formatted_name = str(name) if not isinstance(name, tuple) else ', '.join(map(str, name))
     return formatted_name
 
-
-import matplotlib.image as mpimg
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-
-def place_tick_images(fig, ax, image_paths, zoom=0.1, y_offset=-20):
-
+def place_tick_images(fig, ax, image_paths, base_zoom=0.1, y_offset_factor=0.05, max_width_pixels=None, half_props=False):
     xticks = ax.get_xticks()
     if len(image_paths) != len(xticks):
-        raise ValueError(
-            f"Number of image paths ({len(image_paths)}) must match number of x-ticks ({len(xticks)})."
-        )
-
-    ax.set_xticklabels([''] * len(xticks))
-
-    for x_pos, img_path in zip(xticks, image_paths):
+        raise ValueError()
+    
+    if len(xticks) > 1:
+        bar_width = min(np.diff(xticks))
+    else:
+        bar_width = 1.0
+    
+    images = []
+    image_dims = []
+    
+    for img_path in image_paths:
         img = mpimg.imread(img_path)
-        im = OffsetImage(img, zoom=zoom)
+        height, width = img.shape[:2]
+        
+        if width > height:
+            img = np.rot90(img, k=-1)
+            height, width = width, height
+        
+        if half_props:
+            img = img[height//2:, :]
+            height = height // 2
+            
+        images.append(img)
+        image_dims.append((width, height))
+    
+    max_width = max(dim[0] for dim in image_dims)
+    max_height = max(dim[1] for dim in image_dims)
+    
+    if half_props:
+        max_height_full = max_height * 2
+    else:
+        max_height_full = max_height
+    
+    if max_width_pixels is not None:
+        final_zoom = max_width_pixels / max_width
+    else:
+        try:
+            fig_dpi = fig.dpi
+            fig_width_px = fig.get_figwidth() * fig_dpi
+            bbox = ax.get_position()
+            ax_width_px = bbox.width * fig_width_px
+            xlim = ax.get_xlim()
+            data_range = xlim[1] - xlim[0]
+            bar_width_px = (bar_width / data_range) * ax_width_px
+            target_width_px = bar_width_px * 0.7
+            final_zoom = target_width_px / max_width
+            
+            if final_zoom < 0.1 and target_width_px > 50:
+                final_zoom = max(0.1, min(0.3, target_width_px / max_width))
+                
+        except Exception as e:
+            estimated_bar_width_px = 80
+            target_width_px = estimated_bar_width_px * 0.7
+            final_zoom = target_width_px / max_width
+    
+    final_zoom = max(0.05, min(final_zoom, 1.0))
+    
+    y_offset = -y_offset_factor * final_zoom * max_height_full
+    
+    ax.set_xticklabels([''] * len(xticks))
+    
+    for x_pos, img in zip(xticks, images):
+        im = OffsetImage(img, zoom=final_zoom)
+        
+        if half_props:
+            # Adjust y position to align bottom of cropped image at original center
+            current_height = img.shape[0]
+            original_height = current_height * 2
+            center_offset = (original_height - current_height) / 2 * final_zoom
+            adjusted_y_offset = y_offset - center_offset
+        else:
+            adjusted_y_offset = y_offset
+            
         ab = AnnotationBbox(
             im,
-            (x_pos, 0),   
-            xybox=(0, y_offset),
+            (x_pos, 0),
+            xybox=(0, adjusted_y_offset),
             frameon=False,
             xycoords='data',
             boxcoords='offset points',
             pad=0
         )
         ax.add_artist(ab)
+    
+    fig.subplots_adjust(bottom=0.3)
+    
+    return final_zoom, y_offset
 
-    fig.subplots_adjust(bottom=0.25)
 
 def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=None, plot_type='line', 
                   title=None, fig_size=(5, 4), log_bin_factor=0.05,

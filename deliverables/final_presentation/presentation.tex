@@ -145,6 +145,9 @@ Supervisor: Professor Shreyas Mandre
 \section{Results}
 
 \begin{frame}{Aerodynamic Scaling}
+    \[
+        C_T = \frac{T}{\frac{1}{2} \pi \rho \Omega^2 r_t^4} \quad \quad \quad C_P = C_Q \frac{\Omega}{\Omega} = \frac{Q}{\frac{1}{2} \pi \rho \Omega^2 r_t^5}
+    \]
     \begin{figure}
         \centering
         \includegraphics[width=0.8\textwidth]{../final_report/figures/printed_aero_coeffs.pdf}
@@ -180,6 +183,31 @@ Supervisor: Professor Shreyas Mandre
     \end{itemize}
     \vspace{1cm}
     Questions?
+\end{frame}
+
+\begin{frame}
+    Appendix
+        
+    \begin{equation}
+        \begin{aligned}
+            g_m = \frac{1}{4\pi} \exp\left(jmB \left( \frac{\Omega R}{c_0} - \frac{\pi}{2} \right)\right) \\
+            \times \int_0^1 z^2 \exp \left(j z \frac{r_t}{b} \left(k_y \sin \gamma + k_x \cos \gamma\right) \right) \\
+            \times J_{mB} \left( \frac{mB z \Omega r_t}{c_0} \sin \theta \right)
+                jk_y (C_L / 2) \Psi_L(k_x) dz
+        \end{aligned}
+        \label{eq:hansons_result}
+    \end{equation}
+
+    The terms $k_x$ and $k_y$ represent non-dimensional wavenumbers in the $x$ and $y$ directions respectively.
+
+    \begin{equation}
+        k_x = \frac{mB b}{z r_t}, \quad
+        k_y = \frac{mB\Omega b}{z c_0} \cos \theta, \quad
+    \end{equation}
+
+    \begin{equation}
+        \Psi_L(k_x) = \int_{-1/2}^{1/2} L(X) \exp(jk_x X) dX
+    \end{equation}
 \end{frame}
 
 \begin{frame}[allowframebreaks]{References}

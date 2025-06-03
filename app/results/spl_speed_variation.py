@@ -42,9 +42,9 @@ def plot_rmsndp_speed(sdf):
 
     xlo, xhi = ax.get_xlim()
     xcont = np.linspace(xlo, xhi, 1000)
-    ax.plot(xcont, -10 + 2 * 20 * np.log10(xcont), "k--", label="Quadratic")
+    ax.plot(xcont, 2 * 20 * np.log10(xcont), "k--", label="Quadratic")
 
-    ax.legend(loc="upper left")
+    ax.legend(loc="upper left").set_title("$R/r_t$ [-]")
     ax.set_xscale("log")
     ax.grid(True, which='both')
 
@@ -181,7 +181,6 @@ if __name__ == "__main__":
 
     fig, ax = plot_rmsndp_speed(sdf)
     ax.set_title("")
-    ax.legend().set_title("$R/r_t$ [-]")
     fig.savefig(
         'deliverables/final_report/figures/spl_speed_variation.pdf',
     )

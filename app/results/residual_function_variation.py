@@ -284,8 +284,8 @@ def plot_oaspl_ref_propellers(sdf):
         fdf['propeller'],
         categories=[
             'dalprop4045',
-            'dalprop6045',
             'dalprop5045',
+            'dalprop6045',
             '5045_s15',
             '5045_s30',
             '5045_s45',
@@ -297,7 +297,7 @@ def plot_oaspl_ref_propellers(sdf):
     fdf = fdf.sort_values('propeller')
 
     # Create a figure and axis for the CT and CQ plot
-    fig, ax = plt.subplots(figsize=(6, 5))
+    fig, ax = plt.subplots(figsize=(8, 6))
     x = np.arange(len(fdf['propeller']))
     width = 0.7
     OASPL_bars = ax.bar(x, fdf['intercept'], width,
@@ -310,13 +310,23 @@ def plot_oaspl_ref_propellers(sdf):
     
     # plot a vline for the dalprop5045 reference
     dal5045_intercept = fdf.loc[fdf['propeller'] == 'dalprop5045', 'intercept'].values[0]
-    ax.hlines(dal5045_intercept, x[0] - width/2, x[-1] + width/2, colors='gray', linestyles='--', label='Reference line')
+    ax.hlines(dal5045_intercept, x[0] - width/2, x[-1] + width/2, colors='gray', linestyles='--', label='Reference line',
+              linewidth=1.5)
 
-    ax.set_xlabel('Propeller')
-    ax.set_ylabel('Reference interference factor [dB]')
+    ax.set_ylabel('Reference interference factor [dB]', fontsize=16)
     ax.set_xticks(x)
-    ax.set_xticklabels(fdf['propeller'], rotation=60)
-    ax.legend(loc='upper left')
+    #ax.set_xticklabels(fdf['propeller'], rotation=60)
+
+    from app.results.graphing_tools import (
+        place_tick_images
+    )
+    place_tick_images(
+        fig, ax, [f'app/props/images/{p}.png' for p in fdf['propeller']],
+        half_props=True
+    )
+    plt.yticks(fontsize=12)
+
+    ax.legend(loc='upper left', fontsize=14)
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
     ax.set_ylim(5, -70)
