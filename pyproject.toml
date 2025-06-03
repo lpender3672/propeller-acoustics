@@ -26,6 +26,7 @@ pyopengl = ">=3.1.9,<4.0.0"
 nidaqmx = ">=1.0.2,<2.0.0"
 nptdms = ">=1.10.0,<2.0.0"
 openpyxl = ">=3.1.5,<4.0.0"
+opencv-python = "^4.11.0.86"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=23.12.1"
