@@ -266,7 +266,35 @@ def plot_oaspl_ref_propellers(sdf):
     print(sdf['reference'].values)
 
     fdf = filter_df(sdf, {'angle_bin':135,
-                          })
+                          'propeller' : [
+                '5045_s15',
+                '5045_s30',
+                '5045_s45',
+                '50loop_s50',
+                'dalprop4045',
+                'dalprop5045',
+                'dalprop6045',
+                'foxeer_toroidal',
+                '50loop_s50',
+
+            ]})
+    
+    # set fdf propeller row order
+    fdf['propeller'] = pd.Categorical(
+        fdf['propeller'],
+        categories=[
+            'dalprop4045',
+            'dalprop6045',
+            'dalprop5045',
+            '5045_s15',
+            '5045_s30',
+            '5045_s45',
+            'foxeer_toroidal',
+            '50loop_s50',
+        ],
+        ordered=True
+    )
+    fdf = fdf.sort_values('propeller')
 
     # Create a figure and axis for the CT and CQ plot
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -284,7 +312,7 @@ def plot_oaspl_ref_propellers(sdf):
     ax.set_ylabel('Reference interference factor [dB]')
     ax.set_xticks(x)
     ax.set_xticklabels(fdf['propeller'], rotation=60)
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper left')
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
     ax.set_ylim(5, -70)
