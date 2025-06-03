@@ -19,7 +19,9 @@
 \addbibresource{../final_report/allrefs.bib}
 
 \title{Acoustic Signatures of Quadcopter Propellers}
-\author{Louis Pender}
+\author{Louis Pender \\
+Supervisor: Professor Shreyas Mandre
+}
 \institute{Lucy Cavendish College, University of Cambridge}
 \date{\today}
 
@@ -42,23 +44,26 @@
         \item<2-> Time of flight and payload capacity for productivity
         \vspace{1cm}
         \item<3-> Comparisons of swept and novel looped propeller noise relative to performance
+        % show claims of toroidal propellers having reduced noise relative to aerodynamic performance
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Acoustic scaling}
     \begin{itemize}
-        \item How much noise does a given propeller make?
-        \vspace{1cm}
-        \item How does this change with size $(r_t)$, speed $(\Omega)$ and observer position $(R,\theta)$?
+        \item<1-> How is noise of given propeller quantised?
+        \[
+            p_\text{rms} =  \sqrt{ \frac{1}{T} \int_0^T p(t)^2\, dt}
+        \]
+        \item<2-> How does this change with size $(r)$, speed $(\Omega)$ and observer position $(R,\theta)$?
         \[
         p_\text{rms} = 
         \only<1>{\sqrt{ \frac{1}{T} \int_0^T p(t)^2\, dt }
-                \phantom{ = \frac{\rho(r_t \Omega)^2}{R/r_t} \left| g(\theta, \text{geometry}, ?) \right|}}
-        \only<2>{\frac{\rho(r_t \Omega)^2}{\phantom{R/r_t}}
+                \phantom{ = \frac{\rho(r \Omega)^2}{R/r} \left| g(\theta, \text{geometry}, ?) \right|}}
+        \only<2>{\frac{\rho(r \Omega)^2}{\phantom{R/r}}
                 \phantom{\left| g(\theta, \text{geometry}, ?) \right|}}
-        \only<3>{\frac{\rho(r_t \Omega)^2}{R/r_t}
+        \only<3>{\frac{\rho(r \Omega)^2}{R/r}
                 \phantom{\left| g(\theta, \text{geometry}, ?) \right|}}
-        \only<4->{\frac{\rho(r_t \Omega)^2}{R/r_t}
+        \only<4->{\frac{\rho(r \Omega)^2}{R/r}
                 \left| g(\theta, \text{geometry}, ?) \right|}
         \]
     \end{itemize}
@@ -70,33 +75,39 @@
         
         \item How does a given propellers aerodynamic performance change?
         \[
-            T = C_T \cdot \rho (\Omega r_t)^2 A
+            T = C_T \cdot \rho \Omega^2 r^4
         \]
         \[
-            \only<1-2>{P = C_P \cdot \rho (\Omega r_t)^3 A}
-            \only<3->{Q\Omega = C_Q \cdot \rho \Omega^2 r_t^3 A}
+            \only<1->{P = C_P \cdot \rho \Omega^3 r^5}
         \]
-        \item<3> Propulsive efficiency in forward flight
+        \item<2> Propulsive efficiency in forward flight
         \[
-            \only<3>{\eta = \frac{2 V}{V + V_e}}
+            \only<2>{\eta = \frac{2 V}{V + V_e}}
         \]
         \vspace{-2.3cm}
-        \item<4> Propulsive efficiency at hover
+        \item<3> Propulsive efficiency at hover
         \[
-            \only<4->{FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q}}
+            \only<3->{FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q}}
         \]
         
     \end{itemize}
 \end{frame}
 
 \begin{frame}{The trick}
+    Given 
     \begin{itemize}
-        \item<1-> Effective radius and speed to match coefficients.        
-        \item<2-> Comparison of noise at these reference conditions.
-        \[
-            \frac{p_\text{rms}}{p'_\text{rms}} = \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4 \frac{g}{g'}
-        \]
+        \item test propeller with coefficients $C_T$ and $C_Q$,
+        \item reference propeller $(C_T', C_Q')$,
     \end{itemize}
+    Effective radius $(r_{ef})$ and speed $(\Omega_{ef})$ for the test propeller can be found for same $(T, P)$.
+    \[
+    \frac{r_{ef}}{r} = \frac{FM}{FM'} \quad \quad \quad \frac{\Omega_{ef}}{\Omega} = \left(\frac{C_T}{C_T'}\right)^{5/2} \left( \frac{C_Q'}{C_Q} \right)^2
+    \]
+    These then scale the test propeller noise the reference propeller.
+    \[    
+    p_\text{rms}' = p_\text{rms} \left(\frac{r_{ef}}{r}\right)^3 \left( \frac{\Omega_{ef}}{\Omega}\right)^2 = p_\text{rms} \left(\frac{C_T'}{C_T}\right)^{7/2} \left(\frac{C_Q}{C_Q'} \right)^4
+    \]
+    
 \end{frame}
 
 \section{Methodology}
@@ -159,7 +170,9 @@
 
 \begin{frame}{Conclusion}
     \begin{itemize}
-        \item Small reduction in overall noise for swept and looped designs
+        \item<1->Comparative measure presented and applied to collected experimental results.
+        \item 
+        \item<2-> Small reduction in overall noise for swept and looped designs
         \vspace{1cm}
         \item Reductions in efficiency outweighed acoustic benefits.
         \vspace{1cm}

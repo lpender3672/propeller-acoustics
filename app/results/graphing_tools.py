@@ -175,6 +175,35 @@ def _format_group_name(name, modified_group_by, original_group_by, units):
     return formatted_name
 
 
+import matplotlib.image as mpimg
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+
+def place_tick_images(fig, ax, image_paths, zoom=0.1, y_offset=-20):
+
+    xticks = ax.get_xticks()
+    if len(image_paths) != len(xticks):
+        raise ValueError(
+            f"Number of image paths ({len(image_paths)}) must match number of x-ticks ({len(xticks)})."
+        )
+
+    ax.set_xticklabels([''] * len(xticks))
+
+    for x_pos, img_path in zip(xticks, image_paths):
+        img = mpimg.imread(img_path)
+        im = OffsetImage(img, zoom=zoom)
+        ab = AnnotationBbox(
+            im,
+            (x_pos, 0),   
+            xybox=(0, y_offset),
+            frameon=False,
+            xycoords='data',
+            boxcoords='offset points',
+            pad=0
+        )
+        ax.add_artist(ab)
+
+    fig.subplots_adjust(bottom=0.25)
+
 def multi_function_plot(processed_df, x_var, y_var, filter_dict=None, group_by=None, plot_type='line', 
                   title=None, fig_size=(5, 4), log_bin_factor=0.05,
                   max_groups=10, colour_by=None, cmap='viridis', colourbar_label=None,

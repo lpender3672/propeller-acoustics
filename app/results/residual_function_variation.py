@@ -307,6 +307,10 @@ def plot_oaspl_ref_propellers(sdf):
                        label=r'$20 \log_{10} \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4$',
                          color="#ff6600", alpha=0.7)
     #ct_bars = ax.bar(x + width/2, fdf['OASPLref'], width, label='CT', color='#1f77b4')
+    
+    # plot a vline for the dalprop5045 reference
+    dal5045_intercept = fdf.loc[fdf['propeller'] == 'dalprop5045', 'intercept'].values[0]
+    ax.hlines(dal5045_intercept, x[0] - width/2, x[-1] + width/2, colors='gray', linestyles='--', label='Reference line')
 
     ax.set_xlabel('Propeller')
     ax.set_ylabel('Reference interference factor [dB]')
