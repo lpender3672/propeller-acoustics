@@ -15,8 +15,8 @@
 \usepackage{subcaption}
 \usepackage{adjustbox}
 
-\usepackage[backend=biber,style=authoryear]{biblatex}
-\addbibresource{../final_report/allrefs.bib}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\addbibresource{../allrefs.bib}
 
 \title{Acoustic Signatures of Quadcopter Propellers}
 \author{Louis Pender \\
@@ -31,26 +31,31 @@ Supervisor: Professor Shreyas Mandre
     \titlepage
 \end{frame}
 
-\begin{frame}{Outline}
-    \tableofcontents
-\end{frame}
 
 \section{Introduction}
 
 \begin{frame}{Motivation}
+    \vspace{-1cm}
     \begin{itemize}
         \item<1-> Noise pollution prevents adoption of drone based services
-        \vspace{1cm}
         \item<2-> Time of flight and payload capacity for productivity
-        \vspace{1cm}
+        \item<3-> Novel looped shaped designs claimed to reduce noise with little reduction in performance \cite{ToroidalPropeller2023}, \cite{shima_toroidal}, \cite{Pengyu}
         \item<3-> Comparisons of swept and novel looped propeller noise relative to performance
         % show claims of toroidal propellers having reduced noise relative to aerodynamic performance
+        % pictures of toroidal and normal
     \end{itemize}
+    \uncover<3->{
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.4\textwidth]{shima.png}
+        \caption{Toroidal propeller design \cite{shima_toroidal}}
+    \end{figure}
+    \vspace{-1cm}}
 \end{frame}
 
 \begin{frame}{Acoustic scaling}
     \begin{itemize}
-        \item<1-> How is noise of given propeller quantised?
+        \item<1-> How is noise of a given propeller quantised?
         \[
             p_\text{rms} =  \sqrt{ \frac{1}{T} \int_0^T p(t)^2\, dt}
         \]
@@ -87,26 +92,28 @@ Supervisor: Professor Shreyas Mandre
         \vspace{-2.3cm}
         \item<3> Propulsive efficiency at hover
         \[
-            \only<3->{FM = \frac{C_T^{3/2}}{\sqrt{2}C_Q}}
+            \only<3->{FM = \frac{\text{Ideal hover power}}{\text{Actual hover power}} = \frac{C_T^{3/2}}{\sqrt{2}C_Q}}
         \]
         
     \end{itemize}
 \end{frame}
 
-\begin{frame}{The trick}
+\begin{frame}{Comparison at reference performance}
     Given 
     \begin{itemize}
         \item test propeller with coefficients $C_T$ and $C_Q$,
         \item reference propeller $(C_T', C_Q')$,
     \end{itemize}
-    Effective radius $(r_{ef})$ and speed $(\Omega_{ef})$ for the test propeller can be found for same $(T, P)$.
+    \uncover<1->{
+    An effective radius $(r_{ef})$ and speed $(\Omega_{ef})$ for the test propeller can be found for same $(T, P)$.
     \[
     \frac{r_{ef}}{r} = \frac{FM}{FM'} \quad \quad \quad \frac{\Omega_{ef}}{\Omega} = \left(\frac{C_T}{C_T'}\right)^{5/2} \left( \frac{C_Q'}{C_Q} \right)^2
-    \]
+    \]}
+    \uncover<2->{
     These then scale the test propeller noise the reference propeller.
     \[    
     p_\text{rms}' = p_\text{rms} \left(\frac{r_{ef}}{r}\right)^3 \left( \frac{\Omega_{ef}}{\Omega}\right)^2 = p_\text{rms} \left(\frac{C_T'}{C_T}\right)^{7/2} \left(\frac{C_Q}{C_Q'} \right)^4
-    \]
+    \]}
     
 \end{frame}
 
@@ -117,7 +124,7 @@ Supervisor: Professor Shreyas Mandre
         \centering
         \begin{subfigure}[t]{0.45\textwidth}
             \centering
-            \includegraphics[height=6cm]{../final_report/figures/aero3.pdf}
+            \includegraphics[height=6cm]{aero3annotate.pdf}
         \end{subfigure}
         \begin{subfigure}[t]{0.45\textwidth}
             \centering
@@ -132,10 +139,12 @@ Supervisor: Professor Shreyas Mandre
     \begin{subfigure}{0.45\textwidth}
         \centering
         \includegraphics[height=6cm]{../final_report/tikz/mic_floor_plan.pdf}
+        \caption{Floor plan}
     \end{subfigure}
     \begin{subfigure}{0.45\textwidth}
         \centering
         \includegraphics[height=6cm]{../final_report/figures/chamber.pdf}
+        \caption{Anechoic chamber}
     \end{subfigure}
     \end{figure}
 \end{frame}
@@ -145,27 +154,85 @@ Supervisor: Professor Shreyas Mandre
 \section{Results}
 
 \begin{frame}{Aerodynamic Scaling}
+    \vspace{-0.5cm}
     \[
-        C_T = \frac{T}{\frac{1}{2} \pi \rho \Omega^2 r_t^4} \quad \quad \quad C_P = C_Q \frac{\Omega}{\Omega} = \frac{Q}{\frac{1}{2} \pi \rho \Omega^2 r_t^5}
+        C_T = \frac{T}{\frac{1}{2} \pi \rho \Omega^2 r^4} \quad \quad \quad C_P = C_Q \frac{\Omega}{\Omega} = \frac{Q}{\frac{1}{2} \pi \rho \Omega^2 r^5}
     \]
+    \uncover<1->{
+    \vspace{-0.5cm}
     \begin{figure}
         \centering
-        \includegraphics[width=0.8\textwidth]{../final_report/figures/printed_aero_coeffs.pdf}
+        \includegraphics[width=0.99\textwidth]{../final_report/figures/diameter_aero_coeffs.pdf}
     \end{figure}
+    \vspace{-0.5cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.99\textwidth]{aero_legends.pdf}
+    \end{figure}}
 \end{frame}
 
 
-\begin{frame}{Acoustic Scaling}
+\begin{frame}{Acoustic Scaling - Speed}
+    \vspace{-1cm}
+    \[
+        \log_{10}(p_\text{rms}) = {\color{blue}2\,\log_{10}(\Omega)} + 3 \log_{10}(r) - \log_{10}(R) + \log_{10} |g(\theta, \text{geometry})|
+    \]
+    \vspace{-1cm}
     \begin{figure}
         \centering
-        \includegraphics[width=0.8\textwidth]{../final_report/figures/spl_speed_variation.pdf}
+        \begin{subfigure}{0.8\textwidth}
+            \centering
+            \includegraphics[height=6cm]{../final_report/figures/spl_speed_variation.pdf}
+            \caption{Acoustic scaling with speed at $\theta=180^\circ$}
+        \end{subfigure}
+        \begin{subfigure}{0.1\textwidth}
+            \centering
+            \includegraphics[height=5cm]{../../app/props/images/dalprop5045.png}
+            \vspace{1cm}
+        \end{subfigure}
     \end{figure}
+    \vspace{-1cm}
+\end{frame}
+
+\begin{frame}{Acoustic Scaling - Distance}
+    \vspace{-1cm}
+    \[
+        \log_{10}(p_\text{rms}) = 2\log_{10}(\Omega) + 3 \log_{10}(r) - {\color{blue}\,\log_{10}(R)} + \log_{10} |g(\theta, \text{geometry})|
+    \]
+    \vspace{-1cm}
+    \begin{figure}
+        \centering
+        \begin{subfigure}{0.8\textwidth}
+            \centering
+            \includegraphics[height=6cm]{../final_report/figures/spl_distance_variation.pdf}
+            \caption{Acoustic scaling with speed at $\theta=180^\circ$}
+        \end{subfigure}
+        \begin{subfigure}{0.1\textwidth}
+            \centering
+            \includegraphics[height=5cm]{../../app/props/images/dalprop5045.png}
+            \vspace{1cm}
+        \end{subfigure}
+    \end{figure}
+    \vspace{-1cm}
+\end{frame}
+
+\begin{frame}{Acoustic Performance}
+    \vspace{-1cm}
+    \[
+        \log_{10}(p_\text{rms}) = 2\log_{10}(\Omega) + 3 \log_{10}(r) - \log_{10}(R) + {\color{blue}\,\log_{10} |g(\theta, \text{geometry})|}
+    \]
+    \vspace{-1cm}
+    \uncover<1->{
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.9\textwidth]{../final_report/figures/OASPLref_bar1.pdf}
+    \end{figure}}
 \end{frame}
 
 \begin{frame}{Relative Acoustic Performance}
     \begin{figure}
         \centering
-        \includegraphics[width=0.8\textwidth]{../final_report/figures/OASPLref_bar.pdf}
+        \includegraphics[width=0.9\textwidth]{../final_report/figures/OASPLref_bar.pdf}
     \end{figure}
 \end{frame}
 
@@ -174,19 +241,25 @@ Supervisor: Professor Shreyas Mandre
 \begin{frame}{Conclusion}
     \begin{itemize}
         \item<1->Comparative measure presented and applied to collected experimental results.
-        \item 
+        \vspace{0.5cm}
         \item<2-> Small reduction in overall noise for swept and looped designs
-        \vspace{1cm}
-        \item Reductions in efficiency outweighed acoustic benefits.
-        \vspace{1cm}
-        \item Improving efficiency more effective than reducing noise.
+        \vspace{0.5cm}
+        \item<3-> Reductions in efficiency outweighed acoustic benefits.
+        \vspace{0.5cm}
+        \item<4-> Improving efficiency more effective than reducing noise.
     \end{itemize}
     \vspace{1cm}
-    Questions?
+    
+    \only<5->{\huge \centering Questions?}
 \end{frame}
 
-\begin{frame}
-    Appendix
+
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography
+\end{frame}
+
+
+\begin{frame}{Hanson's Theory \cite{hanson_theory}}
         
     \begin{equation}
         \begin{aligned}
@@ -208,10 +281,6 @@ Supervisor: Professor Shreyas Mandre
     \begin{equation}
         \Psi_L(k_x) = \int_{-1/2}^{1/2} L(X) \exp(jk_x X) dX
     \end{equation}
-\end{frame}
-
-\begin{frame}[allowframebreaks]{References}
-    \printbibliography
 \end{frame}
 
 \end{document}

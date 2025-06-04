@@ -108,7 +108,7 @@ def plot_prop(
     converged_thrust_coefficient = np.mean(CT)
     
     # fit torque curve
-    params_q = fit_cexp(np.log10(speed_q), CQ, [1000, 4, -1000])
+    params_q,_ = fit_cexp(np.log10(speed_q), CQ, [1000, 4, -1000])
 
     if params_q is None:
         print(f"Warning: Could not fit torque curve for prop {label}")
@@ -234,15 +234,16 @@ def sweep_comparison_plot(cal_data):
 
 def printed_comparison_plot(cal_data):
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig, ax = plt.subplots(1, 2, figsize=(6,4))
 
     plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop5045")
     plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed5045")
     plot_prop("app/results/dalprop5045bnr.prop", ax[0], ax[1], cal_data, label="dalprop5045bnr")
     plot_prop("app/results/printed5045bnr.prop", ax[0], ax[1], cal_data, label="printed5045bnr")
 
-    ax[0].set_xlabel('')
-    ax[1].legend(loc="upper left")
+    #ax[0].set_xlabel('')
+    #ax[1].legend(loc="upper left")
+    fig.tight_layout()
 
     fig.savefig(
         "deliverables/final_report/figures/printed_aero_coeffs.pdf"
@@ -251,15 +252,17 @@ def printed_comparison_plot(cal_data):
 
 def diameter_comparison_plot(cal_data):
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig, ax = plt.subplots(1, 2, figsize=(7,3))
 
     plot_prop("app/results/dalprop5045.prop", ax[0], ax[1], cal_data, label="dalprop 5045")
     plot_prop("app/results/dalprop6045.prop", ax[0], ax[1], cal_data, label="dalprop 6045")
     plot_prop("app/results/dalprop4045.prop", ax[0], ax[1], cal_data, label="dalprop 4045")
     plot_prop("app/results/printed5045.prop", ax[0], ax[1], cal_data, label="printed 5045")
 
-    ax[0].set_xlabel('')
-    ax[1].legend(loc="upper left")
+    #ax[0].set_xlabel('')
+    #ax[1].legend(loc="upper left")
+
+    fig.tight_layout()
 
     fig.savefig(
         "deliverables/final_report/figures/diameter_aero_coeffs.pdf"

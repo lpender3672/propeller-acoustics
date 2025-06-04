@@ -301,11 +301,11 @@ def plot_oaspl_ref_propellers(sdf):
     x = np.arange(len(fdf['propeller']))
     width = 0.7
     OASPL_bars = ax.bar(x, fdf['intercept'], width,
-                        label='$20\log_{10} g$ [dB]',
+                        label='$20\log_{10} g$',
                         color="#0095ff", alpha=0.7)
-    ref_bars = ax.bar(x + width/4, fdf['reference'], width,  fdf['intercept'],
-                       label=r'$20 \log_{10} \left(\frac{K_T}{C_T}\right)^{7/2} \left(\frac{C_Q}{K_Q} \right)^4$',
-                         color="#ff6600", alpha=0.7)
+    #ref_bars = ax.bar(x + width/4, fdf['reference'], width,  fdf['intercept'],
+    #                   label=r"$20 \log_{10} \left(C_T'/C_T\right)^{7/2} \left(C_Q/C_Q' \right)^4$",
+    #                     color="#ff6600", alpha=0.7)
     #ct_bars = ax.bar(x + width/2, fdf['OASPLref'], width, label='CT', color='#1f77b4')
     
     # plot a vline for the dalprop5045 reference
@@ -326,14 +326,14 @@ def plot_oaspl_ref_propellers(sdf):
     )
     plt.yticks(fontsize=12)
 
-    ax.legend(loc='upper left', fontsize=14)
+    ax.legend(loc='upper left', fontsize=16)
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
     ax.set_ylim(5, -70)
     
     fig.tight_layout()
     fig.savefig(
-        'deliverables/final_report/figures/OASPLref_bar.pdf',
+        'deliverables/final_report/figures/OASPLref_bar1.pdf',
     )
 
 def plot_fm_oaspl_propellers(sdfr):

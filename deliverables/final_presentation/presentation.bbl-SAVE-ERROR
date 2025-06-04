@@ -16,5 +16,166 @@
   {}
 \endgroup
 
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global}
+    \entry{hanson_theory}{article}{}
+      \name{author}{1}{}{%
+        {{hash=8ad95eedf6e095884b8bea03c2ed1f83}{%
+           family={Hanson},
+           familyi={H\bibinitperiod},
+           given={Donald\bibnamedelima B.},
+           giveni={D\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+      }
+      \strng{namehash}{8ad95eedf6e095884b8bea03c2ed1f83}
+      \strng{fullhash}{8ad95eedf6e095884b8bea03c2ed1f83}
+      \strng{bibnamehash}{8ad95eedf6e095884b8bea03c2ed1f83}
+      \strng{authorbibnamehash}{8ad95eedf6e095884b8bea03c2ed1f83}
+      \strng{authornamehash}{8ad95eedf6e095884b8bea03c2ed1f83}
+      \strng{authorfullhash}{8ad95eedf6e095884b8bea03c2ed1f83}
+      \field{sortinit}{H}
+      \field{sortinithash}{23a3aa7c24e56cfa16945d55545109b5}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{AIAA Journal}
+      \field{number}{10}
+      \field{title}{Helicoidal Surface Theory for Harmonic Noise of Propellers in the Far Field}
+      \field{volume}{18}
+      \field{year}{1980}
+      \field{pages}{1213\bibrangedash 1220}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.2514/3.50873
+      \endverb
+      \verb{eprint}
+      \verb https://doi.org/10.2514/3.50873
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.2514/3.50873
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.2514/3.50873
+      \endverb
+    \endentry
+    \entry{Pengyu}{article}{}
+      \name{author}{4}{}{%
+        {{hash=484cf8dbf36f2f044954fa895f4d3ab7}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Pengyu},
+           giveni={P\bibinitperiod}}}%
+        {{hash=ab1918a4f4dbc5026852b7f5a18817ad}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Chaofan},
+           giveni={C\bibinitperiod}}}%
+        {{hash=93c82128aca25c57cfb17e90d02136d5}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Yu},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=a10772105cfee4121904e60b712743ac}{%
+           family={Yang},
+           familyi={Y\bibinitperiod},
+           given={Yannian},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{40dbb5b252c00685ea4146edc725bf27}
+      \strng{fullhash}{8f8945933c57313aa43c9e0c9213edf2}
+      \strng{bibnamehash}{40dbb5b252c00685ea4146edc725bf27}
+      \strng{authorbibnamehash}{40dbb5b252c00685ea4146edc725bf27}
+      \strng{authornamehash}{40dbb5b252c00685ea4146edc725bf27}
+      \strng{authorfullhash}{8f8945933c57313aa43c9e0c9213edf2}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{For long flight duration and low noise emission, efficient and quiet quadcopters have a continuous demand. The toroidal rotor, which is ring-shaped with each blade forming a closed loop, is recognized for its potential to reduce tip vortex intensity, thereby improving aerodynamic efficiency and reducing noise levels. However, existing studies provide limited and sometimes controversial results of toroidal rotor performance relative to conventional rotors. This study aims to conduct a more comprehensive and systematic evaluation by employing a multi-objective optimization framework to design toroidal and conventional rotors for fair comparison. The optimization under the constraint of a required thrust considers objectives of aerodynamic efficiency and noise emission, with the design variable of blade twist angle. The study compares a toroidal 2-blade rotor with conventional 2-blade and 4-blade rotors. The results show that, while the toroidal rotor generates lower noise than conventional 2-blade rotors, it shows lower aerodynamic efficiency. Compared to conventional 4-blade rotors, the toroidal rotor has lower aerodynamic efficiency and larger noise emission. The trend is determined by the effect of rotational speed and blade-vortex interaction, as revealed by flow field analysis. Noise spectrum analysis allows to identify loading and thickness noise contributions and locate the primary noise sources of the toroidal rotor.}
+      \field{issn}{1070-6631}
+      \field{journaltitle}{Physics of Fluids}
+      \field{month}{12}
+      \field{number}{12}
+      \field{title}{Multi-objective design and evaluation of a toroidal rotor for quadcopters}
+      \field{volume}{36}
+      \field{year}{2024}
+      \field{pages}{127165}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1063/5.0243175
+      \endverb
+      \verb{eprint}
+      \verb https://pubs.aip.org/aip/pof/article-pdf/doi/10.1063/5.0243175/20312973/127165\_1\_5.0243175.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1063/5.0243175
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1063/5.0243175
+      \endverb
+    \endentry
+    \entry{ToroidalPropeller2023}{report}{}
+      \name{author}{1}{}{%
+        {{hash=24ae346ea69545a030b130d7748d044e}{%
+           family={{MIT Lincoln Laboratory}},
+           familyi={M\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {MIT Lincoln Laboratory}%
+      }
+      \list{location}{1}{%
+        {Lexington, MA}%
+      }
+      \strng{namehash}{24ae346ea69545a030b130d7748d044e}
+      \strng{fullhash}{24ae346ea69545a030b130d7748d044e}
+      \strng{bibnamehash}{24ae346ea69545a030b130d7748d044e}
+      \strng{authorbibnamehash}{24ae346ea69545a030b130d7748d044e}
+      \strng{authornamehash}{24ae346ea69545a030b130d7748d044e}
+      \strng{authorfullhash}{24ae346ea69545a030b130d7748d044e}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{2}
+      \field{note}{Approved for public release; distribution is unlimited.}
+      \field{number}{41}
+      \field{title}{Toroidal Propeller}
+      \field{type}{Technology Highlight}
+      \field{year}{2023}
+      \verb{urlraw}
+      \verb https://www.ll.mit.edu/sites/default/files/other/doc/2025-04/TTO_Technology_Highlight_41_Toroidal_Propeller_2025.pdf
+      \endverb
+      \verb{url}
+      \verb https://www.ll.mit.edu/sites/default/files/other/doc/2025-04/TTO_Technology_Highlight_41_Toroidal_Propeller_2025.pdf
+      \endverb
+    \endentry
+    \entry{shima_toroidal}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=9350c1e7f7e0fa6794dbc5fcc68cdfd4}{%
+           family={Shima},
+           familyi={S\bibinitperiod},
+           given={Eiji},
+           giveni={E\bibinitperiod}}}%
+        {{hash=3997a3f65d905d9df83040ceab77e095}{%
+           family={Tsutsumi},
+           familyi={T\bibinitperiod},
+           given={Seiji},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{e7a13ddea96fd2cdb871828bfd03e1b9}
+      \strng{fullhash}{e7a13ddea96fd2cdb871828bfd03e1b9}
+      \strng{bibnamehash}{e7a13ddea96fd2cdb871828bfd03e1b9}
+      \strng{authorbibnamehash}{e7a13ddea96fd2cdb871828bfd03e1b9}
+      \strng{authornamehash}{e7a13ddea96fd2cdb871828bfd03e1b9}
+      \strng{authorfullhash}{e7a13ddea96fd2cdb871828bfd03e1b9}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{02}
+      \field{title}{Preliminary Study on Innovative Loop Propellers for Quiet eVTOL}
+      \field{year}{2023}
+    \endentry
+  \enddatalist
+\endrefsection
 \endinput
 
