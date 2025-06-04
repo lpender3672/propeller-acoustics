@@ -39,16 +39,24 @@ Supervisor: Professor Shreyas Mandre
     \begin{itemize}
         \item<1-> Noise pollution prevents adoption of drone based services
         \item<2-> Time of flight and payload capacity for productivity
-        \item<3-> Novel looped shaped designs claimed to reduce noise with little reduction in performance \cite{ToroidalPropeller2023}, \cite{shima_toroidal}, \cite{Pengyu}
-        \item<3-> Comparisons of swept and novel looped propeller noise relative to performance
+        \item<3-> Novel looped shaped designs claim to reduce noise with little reduction in performance \cite{ToroidalPropeller2023}, \cite{shima_toroidal}, \cite{Pengyu}
+        \item<4-> However, this tradeoff has not been quantified.
         % show claims of toroidal propellers having reduced noise relative to aerodynamic performance
         % pictures of toroidal and normal
     \end{itemize}
     \uncover<3->{
     \begin{figure}
         \centering
-        \includegraphics[width=0.4\textwidth]{shima.png}
-        \caption{Toroidal propeller design \cite{shima_toroidal}}
+        \begin{subfigure}[t]{0.45\textwidth}
+            \centering
+            \includegraphics[height=3cm]{shima.png}
+            \caption{Looped propeller design \cite{shima_toroidal}}
+        \end{subfigure}
+        \begin{subfigure}[t]{0.45\textwidth}
+            \centering
+            \includegraphics[height=3cm]{Wiedemann.png}
+            \caption{Standard and swept designs \cite{Wiedemann_swept}}
+        \end{subfigure}
     \end{figure}
     \vspace{-1cm}}
 \end{frame}
@@ -87,7 +95,7 @@ Supervisor: Professor Shreyas Mandre
         \]
         \item<2> Propulsive efficiency in forward flight
         \[
-            \only<2>{\eta = \frac{2 V}{V + V_e}}
+            \only<2>{\eta = \frac{2 V}{V + V_e}} = 0?
         \]
         \vspace{-2.3cm}
         \item<3> Propulsive efficiency at hover
@@ -110,10 +118,11 @@ Supervisor: Professor Shreyas Mandre
     \frac{r_{ef}}{r} = \frac{FM}{FM'} \quad \quad \quad \frac{\Omega_{ef}}{\Omega} = \left(\frac{C_T}{C_T'}\right)^{5/2} \left( \frac{C_Q'}{C_Q} \right)^2
     \]}
     \uncover<2->{
-    These then scale the test propeller noise the reference propeller.
+    These then scale the test propeller noise to be comparable to the reference propeller.
     \[    
-    p_\text{rms}' = p_\text{rms} \left(\frac{r_{ef}}{r}\right)^3 \left( \frac{\Omega_{ef}}{\Omega}\right)^2 = p_\text{rms} \left(\frac{C_T'}{C_T}\right)^{7/2} \left(\frac{C_Q}{C_Q'} \right)^4
-    \]}
+    p_\text{rms,ef} = p_\text{rms} \left(\frac{r_{ef}}{r}\right)^3 \left( \frac{\Omega_{ef}}{\Omega}\right)^2 = p_\text{rms} \left(\frac{C_T'}{C_T}\right)^{7/2} \left(\frac{C_Q}{C_Q'} \right)^4
+    \]
+    Compare $p'_\text{rms}, p_\text{rms,ef}$}
     
 \end{frame}
 
@@ -125,10 +134,12 @@ Supervisor: Professor Shreyas Mandre
         \begin{subfigure}[t]{0.45\textwidth}
             \centering
             \includegraphics[height=6cm]{aero3annotate.pdf}
+            \caption{Annotated CAD diagram}
         \end{subfigure}
         \begin{subfigure}[t]{0.45\textwidth}
             \centering
             \includegraphics[height=6cm]{../final_report/figures/aero_setup.pdf}
+            \caption{Assembled rig}
         \end{subfigure}
     \end{figure}
 \end{frame}
@@ -241,16 +252,18 @@ Supervisor: Professor Shreyas Mandre
 \begin{frame}{Conclusion}
     \begin{itemize}
         \item<1->Comparative measure presented and applied to collected experimental results.
-        \vspace{0.5cm}
-        \item<2-> Small reduction in overall noise for swept and looped designs
-        \vspace{0.5cm}
-        \item<3-> Reductions in efficiency outweighed acoustic benefits.
-        \vspace{0.5cm}
+        \item<2-> Majority of designs showed increase in noise at the angle of interest.
+        \item<3-> However reductions in efficiency outweighed acoustic benefits.
         \item<4-> Improving efficiency more effective than reducing noise.
     \end{itemize}
     \vspace{1cm}
+    \uncover<5->{Future work:}
+    \begin{itemize}
+        \item<5-> Measure a range of different observer angles
+        \item<6-> Test at different propeller radii
+    \end{itemize}
     
-    \only<5->{\huge \centering Questions?}
+    \only<7->{\huge \centering Questions?}
 \end{frame}
 
 
